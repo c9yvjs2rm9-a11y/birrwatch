@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Birrwatch — Ethiopian exchange rates, every bank & bureau</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23D9A62E'/%3E%3Ctext x='32' y='43' font-size='28' text-anchor='middle' fill='%23191713' font-family='serif'%3E%E1%89%A5%E1%88%AD%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Archivo:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&family=Noto+Sans+Ethiopic:wght@600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F6F4EE; --paper2:#EFECE1; --panel:#FBFAF6;
+  --ink:#191713; --ink2:#3F3B2F; --muted:#75705F;
+  --line:#E4DFCF; --line2:#D6D0BC;
+  --green:#0B7B3D; --red:#B93A1B; --gold:#D9A62E;
+  --mono:"Spline Sans Mono",ui-monospace,monospace;
+  --ui:"Archivo",sans-serif; --disp:"Fraunces",serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--paper);color:var(--ink);font:400 14.5px/1.55 var(--ui)}
+::selection{background:var(--ink);color:var(--paper)}
+button{font-family:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}
+svg{display:block}
+.wrap{max-width:1180px;margin:0 auto;padding:0 28px}
+@media(max-width:640px){.wrap{padding:0 16px}}
+.ticker{overflow:hidden;background:var(--ink);color:#EDEAE0}
+.t-track{display:flex;width:max-content;animation:tk 70s linear infinite}
+.ticker:hover .t-track{animation-play-state:paused}
+@keyframes tk{to{transform:translateX(-50%)}}
+.t-half{display:flex}
+.t-item{display:flex;align-items:center;gap:8px;padding:8px 20px;font:500 11px var(--mono);letter-spacing:.02em;border-right:1px solid rgba(246,244,238,.1);white-space:nowrap}
+.t-item b{font-weight:600;color:#fff}
+.t-item .up{color:#7FD6A4}.t-item .down{color:#F0A08B}
+.t-meta{color:#B9B29D}
+@media(prefers-reduced-motion:reduce){.t-track{animation:none}.ticker{overflow-x:auto}}
+.hdr{position:sticky;top:0;z-index:50;background:rgba(246,244,238,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.hdr-in{max-width:1180px;margin:0 auto;padding:0 28px;display:flex;align-items:center;gap:22px;height:60px}
+.brand{display:flex;align-items:center;gap:11px;flex-shrink:0}
+.brand-mark{width:34px;height:34px;border-radius:9px;background:var(--gold);color:var(--ink);display:grid;place-items:center;font:600 13px "Noto Sans Ethiopic",serif}
+.brand-name{font:600 19px var(--disp);letter-spacing:-.01em}
+.nav{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;flex:1}
+.nav::-webkit-scrollbar{display:none}
+.nav-link{border:0;background:none;padding:8px 12px;border-radius:8px;font:600 13px var(--ui);color:var(--muted);white-space:nowrap}
+.nav-link:hover{color:var(--ink)}
+.nav-link.on{color:var(--ink);background:#EAE6D8}
+.hdr-clock{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.hdr-clock b{display:block;font:600 12.5px var(--mono);letter-spacing:.02em}
+.hdr-clock i{display:block;font:400 10.5px var(--mono);font-style:normal;color:var(--muted)}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);position:relative;flex-shrink:0}
+.live-dot::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:1px solid var(--green);animation:pl 2.2s ease-out infinite}
+@keyframes pl{0%{transform:scale(.4);opacity:.9}100%{transform:scale(1.3);opacity:0}}
+@media(max-width:1024px){
+  .hdr-in{flex-wrap:wrap;height:auto;padding:10px 16px 0;row-gap:0}
+  .nav{order:3;width:100%;padding-bottom:8px}
+  .hdr-clock{margin-left:auto}
+}
+.kicker{font:500 10.5px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+h1,h2,h3{font-family:var(--disp);font-weight:600;letter-spacing:-.01em}
+h2{font-size:27px;margin-top:7px}
+.view{display:none;padding:38px 0 84px}
+.view.on{display:block;animation:fu .35s ease}
+@keyframes fu{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.block-head{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;flex-wrap:wrap;margin:52px 0 20px}
+.hint{font-size:12.5px;color:var(--muted);max-width:460px}
+.f-note{font-size:11.5px;color:var(--muted);margin-top:12px}
+.chip-row{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 6px;scrollbar-width:none;margin-bottom:16px}
+.chip-row::-webkit-scrollbar{display:none}
+.chip{border:1px solid var(--line2);background:var(--panel);border-radius:999px;padding:7px 15px;font:600 12px var(--mono);letter-spacing:.03em;color:var(--ink2);white-space:nowrap}
+.chip:hover{border-color:var(--ink)}
+.chip.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:10px;background:var(--panel);padding:3px;gap:2px}
+.seg button{border:0;background:transparent;font:600 12px var(--ui);color:var(--muted);padding:7px 13px;border-radius:7px;white-space:nowrap}
+.seg button.on{background:var(--ink);color:var(--paper)}
+.input{border:1px solid var(--line2);background:var(--panel);border-radius:9px;padding:9px 12px;font:500 13px var(--ui);color:var(--ink);outline:none}
+.input:focus{border-color:var(--ink)}
+.search{position:relative}
+.search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.search .input{padding-left:33px;min-width:210px}
+.btn{border:1px solid var(--ink);border-radius:9px;padding:10px 18px;font:600 13.5px var(--ui);transition:background .15s}
+.btn-primary{background:var(--ink);color:var(--paper)}
+.btn-primary:hover{background:#37331F}
+.btn-ghost{background:transparent;color:var(--ink)}
+.btn-ghost:hover{background:var(--paper2)}
+.icon-btn{width:30px;height:30px;display:inline-grid;place-items:center;border:0;background:none;border-radius:7px;color:var(--muted)}
+.icon-btn:hover{background:var(--paper2);color:var(--ink)}
+.icon-btn.on{color:var(--green)}
+.hero{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:46px;align-items:center;padding:26px 0 40px}
+.kicker-row{display:flex;align-items:center;gap:12px}
+.hero-rate{display:flex;align-items:baseline;gap:14px;margin:10px 0 14px}
+#heroRate{font:500 clamp(54px,8.5vw,102px)/1 var(--mono);letter-spacing:-.045em;font-feature-settings:"tnum"}
+.hero-deltas{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:16px}
+.delta{display:inline-flex;align-items:center;gap:6px;font:600 12.5px var(--ui);padding:5px 11px;border-radius:999px;border:1px solid transparent}
+.delta svg{flex-shrink:0}
+.delta.up{color:var(--green);border-color:rgba(11,123,61,.3);background:rgba(11,123,61,.06)}
+.delta.down{color:var(--red);border-color:rgba(185,58,27,.3);background:rgba(185,58,27,.06)}
+.delta.down svg{transform:rotate(180deg)}
+.hero-sub{font-size:13px;color:var(--muted)}
+.hero-sub b{color:var(--ink2);font-family:var(--mono);font-weight:600;font-size:12.5px}
+.eth-date{margin-top:14px;font:600 13px "Noto Sans Ethiopic",var(--ui);color:var(--ink2)}
+.eth-date span{font:400 11px var(--mono);color:var(--muted);margin-left:8px}
+.panel{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:18px 18px 12px}
+.chart-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.range-hint{font-size:11px;color:var(--muted)}
+.chart-wrap{position:relative}
+.chart-wrap canvas{width:100%;display:block;touch-action:pan-y}
+#heroChart{height:238px}
+#trendChart{height:340px}
+#bankChart{height:210px}
+.chart-tip{position:absolute;top:6px;display:none;background:var(--ink);color:var(--paper);border-radius:9px;padding:8px 11px;font:500 11px var(--mono);pointer-events:none;z-index:5;min-width:104px}
+.chart-tip b{display:block;font-size:13px;font-weight:600}
+.chart-tip i{display:block;font-style:normal;color:#B9B29D;margin:2px 0}
+.chart-tip u{text-decoration:none;font-weight:600}
+.chart-tip .up{color:#7FD6A4}.chart-tip .down{color:#F0A08B}
+@media(max-width:960px){.hero{grid-template-columns:1fr;gap:26px}}
+.street-band{display:flex;flex-wrap:wrap;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:20px 0}
+.street-item{flex:1;min-width:190px;padding:2px 26px;border-left:1px solid var(--line)}
+.street-item:first-child{padding-left:2px;border-left:0}
+.s-label{display:block;font:500 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.s-bank{display:block;font:600 13px var(--ui)}
+.s-rate{display:block;font:600 25px var(--mono);letter-spacing:-.02em;margin-top:2px}
+.s-rate small{font-size:12px;color:var(--muted);font-weight:500;letter-spacing:0}
+.s-note{flex:1.1;min-width:200px;padding:2px 26px;border-left:1px solid var(--line);font-size:12px;color:var(--muted);align-self:center}
+@media(max-width:760px){.street-item{padding:2px 16px}.s-note{border-left:0;padding-left:2px}}
+.table-scroll{border:1px solid var(--line);border-radius:13px;background:var(--panel);overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{font:500 10.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-align:left;padding:12px 14px;border-bottom:1px solid var(--line2);white-space:nowrap}
+th[data-key]{cursor:pointer;user-select:none}
+th[data-key]:hover{color:var(--ink)}
+th.sorted{color:var(--ink)}
+th.sorted::after{content:" ↓"}
+th.sorted.asc::after{content:" ↑"}
+td{padding:13px 14px;border-bottom:1px solid var(--line);font-size:13.5px;vertical-align:middle}
+tbody tr:last-child td{border-bottom:0}
+tbody tr{transition:background .12s}
+tbody tr:hover td{background:#F1EEE2}
+.num{font-family:var(--mono);font-feature-settings:"tnum";text-align:right;white-space:nowrap}
+th.num{text-align:right}
+.up{color:var(--green)}.down{color:var(--red)}
+td.hl,th.hl{background:#F1EDE0}
+.c-idx{font:500 11px var(--mono);color:var(--muted);width:34px}
+.c-bank{display:flex;align-items:center;gap:12px;min-width:230px}
+.mono-badge{width:28px;height:28px;flex-shrink:0;border:1px solid var(--line2);border-radius:7px;display:grid;place-items:center;font:600 10px var(--mono);letter-spacing:.02em;background:var(--paper)}
+.mono-badge.lg{width:46px;height:46px;border-radius:11px;font-size:14px}
+.b-txt b{display:block;font-weight:600;font-size:13.5px}
+.b-txt i{display:block;font-style:normal;font-size:11.5px;color:var(--muted)}
+.c-spark{width:120px}
+canvas.sparkcv{width:110px;height:30px}
+.c-upd{font:400 11.5px var(--mono);color:var(--muted)}
+.stat-strip{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--line);border-radius:13px;background:var(--panel);padding:16px 0;margin:22px 0 8px}
+.stat{flex:1;min-width:130px;padding:4px 24px;border-left:1px solid var(--line)}
+.stat:first-child{border-left:0}
+.stat .s-label{margin-bottom:3px}
+.stat b{font:600 17px var(--mono);letter-spacing:-.01em}
+.stat i{display:block;font:400 10.5px var(--mono);font-style:normal;color:var(--muted);margin-top:1px}
+.p-pair{font:600 13.5px var(--ui);display:block}
+.p-pair + i,td i.sub{display:block;font-style:normal;font-size:11.5px;color:var(--muted)}
+tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--ink)}
+.c-go{width:36px;color:var(--muted)}
+tbody tr[data-code]{cursor:pointer}
+.banks-grid{display:grid;grid-template-columns:330px 1fr;gap:36px;align-items:start;margin-top:24px}
+.bank-list{max-height:660px;overflow-y:auto;border:1px solid var(--line);border-radius:13px;background:var(--panel)}
+.bank-item{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:13px 14px;border:0;border-bottom:1px solid var(--line);background:none}
+.bank-item:last-child{border-bottom:0}
+.bank-item:hover{background:#F1EEE2}
+.bank-item.on{background:#EFEADB;box-shadow:inset 3px 0 0 var(--ink)}
+.bi-txt{flex:1;min-width:0}
+.bi-txt b{display:block;font:600 13px var(--ui);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bi-txt i{display:block;font-style:normal;font-size:11px;color:var(--muted)}
+.bi-rate{font:600 12.5px var(--mono);color:var(--ink2)}
+.bi-rate em{display:block;font:400 9px var(--mono);font-style:normal;color:var(--muted);text-align:right}
+.bd-head{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.bd-head .meta{font-size:12.5px;color:var(--muted);margin-top:4px}
+.bd-tag{margin-left:auto;font:700 10px var(--ui);letter-spacing:.1em;text-transform:uppercase;background:var(--ink);color:var(--paper);padding:6px 11px;border-radius:999px;align-self:center}
+.bd-figures{display:flex;flex-wrap:wrap;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:18px 0;margin:20px 0}
+.bd-figures > div{flex:1;min-width:150px;padding:2px 22px;border-left:1px solid var(--line)}
+.bd-figures > div:first-child{padding-left:2px;border-left:0}
+.big-num{display:block;font:600 27px var(--mono);letter-spacing:-.02em;margin:4px 0 2px}
+.mini{font-size:11px;color:var(--muted)}
+.sheet td,.sheet th{padding:10px 12px;font-size:12.5px}
+@media(max-width:900px){.banks-grid{grid-template-columns:1fr}.bank-list{max-height:340px}}
+.matrix td,.matrix th{padding:9px 10px;font-size:12px}
+.matrix thead th{position:sticky;top:0;background:var(--panel);z-index:2}
+.matrix tbody th{position:sticky;left:0;background:var(--panel);z-index:1;font:600 11.5px var(--mono)}
+.matrix td{font-family:var(--mono);font-feature-settings:"tnum";text-align:right;cursor:pointer;border:1px solid #EDE9DC}
+.matrix td:hover{outline:1.5px solid var(--ink);outline-offset:-1.5px}
+.matrix .rc{background:#EFEADB !important}
+.matrix .hx{color:var(--ink);box-shadow:inset 0 -2px 0 var(--ink)}
+.mx-diag{text-align:center;color:var(--line2)!important;cursor:default!important}
+.mx-corner{font:500 9px var(--mono);letter-spacing:.1em;color:var(--muted)}
+.bell{color:var(--muted)}
+.bell.on{color:var(--green)}
+.bell.on svg path{fill:currentColor}
+.conv-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:20px;align-items:stretch;margin-top:26px}
+.conv-panel{border:1px solid var(--line);border-radius:15px;background:var(--panel);padding:20px 22px}
+.cp-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.sel-wrap{position:relative}
+.sel-wrap select{appearance:none;-webkit-appearance:none;border:1px solid var(--line2);background:var(--paper);border-radius:8px;padding:8px 34px 8px 12px;font:600 13px var(--mono);color:var(--ink);cursor:pointer;outline:none}
+.sel-wrap select:focus{border-color:var(--ink)}
+.sel-wrap::after{content:"";position:absolute;right:13px;top:50%;width:7px;height:7px;border-right:1.6px solid var(--muted);border-bottom:1.6px solid var(--muted);transform:translateY(-70%) rotate(45deg);pointer-events:none}
+.amt-input{width:100%;border:0;background:none;outline:none;font:500 36px/1.2 var(--mono);letter-spacing:-.02em;color:var(--ink);font-feature-settings:"tnum"}
+.amt-out{font:500 36px/1.2 var(--mono);letter-spacing:-.02em;font-feature-settings:"tnum";word-break:break-all}
+.cp-sub{font-size:12.5px;color:var(--muted);margin-top:8px}
+.swap-btn{align-self:center;width:46px;height:46px;border-radius:50%;border:1px solid var(--line2);background:var(--ink);color:var(--paper);display:grid;place-items:center;transition:transform .35s ease,background .15s}
+.swap-btn:hover{background:#37331F}
+.swap-btn.rot{transform:rotate(180deg)}
+.conv-bar{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin:22px 0 10px}
+.conv-rate{font:500 12.5px var(--mono);color:var(--muted);text-align:right}
+.conv-rate b{color:var(--ink);font-size:14px}
+.conv-rate em{display:block;font-style:normal;font-size:11px;margin-top:2px}
+.quick{margin-top:34px;max-width:560px}
+.quick h3{font-size:17px;margin-bottom:10px}
+@media(max-width:760px){
+  .conv-grid{grid-template-columns:1fr}
+  .swap-btn{justify-self:center;transform:rotate(90deg)}
+  .swap-btn.rot{transform:rotate(270deg)}
+  .conv-rate{text-align:left}
+}
+.b-row{cursor:pointer}
+.caret{transition:transform .2s;color:var(--muted)}
+.b-row.open .caret{transform:rotate(180deg)}
+.b-more td{background:#F1EEE2;padding:0}
+.b-more-in{display:grid;grid-template-columns:repeat(3,1fr) 1.4fr;gap:18px;padding:16px 18px}
+.b-more-in .s-label{margin-bottom:4px}
+.b-more-in .val{font:600 13px var(--mono)}
+.b-meta{font-size:11.5px;color:var(--muted);display:flex;flex-direction:column;gap:3px}
+@media(max-width:700px){.b-more-in{grid-template-columns:1fr 1fr}}
+.bill-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:8px 0 26px}
+#billNote{font-size:12px;color:var(--muted)}
+.plan{display:grid;grid-template-columns:1.1fr 1.6fr .75fr auto;gap:30px;align-items:center;border:1px solid var(--line);border-radius:15px;background:var(--panel);padding:28px 26px;margin-bottom:14px}
+.plan.featured{border:1.5px solid var(--ink)}
+.p-tag{display:inline-block;font:700 9.5px var(--ui);letter-spacing:.12em;text-transform:uppercase;background:var(--gold);color:#241C04;padding:4px 10px;border-radius:999px;margin-bottom:9px}
+.p-name h3{font-size:21px}
+.p-name p{font-size:12.5px;color:var(--muted);margin-top:5px;max-width:250px}
+.p-feats{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:7px 18px}
+.p-feats li{display:flex;gap:8px;font-size:12.5px;color:var(--ink2);align-items:flex-start}
+.p-feats svg{flex-shrink:0;margin-top:3px;color:var(--green)}
+.p-price{display:flex;flex-direction:column}
+.price-val{font:600 34px var(--mono);letter-spacing:-.03em}
+.p-cur{font:500 12px var(--mono);color:var(--muted)}
+.p-usd{font:400 11px var(--mono);color:var(--muted);margin-top:3px}
+.faq{border-top:1px solid var(--line);margin-top:18px}
+.faq-item{border-bottom:1px solid var(--line)}
+.faq-q{width:100%;display:flex;justify-content:space-between;align-items:center;gap:16px;background:none;border:0;text-align:left;padding:19px 2px;font:600 15px var(--ui);color:var(--ink)}
+.faq-q svg{transition:transform .25s;color:var(--muted);flex-shrink:0}
+.faq-item.open .faq-q svg{transform:rotate(180deg)}
+.faq-a{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s ease}
+.faq-item.open .faq-a{grid-template-rows:1fr}
+.faq-a > div{overflow:hidden}
+.faq-a p{font-size:13.5px;color:var(--muted);padding:0 2px 20px;max-width:680px}
+@media(max-width:960px){.plan{grid-template-columns:1fr 1fr}.p-feats{grid-column:1/-1}}
+@media(max-width:600px){.plan{grid-template-columns:1fr}.p-feats{grid-template-columns:1fr}}
+footer{background:var(--ink);color:var(--paper);padding:64px 0 36px;margin-top:20px}
+.f-state{font:600 clamp(26px,4vw,38px)/1.2 var(--disp);letter-spacing:-.01em;max-width:560px}
+.f-grid{display:flex;gap:60px;flex-wrap:wrap;margin:36px 0 44px}
+.f-col span{display:block;font:500 10px var(--mono);letter-spacing:.15em;text-transform:uppercase;color:#8F8974;margin-bottom:12px}
+.f-col a{display:block;font-size:13px;color:#CFC9B6;padding:4px 0;cursor:pointer}
+.f-col a:hover{color:#fff}
+.f-bottom{border-top:1px solid rgba(246,244,238,.14);padding-top:22px;font-size:11.5px;color:#8F8974;line-height:1.7}
+.f-bottom b{color:#CFC9B6;font-weight:600}
+#toasts{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;z-index:100;align-items:center}
+.toast{background:var(--ink);color:var(--paper);font:500 13px var(--ui);padding:11px 17px;border-radius:10px;opacity:0;transform:translateY(8px);transition:.25s;max-width:min(90vw,480px);text-align:center}
+.toast.in{opacity:1;transform:none}
+#overlay{position:fixed;inset:0;background:rgba(22,20,13,.46);display:grid;place-items:center;z-index:90;opacity:0;transition:opacity .2s;padding:18px}
+#overlay.in{opacity:1}
+.modal{background:var(--paper);border-radius:16px;padding:28px;width:min(420px,100%);position:relative;transform:translateY(10px);transition:transform .2s}
+#overlay.in .modal{transform:none}
+.modal h3{font-size:23px;margin:8px 0 6px}
+.modal-x{position:absolute;top:14px;right:14px}
+.modal-sub{font-size:13px;color:var(--muted);margin-bottom:20px}
+.modal label{display:block;font:500 10.5px var(--mono);letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+.modal .input{width:100%;padding:12px 14px;font-size:14px}
+.f-err{color:var(--red);font-size:12px;margin:7px 0 0}
+.modal .btn{width:100%;margin-top:16px;padding:12px}
+.f-note-c{font-size:11px;color:var(--muted);text-align:center;margin-top:13px}
+</style>
+</head>
+<body>
+
+<div class="ticker" aria-hidden="true"><div class="t-track" id="tickerTrack"><div class="t-half" id="th1"></div><div class="t-half" id="th2"></div></div></div>
+
+<header class="hdr">
+  <div class="hdr-in">
+    <a class="brand" data-view="today"><span class="brand-mark">ብር</span><span class="brand-name">Birrwatch</span></a>
+    <nav class="nav" id="nav">
+      <button class="nav-link on" data-view="today">Today</button>
+      <button class="nav-link" data-view="trends">Trends</button>
+      <button class="nav-link" data-view="banks">Banks</button>
+      <button class="nav-link" data-view="pairs">Pairs</button>
+      <button class="nav-link" data-view="converter">Converter</button>
+      <button class="nav-link" data-view="bureaus">FX Bureaus</button>
+      <button class="nav-link" data-view="pricing">Pricing</button>
+    </nav>
+    <div class="hdr-clock"><span class="live-dot"></span><div><b id="clockTime">—:—:— EAT</b><i id="clockDate">Addis Ababa</i></div></div>
+  </div>
+</header>
+
+<main class="wrap">
+
+<section class="view on" id="view-today">
+  <div class="hero">
+    <div>
+      <div class="kicker-row"><span class="kicker">USD / ETB — market mid</span><span class="live-dot"></span></div>
+      <div class="hero-rate">
+        <span id="heroRate">—</span>
+        <button class="icon-btn" id="copyRate" title="Copy rate"></button>
+      </div>
+      <div class="hero-deltas" id="heroDeltas"></div>
+      <p class="hero-sub">NBE official <b id="nbeRate">—</b> &nbsp;·&nbsp; Bank average <b id="avgRate">—</b> &nbsp;·&nbsp; <span id="heroUpdated">updated just now</span></p>
+      <div class="eth-date" id="ethDate"></div>
+    </div>
+    <div class="panel">
+      <div class="chart-head"><span class="kicker" id="heroKicker">Last 90 days · USD/ETB</span><span class="range-hint">touch or hover the chart for daily detail</span></div>
+      <div class="chart-wrap"><canvas id="heroChart"></canvas><div class="chart-tip"></div></div>
+    </div>
+  </div>
+
+  <div class="street-band" id="bestBand"></div>
+
+  <div class="block-head">
+    <div><span class="kicker">01 — All banks</span><h2>Bank comparison</h2></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <div class="seg" id="dirSeg">
+        <button data-dir="buy" class="on">I'm selling FX</button>
+        <button data-dir="sell">I'm buying FX</button>
+      </div>
+      <div class="search" id="searchWrap"></div>
+    </div>
+  </div>
+  <div class="chip-row" id="curChips"></div>
+  <p class="hint" id="dirHint" style="margin:-6px 0 14px"></p>
+  <div class="table-scroll">
+    <table id="rateTable" style="min-width:860px">
+      <thead><tr>
+        <th></th><th data-key="bank">Bank</th>
+        <th data-key="buy" class="num">Bank buys</th>
+        <th data-key="sell" class="num">Bank sells</th>
+        <th data-key="spread" class="num">Spread</th>
+        <th data-key="chg" class="num">1D</th>
+        <th>60-day</th>
+        <th data-key="upd">Updated</th>
+      </tr></thead>
+      <tbody id="rateBody"></tbody>
+    </table>
+  </div>
+  <p class="f-note">Illustrative dataset for demonstration — figures are simulated, not live market quotes. Bank "buys" = the rate at which the bank purchases foreign cash/FX from you.</p>
+</section>
+
+<section class="view" id="view-trends">
+  <div class="block-head" style="margin-top:8px">
+    <div><span class="kicker">02 — Trends</span><h2 id="trendTitle">USD / ETB</h2></div>
+    <div class="seg" id="trendRange">
+      <button data-r="7">7D</button><button data-r="30">1M</button><button data-r="90" class="on">3M</button><button data-r="180">6M</button><button data-r="365">1Y</button>
+    </div>
+  </div>
+  <div class="chip-row" id="trendChips"></div>
+  <div class="panel">
+    <div class="chart-wrap"><canvas id="trendChart"></canvas><div class="chart-tip"></div></div>
+  </div>
+  <div class="stat-strip" id="trendStats"></div>
+  <div class="block-head">
+    <div><h2>Every pair, at a glance</h2></div>
+    <div class="seg" id="trendSort">
+      <button data-k="d30" class="on">30D</button><button data-k="d1">1D</button><button data-k="name">A–Z</button>
+    </div>
+  </div>
+  <p class="hint" style="margin:-10px 0 14px">Click any row to load it into the chart above.</p>
+  <div class="table-scroll">
+    <table style="min-width:760px">
+      <thead><tr><th>Pair</th><th class="num">Rate</th><th class="num">1D</th><th class="num">30D</th><th>60-day trend</th><th></th></tr></thead>
+      <tbody id="trendBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<section class="view" id="view-banks">
+  <div class="block-head" style="margin-top:8px">
+    <div><span class="kicker">03 — Banks</span><h2>Bank explorer</h2></div>
+    <div class="search" id="bankSearchWrap"></div>
+  </div>
+  <div class="banks-grid">
+    <aside class="bank-list" id="bankList"></aside>
+    <div id="bankDetail"></div>
+  </div>
+</section>
+
+<section class="view" id="view-pairs">
+  <div class="block-head" style="margin-top:8px">
+    <div><span class="kicker">04 — Pairs</span><h2>Cross-rate matrix</h2></div>
+    <p class="hint">Derived from live ETB market mids. Click any cell to copy the conversion.</p>
+  </div>
+  <div class="table-scroll"><table class="matrix" id="matrix" style="min-width:880px"></table></div>
+  <div class="block-head"><div><h2>Popular ETB pairs</h2></div><p class="hint">Best buy and sell across all banks, right now.</p></div>
+  <div class="table-scroll">
+    <table style="min-width:820px">
+      <thead><tr><th>Pair</th><th class="num">Mid</th><th class="num">Best buy</th><th class="num">Best sell</th><th class="num">Market spread</th><th class="num">30D</th><th>Alert</th></tr></thead>
+      <tbody id="pairsBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<section class="view" id="view-converter">
+  <div class="block-head" style="margin-top:8px">
+    <div><span class="kicker">05 — Converter</span><h2>Currency converter</h2></div>
+  </div>
+  <div class="conv-grid">
+    <div class="conv-panel">
+      <div class="cp-head"><span class="kicker">From</span><div class="sel-wrap"><select id="cvFrom"></select></div></div>
+      <input class="amt-input" id="cvAmt" value="100" inputmode="decimal" autocomplete="off" spellcheck="false">
+      <div class="cp-sub" id="cvFromName"></div>
+    </div>
+    <button class="swap-btn" id="swapBtn" title="Swap currencies"></button>
+    <div class="conv-panel">
+      <div class="cp-head"><span class="kicker">To</span><div class="sel-wrap"><select id="cvTo"></select></div></div>
+      <div class="amt-out" id="cvResult">—</div>
+      <div class="cp-sub" id="cvToName"></div>
+    </div>
+  </div>
+  <div class="conv-bar">
+    <div class="seg" id="cvMode">
+      <button data-m="best" class="on">Best bank rate</button>
+      <button data-m="avg">Market average</button>
+      <button data-m="official">NBE official</button>
+    </div>
+    <div class="conv-rate" id="cvRateLine"></div>
+  </div>
+  <div class="quick">
+    <h3>Quick reference</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Amount</th><th class="num">Converts to</th></tr></thead>
+        <tbody id="quickBody"></tbody>
+      </table>
+    </div>
+    <p class="f-note">Quoted rates exclude bank commissions and cash-handling fees — confirm the final figure with your branch or the bureau counter.</p>
+  </div>
+</section>
+
+<section class="view" id="view-bureaus">
+  <div class="block-head" style="margin-top:8px">
+    <div><span class="kicker">06 — Licensed FX bureaus</span><h2>Licensed FX bureaus</h2></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <div class="chip-row" id="cityChips" style="margin:0"></div>
+      <div class="search" id="bureauSearchWrap"></div>
+    </div>
+  </div>
+  <div class="street-band" id="bureauBand"></div>
+  <div class="table-scroll" style="margin-top:26px">
+    <table style="min-width:860px">
+      <thead><tr>
+        <th></th><th data-key="name">Bureau</th><th>City</th><th>Hours</th>
+        <th data-key="buy" class="num">USD buy</th><th data-key="sell" class="num">USD sell</th>
+        <th data-key="spread" class="num">Spread</th><th data-key="vs" class="num">vs best bank</th>
+      </tr></thead>
+      <tbody id="bureauBody"></tbody>
+    </table>
+  </div>
+  <p class="f-note">Cash rates at the counter. Bureaus are licensed by the National Bank of Ethiopia and typically quote tighter cash spreads than bank branches. Click a row for the full board.</p>
+</section>
+
+<section class="view" id="view-pricing">
+  <div class="block-head" style="margin-top:8px">
+    <div><span class="kicker">07 — Pricing</span><h2>Priced like our rates: in the open.</h2></div>
+  </div>
+  <p class="hint" style="margin:-8px 0 4px">Start free, upgrade when the birr starts mattering to your bottom line. Prices in Ethiopian birr, VAT included — dollar approximations use today's live rate.</p>
+  <div class="bill-row">
+    <div class="seg" id="billSeg">
+      <button data-b="m" class="on">Monthly</button>
+      <button data-b="a">Annual · save 20%</button>
+    </div>
+    <span id="billNote">Billed monthly. Switch to annual for two months free.</span>
+  </div>
+
+  <div class="plan">
+    <div class="p-name"><h3>Observer</h3><p>For keeping an honest eye on the birr.</p></div>
+    <ul class="p-feats">
+      <li>End-of-day rates, all covered banks</li><li>Licensed FX bureaus as they join</li>
+      <li>7-day rate history</li><li>1 price alert</li>
+      <li>Full converter</li><li>Web & mobile</li>
+    </ul>
+    <div class="p-price"><span class="price-val" data-m="0" data-a="0">0</span><span class="p-cur">ETB / forever</span><span class="p-usd" data-m="0" data-a="0">free</span></div>
+    <button class="btn btn-ghost btn-plan" data-plan="Observer">Start free</button>
+  </div>
+
+  <div class="plan featured">
+    <div class="p-name"><span class="p-tag">Most popular</span><h3>Professional</h3><p>For importers, freelancers and traders who move money weekly.</p></div>
+    <ul class="p-feats">
+      <li>Live rates as banks publish</li><li>365-day history + CSV export</li>
+      <li>20 price alerts</li><li>Custom-spread converter</li>
+      <li>Daily email digest</li><li>Everything in Observer</li>
+    </ul>
+    <div class="p-price"><span class="price-val" data-m="249" data-a="199">249</span><span class="p-cur">ETB /mo</span><span class="p-usd" data-m="249" data-a="199">—</span></div>
+    <button class="btn btn-primary btn-plan" data-plan="Professional">Start Professional</button>
+  </div>
+
+  <div class="plan">
+    <div class="p-name"><h3>Business & API</h3><p>For platforms, NGOs and finance teams wiring ETB into their systems.</p></div>
+    <ul class="p-feats">
+      <li>REST + WebSocket API</li><li>50k requests / month</li>
+      <li>5 team seats</li><li>Slack & Telegram webhooks</li>
+      <li>99.9% uptime SLA</li><li>Priority support</li>
+    </ul>
+    <div class="p-price"><span class="price-val" data-m="1999" data-a="1599">1,999</span><span class="p-cur">ETB /mo</span><span class="p-usd" data-m="1999" data-a="1599">—</span></div>
+    <button class="btn btn-primary btn-plan" data-plan="Business">Talk to us</button>
+  </div>
+
+  <h2 style="margin-top:56px">Questions, answered</h2>
+  <div class="faq" id="faq">
+    <div class="faq-item"><button class="faq-q">Where does the rate data come from?<span class="f-chev"></span></button><div class="faq-a"><div><p>We aggregate the published daily rate sheets of Ethiopia's commercial banks and NBE-licensed FX bureaus, and cross-check against the National Bank of Ethiopia's official reference rate. Observer accounts see end-of-day figures; Professional accounts see updates the moment a bank publishes.</p></div></div></div>
+    <div class="faq-item"><button class="faq-q">Buy rate or sell rate — which one applies to me?<span class="f-chev"></span></button><div class="faq-a"><div><p>If you're handing dollars to a bank and receiving birr, look at the bank's <b>buy</b> rate — higher is better for you. If you're paying birr to receive dollars, look at the <b>sell</b> rate — lower is better. The comparison table's toggle flips the highlight to the column you care about.</p></div></div></div>
+    <div class="faq-item"><button class="faq-q">Why not just check my bank's app?<span class="f-chev"></span></button><div class="faq-a"><div><p>Because your bank quotes one rate and every other bank quotes a different one. Spreads between the best and worst bank can exceed 1 ETB per dollar — on a $10,000 transfer that's real money lost to the wrong counter.</p></div></div></div>
+    <div class="faq-item"><button class="faq-q">Can I pay in birr?<span class="f-chev"></span></button><div class="faq-a"><div><p>Yes — Telebirr, Chapa, and cards are all accepted. Prices are set in birr on purpose; we don't think an Ethiopian rate service should bill you in someone else's currency.</p></div></div></div>
+    <div class="faq-item"><button class="faq-q">Can I cancel anytime?<span class="f-chev"></span></button><div class="faq-a"><div><p>Anytime, from your account page, in two clicks. Annual plans are refunded pro-rata for unused months. No retention phone calls — we'd rather earn the renewal.</p></div></div></div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p class="f-state">Know what your birr is worth — before you trade it.</p>
+    <div class="f-grid">
+      <div class="f-col"><span>Data</span>
+        <a data-view="today">Today's rates</a><a data-view="trends">Trends</a><a data-view="banks">Banks</a><a data-view="bureaus">FX Bureaus</a>
+      </div>
+      <div class="f-col"><span>Tools</span>
+        <a data-view="converter">Converter</a><a data-view="pairs">Cross rates</a><a data-view="pricing">Pricing</a>
+      </div>
+      <div class="f-col"><span>Contact</span>
+        <a href="mailto:hello@birrwatch.et">hello@birrwatch.et</a><a data-view="pricing">API access</a>
+      </div>
+    </div>
+    <div class="f-bottom">
+      <b>Birrwatch</b> is an independent exchange-rate tracker for Ethiopia. Rates are collected from published bank rate sheets — indicative only, not financial advice. Confirm with your bank or bureau before transacting.<br>© 2025 Birrwatch · Made in Addis Ababa · <span style="font-family:'Noto Sans Ethiopic'">አዲስ አበባ</span>
+    </div>
+  </div>
+</footer>
+
+<div id="toasts"></div>
+
+<div id="overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Create account">
+    <button class="icon-btn modal-x" id="mClose" title="Close"></button>
+    <span class="kicker">Create account</span>
+    <h3>Start watching the birr</h3>
+    <p class="modal-sub">Plan: <b id="mPlan" style="color:var(--ink)">Professional</b> · <span id="mPrice">249 ETB /mo</span></p>
+    <label for="mEmail">Email</label>
+    <input class="input" id="mEmail" type="email" placeholder="you@company.et" autocomplete="email">
+    <p class="f-err" id="mErr" hidden>Please enter a valid email address.</p>
+    <button class="btn btn-primary" id="mGo">Continue</button>
+    <p class="f-note-c">Pay with Telebirr, Chapa, or card · Cancel anytime</p>
+  </div>
+</div>
+
+<script>
+/* ================= utilities ================= */
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+function safe(fn,label){try{fn()}catch(e){console.error('[birrwatch]',label||'',e)}}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const fmt=(n,d=2)=>(n==null||!isFinite(n))?'—':n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtSmart=v=>{if(v==null||!isFinite(v))return'—';const a=Math.abs(v);return fmt(v,a>=100?2:a>=1?4:6)};
+const fmtPct=(v,d=2)=>(v==null||!isFinite(v))?'—':(v>=0?'+':'−')+Math.abs(v*100).toFixed(d)+'%';
+const cls=v=>v>=0?'up':'down';
+function ago(ts){if(!ts)return'—';const s=Math.max(0,(Date.now()-ts)/1e3);if(s<50)return'just now';const m=s/60;if(m<60)return Math.floor(m)+' min ago';return Math.floor(m/60)+' h '+(Math.floor(m)%60)+' m ago'}
+function dlabel(d,full){return full?d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}):d.getDate()+' '+d.toLocaleString('en',{month:'short'})}
+function copyText(t){try{navigator.clipboard.writeText(t)}catch(e){const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove()}}
+const cmp=(a,b,dir)=>{if(a==null&&b==null)return 0;if(a==null)return 1;if(b==null)return -1;return(a<b?-1:a>b?1:0)*dir};
+
+/* ================= icons ================= */
+const S16='<svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">';
+const I={
+ search:S16+'<circle cx="6.8" cy="6.8" r="4.4"/><path d="m10.2 10.2 3.3 3.3"/></svg>',
+ swap:S16+'<path d="M8 2.5v11M4.8 5.7 8 2.5l3.2 3.2M4.8 10.3 8 13.5l3.2-3.2"/></svg>',
+ copy:S16+'<rect x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path d="M10.5 3.5v-.2A1.3 1.3 0 0 0 9.2 2H3.8A1.3 1.3 0 0 0 2.5 3.3v5.4A1.3 1.3 0 0 0 3.8 10h.2"/></svg>',
+ bell:S16+'<path d="M8 2.2a4 4 0 0 0-4 4v2.6L2.7 11h10.6L12 8.8V6.2a4 4 0 0 0-4-4Z"/><path d="M6.5 13a1.6 1.6 0 0 0 3 0"/></svg>',
+ chev:S16+'<path d="m4 6 4 4 4-4"/></svg>',
+ right:S16+'<path d="m6 4 4 4-4 4"/></svg>',
+ x:S16+'<path d="m4 4 8 8M12 4 4 12"/></svg>',
+ tri:'<svg width="8" height="8" viewBox="0 0 10 10"><path d="M5 1.5 9 8H1z" fill="currentColor"/></svg>'
+};
+
+/* ================= static definitions ================= */
+const CURRENCIES=[
+ {code:'USD',name:'US Dollar',per:1,anchor:157.24,vol:.0038,drift:.00060,seed:11},
+ {code:'EUR',name:'Euro',per:1,anchor:181.35,vol:.0042,drift:.00052,seed:23},
+ {code:'GBP',name:'British Pound',per:1,anchor:210.62,vol:.0042,drift:.00042,seed:37},
+ {code:'CHF',name:'Swiss Franc',per:1,anchor:190.88,vol:.0045,drift:-.00018,seed:41},
+ {code:'CAD',name:'Canadian Dollar',per:1,anchor:115.47,vol:.0040,drift:.00048,seed:53},
+ {code:'AED',name:'UAE Dirham',per:1,anchor:42.81,vol:.0012,drift:.00058,seed:67,peg:.27230},
+ {code:'SAR',name:'Saudi Riyal',per:1,anchor:41.92,vol:.0013,drift:.00058,seed:71,peg:.26662},
+ {code:'CNY',name:'Chinese Yuan',per:1,anchor:21.79,vol:.0016,drift:.00030,seed:83,peg:.13858},
+ {code:'JPY',name:'Japanese Yen (per 100)',per:100,anchor:106.42,vol:.0046,drift:.00078,seed:97},
+ {code:'KES',name:'Kenyan Shilling',per:1,anchor:1.2186,vol:.0030,drift:.00022,seed:103},
+];
+const CUR=Object.fromEntries(CURRENCIES.map(c=>[c.code,c]));
+const decOf=c=>c==='KES'?4:2;
+const BANKS=[
+ {c:'CBE',name:'Commercial Bank of Ethiopia',type:'State-owned',est:1942,br:1900,spread:1.10,bias:.75,upd:14},
+ {c:'AWB',name:'Awash Bank',type:'Private',est:1994,br:830,spread:.95,bias:-.35,upd:38},
+ {c:'DBL',name:'Dashen Bank',type:'Private',est:1995,br:560,spread:1.00,bias:.20,upd:52},
+ {c:'BOA',name:'Bank of Abyssinia',type:'Private',est:1996,br:790,spread:.90,bias:-.55,upd:21},
+ {c:'CBO',name:'Cooperative Bank of Oromia',type:'Private',est:2004,br:720,spread:1.05,bias:.10,upd:64},
+ {c:'NIB',name:'Nib International Bank',type:'Private',est:1999,br:390,spread:1.15,bias:-.20,upd:88},
+ {c:'WGB',name:'Wegagen Bank',type:'Private',est:1997,br:360,spread:1.20,bias:.35,upd:47},
+ {c:'ZEM',name:'Zemen Bank',type:'Private',est:2008,br:75,spread:.80,bias:-.70,upd:9},
+ {c:'HIB',name:'Hibret Bank',type:'Private',est:1998,br:470,spread:1.10,bias:.45,upd:73},
+ {c:'BRH',name:'Berhan Bank',type:'Private',est:2010,br:260,spread:1.00,bias:-.15,upd:96},
+ {c:'ABY',name:'Abay Bank',type:'Private',est:2010,br:340,spread:1.25,bias:.05,upd:112},
+ {c:'ORB',name:'Oromia Bank',type:'Private',est:2008,br:480,spread:1.05,bias:.28,upd:33},
+ {c:'ENB',name:'Enat Bank',type:'Private',est:2013,br:190,spread:1.30,bias:-.40,upd:121},
+ {c:'BUN',name:'Bunna Bank',type:'Private',est:2013,br:170,spread:1.20,bias:.15,upd:140},
+ {c:'ZZB',name:'ZamZam Bank',type:'Interest-free',est:2021,br:120,spread:1.35,bias:-.25,upd:155},
+];
+const BANK=Object.fromEntries(BANKS.map(b=>[b.c,b]));
+const BUREAUS=[
+ {id:'FXB014',name:'Sheger Currency Exchange',city:'Addis Ababa',area:'Bole Road, Alem Cinema',hours:'08:30 – 19:00',lic:'FXB/014/24',tel:'+251 11 5 54 21 30',spread:.70,bias:.9},
+ {id:'FXB021',name:'Bole Medhanialem FX Bureau',city:'Addis Ababa',area:'Medhanialem Junction',hours:'08:00 – 20:00',lic:'FXB/021/24',tel:'+251 11 6 18 44 52',spread:.85,bias:.5},
+ {id:'FXB026',name:'Kazanchis FX Bureau',city:'Addis Ababa',area:'Congo Street, Kazanchis',hours:'08:30 – 18:30',lic:'FXB/026/24',tel:'+251 11 5 15 70 08',spread:.80,bias:.35},
+ {id:'FXB029',name:'Meskel Flower FX Bureau',city:'Addis Ababa',area:'Meskel Flower Road',hours:'08:30 – 19:00',lic:'FXB/029/24',tel:'+251 11 6 62 39 14',spread:.90,bias:.1},
+ {id:'FXB031',name:'Megenagna FX Bureau',city:'Addis Ababa',area:'Megenagna, near the Terminal',hours:'08:00 – 20:00',lic:'FXB/031/24',tel:'+251 11 6 80 05 27',spread:.95,bias:-.1},
+ {id:'FXB034',name:'Piassa FX Bureau',city:'Addis Ababa',area:'Piazza, Taitu Street',hours:'08:30 – 18:00',lic:'FXB/034/24',tel:'+251 11 1 11 62 90',spread:1.00,bias:.2},
+ {id:'FXB038',name:'Dire Currency Exchange',city:'Dire Dawa',area:'Kezira, Market Street',hours:'08:30 – 18:30',lic:'FXB/038/24',tel:'+251 25 1 11 34 76',spread:1.05,bias:.1},
+ {id:'FXB041',name:'Tana FX Bureau',city:'Bahir Dar',area:'Main Depozit Road',hours:'08:00 – 18:00',lic:'FXB/041/24',tel:'+251 58 2 26 41 19',spread:.95,bias:.3},
+ {id:'FXB044',name:'Lake View FX Bureau',city:'Hawassa',area:'Lake Awassa Front',hours:'08:30 – 19:00',lic:'FXB/044/24',tel:'+251 46 2 20 55 81',spread:1.00,bias:0},
+ {id:'FXB047',name:'Adama Express FX',city:'Adama',area:'Dembela Road',hours:'08:30 – 18:30',lic:'FXB/047/24',tel:'+251 22 1 12 73 45',spread:1.15,bias:-.2},
+];
+const BUREAU=Object.fromEntries(BUREAUS.map(u=>[u.id,u]));
+
+/* ================= config & data store ================= */
+const QS=new URLSearchParams(location.search);
+const CONFIG={
+  DATA_URL:QS.get('data')||'data/rates.json',
+  TRENDS_URL:QS.get('trends')||'data/trends.json',
+  POLL_MS:60000, STALE_MS:26*3600e3,
+};
+const DATA={mode:'demo',rates:[],sources:{},quotes:{},srcTs:{},genTs:Date.now(),genAt:'',histReal:false,fails:0,chipEl:null};
+let H={}, DATES=[];
+const live={mid:{},off:{}};
+
+const srcKey=(b,c)=>b+'|'+c;
+const histReal=()=>DATA.mode!=='live'||DATA.histReal;
+const hasData=c=>DATA.mode!=='live'||BANKS.some(b=>bankRates(b,c));
+function storeQuote(id,code){return DATA.quotes[srcKey(id,code)]||null}
+function per(code){return CUR[code]?CUR[code].per:1}
+function etbPerUnit(code){return code==='ETB'?1:live.mid[code]/per(code)}
+function offPerUnit(code){return code==='ETB'?1:(live.off[code]||live.mid[code]*.9955)/per(code)}
+function nameOf(code){return code==='ETB'?'Ethiopian Birr':CUR[code].name}
+
+function demoQuote(id,code){
+  const b=BANK[id],u=BUREAU[id],mid=live.mid[code],scale=mid/live.mid.USD;
+  if(b){const half=b.spread*scale/2;let buy=mid-half+b.bias*half*.55,sell=mid+half+b.bias*half*.22;
+    if(sell-buy<half*.8)sell=buy+half*.8;return{buy,sell,spread:sell-buy}}
+  if(u){const half=u.spread*scale/2;let buy=mid-half+u.bias*half*1.5,sell=mid+half+u.bias*half*.4;
+    if(sell-buy<half*.7)sell=buy+half*.7;return{buy,sell,spread:sell-buy}}
+  return null;
+}
+function bankRates(b,code){return DATA.mode==='live'?storeQuote(b.c,code):demoQuote(b.c,code)}
+function bureauRates(u,code='USD'){return DATA.mode==='live'?storeQuote(u.id,code):demoQuote(u.id,code)}
+
+function bestBuy(code){let o=null;for(const b of BANKS){const r=bankRates(b,code);if(r&&(!o||r.buy>o.r.buy))o={b,r}}return o}
+function bestSell(code){let o=null;for(const b of BANKS){const r=bankRates(b,code);if(r&&(!o||r.sell<o.r.sell))o={b,r}}return o}
+function tightest(code){let o=null;for(const b of BANKS){const r=bankRates(b,code);if(r&&r.spread!=null&&(!o||r.spread<o.r.spread))o={b,r}}return o}
+
+function curChg(code,back){const s=H[code];if(!s||s.length<2)return 0;const L=s.length,p=s[Math.max(0,L-1-back)],m=live.mid[code]||s[L-1];return p?(m-p)/p:0}
+function bankChg(b,code){return curChg(code,1)}
+function bankSeries(b,code,n){const s=H[code];if(!s||!live.mid[code])return[];const r=bankRates(b,code);const k=r?r.buy/live.mid[code]:1;return s.slice(-n).map(v=>v*k)}
+function sourceUpdated(id){if(DATA.mode==='live'){const t=DATA.srcTs[id];return t||DATA.genTs}const b=BANK[id];return Date.now()-(b?b.upd:0)*6e4}
+function isStale(id){if(DATA.mode!=='live')return false;const ts=DATA.srcTs[id];return!!ts&&Date.now()-ts>CONFIG.STALE_MS}
+function okCount(){const ids=Object.keys(DATA.sources);return ids.filter(id=>!isStale(id)).length}
+function avgMid(code){let n=0,t=0;for(const b of BANKS){const r=bankRates(b,code);if(r){n++;t+=(r.buy+r.sell)/2}}return n?t/n:live.mid[code]}
+
+function recomputeMids(){
+  const sums={},official={};
+  for(const r of DATA.rates){
+    const s=DATA.sources[r.source];if(!s)continue;
+    const mid=(+r.buy + +r.sell)/2;
+    if(s.type==='official')official[r.currency]=mid;
+    else if(s.type==='bank'){(sums[r.currency]??={n:0,t:0});sums[r.currency].n++;sums[r.currency].t+=mid}
+  }
+  for(const c of CURRENCIES){
+    live.mid[c.code]=sums[c.code]?sums[c.code].t/sums[c.code].n:(H[c.code]?H[c.code][H[c.code].length-1]:c.anchor);
+    live.off[c.code]=official[c.code]||live.mid[c.code]*.9955;
+  }
+}
+function applyRates(doc){
+  DATA.rates=doc.rates||[];DATA.sources=doc.sources||{};DATA.quotes={};DATA.srcTs={};
+  for(const id in DATA.sources)DATA.srcTs[id]=Date.parse(DATA.sources[id].fetched_at)||DATA.genTs;
+  for(const r of DATA.rates)DATA.quotes[srcKey(r.source,r.currency)]={buy:+r.buy,sell:+r.sell,spread:+r.sell-+r.buy};
+  recomputeMids();
+}
+function applyTrends(t){
+  if(!t||!t.dates||!t.dates.length||!t.series)return;
+  DATES=t.dates.map(d=>new Date(d+'T00:00:00Z'));
+  for(const c of CURRENCIES){
+    const s=t.series[c.code];
+    let arr=s&&s.mid&&s.mid.length?s.mid.slice():new Array(DATES.length).fill(live.mid[c.code]);
+    if(arr.length<DATES.length)arr=arr.concat(new Array(DATES.length-arr.length).fill(arr[arr.length-1]));
+    arr[arr.length-1]=live.mid[c.code];
+    H[c.code]=arr;
+  }
+  DATA.histReal=true;
+}
+
+/* ---- demo generator (fallback so the UI always boots) ---- */
+function buildDemo(){
+  const DAYS=420,r=mulberry32(11);let v=157.24;const usd=[v];
+  for(let i=1;i<DAYS;i++){v=v/(1+.0006+(r()*2-1)*.0038);usd.unshift(v)}
+  H={USD:usd};
+  for(const c of CURRENCIES){
+    if(c.code==='USD')continue;
+    if(c.peg){const rr=mulberry32(c.seed);H[c.code]=usd.map(x=>x*c.peg*(1+(rr()*2-1)*.0008))}
+    else{const rr=mulberry32(c.seed);let x=c.anchor;const a=[x];
+      for(let i=1;i<DAYS;i++){x=x/(1+c.drift+(rr()*2-1)*c.vol);a.unshift(x)}H[c.code]=a}
+  }
+  DATES=[];const t0=new Date();
+  for(let i=DAYS-1;i>=0;i--){const d=new Date(t0);d.setDate(t0.getDate()-i);DATES.push(d)}
+  live.mid={};live.off={};
+  for(const c of CURRENCIES){live.mid[c.code]=H[c.code][DAYS-1];live.off[c.code]=live.mid[c.code]*.9955}
+  DATA.genTs=Date.now();
+}
+
+/* ---- polling ---- */
+async function pollData(){
+  if(document.hidden&&DATA.mode==='live')return;
+  try{
+    const r=await fetch(CONFIG.DATA_URL+'?t='+Date.now(),{cache:'no-store'});
+    if(!r.ok)throw new Error('http '+r.status);
+    const doc=await r.json();
+    let tr=null;
+    try{const rt=await fetch(CONFIG.TRENDS_URL+'?t='+Date.now(),{cache:'no-store'});if(rt.ok)tr=await rt.json()}catch(e){}
+    const gen=doc.meta&&doc.meta.generated_at;
+    if(gen&&gen===DATA.genAt)return;
+    DATA.genAt=gen||'';
+    DATA.genTs=Date.parse(gen)||Date.now();
+    applyRates(doc);
+    if(tr)applyTrends(tr);
+    DATA.mode='live';DATA.fails=0;
+    renderTicker();updateStatusChip();VIEW[S.view]&&safe(()=>VIEW[S.view](),S.view);
+  }catch(e){
+    DATA.fails++;console.warn('[birrwatch] data fetch failed:',e.message);
+    updateStatusChip();
+  }
+}
+
+/* ---- status chip ---- */
+function ensureStatus(){
+  const host=$('.hdr-clock');if(!host||DATA.chipEl)return;
+  const s=document.createElement('span');
+  s.style.cssText='display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line2);border-radius:999px;padding:4px 10px;font:600 9.5px var(--mono);letter-spacing:.08em;color:var(--ink2);white-space:nowrap';
+  host.prepend(s);DATA.chipEl=s;
+}
+function updateStatusChip(){
+  const el=DATA.chipEl;if(!el)return;
+  if(DATA.mode==='live'){
+    const total=Object.keys(DATA.sources).length,ok=okCount();
+    const dot=DATA.fails?'#D9A62E':'#0B7B3D';
+    el.innerHTML=`<span style="width:6px;height:6px;border-radius:50%;background:${dot};flex-shrink:0"></span>${DATA.fails?'LIVE · retrying':'LIVE'} · ${ok}/${total} ok`;
+    el.title='Dataset generated '+new Date(DATA.genTs).toLocaleString();
+  }else{
+    el.innerHTML='<span style="width:6px;height:6px;border-radius:50%;background:#B93A1B;flex-shrink:0"></span>DEMO DATA';
+    el.title='Showing simulated data — run the scraper to go live.';
+  }
+}
+
+/* ================= chart engine ================= */
+const CHARTS=[];
+function drawLine(cv,vals,dates,opt={}){
+  const wrap=cv.closest('.chart-wrap'),tip=wrap?$('.chart-tip',wrap):null,dec=opt.dec??2;
+  const P={l:8,r:58,t:18,b:26};let hover=null;
+  function paint(){
+    if(!cv.isConnected||!cv.offsetParent||vals.length<2)return;
+    const w=cv.clientWidth,h=cv.clientHeight,dpr=Math.min(2,devicePixelRatio||1);
+    cv.width=w*dpr;cv.height=h*dpr;
+    const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
+    const n=vals.length,pw=w-P.l-P.r,ph=h-P.t-P.b;
+    let mn=Infinity,mx=-Infinity;for(const v of vals){if(v<mn)mn=v;if(v>mx)mx=v}
+    const span=(mx-mn)||mn*.01;mn-=span*.07;mx+=span*.07;
+    const X=i=>P.l+i/(n-1)*pw,Y=v=>P.t+(1-(v-mn)/(mx-mn))*ph;
+    g.font='10px "Spline Sans Mono",monospace';
+    for(let k=0;k<=3;k++){const y=P.t+ph*k/3,vv=mx-(mx-mn)*k/3;
+      g.strokeStyle='#E1DCCB';g.setLineDash([3,4]);g.beginPath();g.moveTo(P.l,y);g.lineTo(w-P.r,y);g.stroke();g.setLineDash([]);
+      g.fillStyle='#8A8471';g.textAlign='left';g.textBaseline='middle';g.fillText(fmt(vv,dec),w-P.r+8,y)}
+    g.textBaseline='alphabetic';
+    for(let k=0;k<=4;k++){const i=Math.round(k/4*(n-1));g.textAlign=k===0?'left':k===4?'right':'center';g.fillStyle='#8A8471';g.fillText(dlabel(dates[i]),X(i),h-8)}
+    let iMn=0,iMx=0;vals.forEach((v,i)=>{if(v<vals[iMn])iMn=i;if(v>vals[iMx])iMx=i});
+    g.fillStyle='#9A937D';g.textAlign='center';
+    g.fillText('H '+fmt(vals[iMx],dec),Math.min(Math.max(X(iMx),36),w-P.r-36),Y(vals[iMx])-8);
+    g.fillText('L '+fmt(vals[iMn],dec),Math.min(Math.max(X(iMn),36),w-P.r-36),Y(vals[iMn])+16);
+    g.beginPath();g.moveTo(X(0),Y(vals[0]));for(let i=1;i<n;i++)g.lineTo(X(i),Y(vals[i]));
+    g.lineTo(X(n-1),P.t+ph);g.lineTo(X(0),P.t+ph);g.closePath();g.fillStyle='rgba(25,23,19,.05)';g.fill();
+    g.beginPath();g.moveTo(X(0),Y(vals[0]));for(let i=1;i<n;i++)g.lineTo(X(i),Y(vals[i]));
+    g.strokeStyle='#191713';g.lineWidth=1.7;g.lineJoin='round';g.stroke();
+    g.beginPath();g.arc(X(n-1),Y(vals[n-1]),3,0,7);g.fillStyle='#0B7B3D';g.fill();
+    if(hover!=null){const x=X(hover),y=Y(vals[hover]);
+      g.strokeStyle='rgba(25,23,19,.3)';g.lineWidth=1;g.beginPath();g.moveTo(x,P.t);g.lineTo(x,P.t+ph);g.stroke();
+      g.beginPath();g.arc(x,y,4,0,7);g.fillStyle='#191713';g.fill();g.strokeStyle='#F6F4EE';g.lineWidth=1.5;g.stroke()}
+  }
+  const move=e=>{
+    const t=e.touches?e.touches[0]:e;if(!t)return;
+    const r=cv.getBoundingClientRect(),x=t.clientX-r.left,pw=r.width-P.l-P.r;
+    hover=Math.max(0,Math.min(vals.length-1,Math.round((x-P.l)/pw*(vals.length-1))));paint();
+    if(tip){const i=hover,ch=(vals[i]-vals[0])/vals[0];
+      tip.style.display='block';
+      tip.style.left=Math.max(0,Math.min(cv.clientWidth-118,P.l+i/(vals.length-1)*(cv.clientWidth-P.l-P.r)-58))+'px';
+      tip.innerHTML=`<b>${fmt(vals[i],dec)}</b><i>${dlabel(dates[i],1)}</i><u class="${cls(ch)}">${fmtPct(ch)}</u>`}
+  };
+  cv.onmousemove=move;
+  cv.ontouchstart=move; cv.ontouchmove=move;
+  cv.onmouseleave=()=>{hover=null;paint();if(tip)tip.style.display='none'};
+  paint();CHARTS.push(paint);
+}
+function drawSpark(cv,vals){
+  if(!cv.isConnected||!cv.offsetParent||vals.length<2)return;
+  const w=cv.clientWidth||110,h=cv.clientHeight||30,d=2;
+  cv.width=w*d;cv.height=h*d;
+  const g=cv.getContext('2d');g.setTransform(d,0,0,d,0,0);
+  let mn=Math.min(...vals),mx=Math.max(...vals);const sp=(mx-mn)||1;
+  const X=i=>2+i/(vals.length-1)*(w-6),Y=v=>2+(1-(v-mn)/sp)*(h-5);
+  g.beginPath();vals.forEach((v,i)=>i?g.lineTo(X(i),Y(v)):g.moveTo(X(0),Y(v)));
+  g.strokeStyle=vals[vals.length-1]>=vals[0]?'#0B7B3D':'#B93A1B';g.lineWidth=1.4;g.lineJoin='round';g.stroke();
+  g.beginPath();g.arc(X(vals.length-1),Y(vals[vals.length-1]),2.4,0,7);g.fillStyle=g.strokeStyle;g.fill();
+}
+
+/* ================= state ================= */
+const S={
+  view:'today',
+  today:{cur:'USD',sort:{key:'buy',dir:-1},dir:'buy',q:''},
+  trends:{cur:'USD',range:90,sort:'d30'},
+  banks:{sel:'CBE',cur:'USD',q:''},
+  pairs:{},
+  conv:{from:'USD',to:'ETB',mode:'best'},
+  bureaus:{city:'All',q:'',sort:{key:'buy',dir:-1}},
+  price:{annual:false},
+};
+
+/* ================= renderers ================= */
+function renderTicker(){
+  const meta=`<span class="t-item t-meta">${BANKS.filter(b=>bankRates(b,'USD')).length} banks live · NBE ref ${fmt(live.off.USD,2)} ETB</span>`;
+  const items=CURRENCIES.map(c=>{const m=live.mid[c.code];if(m==null)return'';const d=curChg(c.code,1);
+    const pct=histReal()?`<span class="${cls(d)}">${I.tri.replace('<svg','<svg style="transform:rotate('+(d>=0?0:180)+'deg)"')} ${fmtPct(d)}</span>`:'';
+    return `<span class="t-item"><b>${c.code}/ETB</b><span>${fmt(m,decOf(c.code))}</span>${pct}</span>`}).join('');
+  $('#th1').innerHTML=meta+items;$('#th2').innerHTML=meta+items;
+}
+function deltaHtml(v,label){return `<span class="delta ${cls(v)}">${I.tri}${fmtPct(v)} ${label}</span>`}
+function renderHero(){
+  const m=live.mid.USD;
+  $('#heroRate').textContent=fmt(m,2);
+  $('#heroDeltas').innerHTML=histReal()
+    ?deltaHtml(curChg('USD',1),'today')+deltaHtml(curChg('USD',30),'30d')
+    :'<span class="delta" style="color:var(--muted);border-color:var(--line2);background:var(--paper2)">history building — daily change appears soon</span>';
+  $('#nbeRate').textContent=fmt(live.off.USD,2)+' ETB';
+  $('#avgRate').textContent=fmt(avgMid('USD'),2)+' ETB';
+  $('#heroUpdated').textContent='updated '+ago(DATA.genTs)+
+    (DATA.mode==='live'?` · ${okCount()}/${Object.keys(DATA.sources).length} sources ok`:'');
+}
+function renderBestBand(){
+  const bb=bestBuy('USD'),bs=bestSell('USD'),t=tightest('USD');
+  const nb=BANKS.filter(b=>bankRates(b,'USD')).length;
+  $('#bestBand').innerHTML=`
+   <div class="street-item"><span class="s-label">Best USD buy — you get</span><span class="s-bank">${bb?bb.b.name:'—'}</span><span class="s-rate">${bb?fmt(bb.r.buy,2):'—'} <small>ETB</small></span></div>
+   <div class="street-item"><span class="s-label">Lowest USD sell — you pay</span><span class="s-bank">${bs?bs.b.name:'—'}</span><span class="s-rate">${bs?fmt(bs.r.sell,2):'—'} <small>ETB</small></span></div>
+   <div class="street-item"><span class="s-label">Tightest spread</span><span class="s-bank">${t?t.b.name:'—'}</span><span class="s-rate">${t?fmt(t.r.spread,2):'—'} <small>ETB</small></span></div>
+   <div class="s-note">Cash & electronic rates from the published sheets of ${nb} bank${nb===1?'':'s'} — more banks join as their sheets are added.</div>`;
+}
+function renderChips(){
+  const mk=()=>CURRENCIES.map(c=>{const ok=hasData(c.code);
+    return `<button class="chip ${c.code===S.today.cur?'on':''}" data-cur="${c.code}" title="${c.name}"${ok?'':' style="opacity:.35"'}>${c.code}</button>`}).join('');
+  $('#curChips').innerHTML=mk();
+  const tc=$('#trendChips');if(tc)tc.innerHTML=mk();
+}
+function renderDirHint(){
+  const cur=S.today.cur;
+  if(S.today.dir==='buy'){
+    const b=bestBuy(cur);
+    $('#dirHint').innerHTML=b?`Selling <b>${cur}</b>? A higher <b>buy</b> rate gets you more birr. Best today: <b>${b.b.name}</b> — ${fmt(b.r.buy,decOf(cur))} ETB.`:`No ${cur} buy quotes published yet.`;
+  }else{
+    const b=bestSell(cur);
+    $('#dirHint').innerHTML=b?`Buying <b>${cur}</b>? A lower <b>sell</b> rate costs you less. Best today: <b>${b.b.name}</b> — ${fmt(b.r.sell,decOf(cur))} ETB.`:`No ${cur} sell quotes published yet.`;
+  }
+}
+function renderTodayTable(){
+  const cur=S.today.cur,q=S.today.q.trim().toLowerCase(),d=decOf(cur);
+  let rows=BANKS.filter(b=>!q||b.name.toLowerCase().includes(q)||b.c.toLowerCase().includes(q));
+  const {key,dir}=S.today.sort;
+  const val={bank:b=>b.name,buy:b=>{const r=bankRates(b,cur);return r?r.buy:null},sell:b=>{const r=bankRates(b,cur);return r?r.sell:null},spread:b=>{const r=bankRates(b,cur);return r?r.spread:null},chg:b=>bankChg(b,cur),upd:b=>sourceUpdated(b.c)};
+  rows.sort((a,b)=>cmp(val[key](a),val[key](b),dir));
+  $('#rateBody').innerHTML=rows.map((b,i)=>{
+    const r=bankRates(b,cur),ch=bankChg(b,cur);
+    const hlB=S.today.dir==='buy'&&r?' hl':'',hlS=S.today.dir==='sell'&&r?' hl':'';
+    const st=isStale(b.c)?' <span class="down">·stale</span>':'';
+    return `<tr data-b="${b.c}">
+      <td class="c-idx">${String(i+1).padStart(2,'0')}</td>
+      <td><span class="c-bank"><span class="mono-badge">${b.c.slice(0,2)}</span><span class="b-txt"><b>${b.name}</b><i>${b.type} · est. ${b.est} · ${b.br.toLocaleString()} branches</i></span></span></td>
+      <td class="num c-buy${hlB}">${r?fmt(r.buy,d):'—'}</td>
+      <td class="num c-sell${hlS}">${r?fmt(r.sell,d):'—'}</td>
+      <td class="num c-spread">${r?fmt(r.spread,d):'—'}</td>
+      <td class="num c-chg${histReal()?' '+cls(ch):''}">${histReal()?fmtPct(ch):'—'}</td>
+      <td class="c-spark"><canvas class="sparkcv" data-b="${b.c}"></canvas></td>
+      <td class="c-upd" data-b="${b.c}">${ago(sourceUpdated(b.c))}${st}</td></tr>`}).join('');
+  $$('#rateBody .sparkcv').forEach(cv=>drawSpark(cv,bankSeries(BANK[cv.dataset.b],cur,60)));
+  $$('#rateTable th[data-key]').forEach(th=>{const on=th.dataset.key===key;th.classList.toggle('sorted',on);th.classList.toggle('asc',on&&dir===1)});
+  const note=$('#view-today .f-note');
+  if(note)note.textContent=DATA.mode==='live'
+    ?'Rates collected from published bank rate sheets — indicative only. Confirm with the bank before transacting. Table swipes sideways.'
+    :'Illustrative dataset for demonstration — figures are simulated, not live market quotes. Bank "buys" = the rate at which the bank purchases foreign cash/FX from you.';
+}
+function renderToday(){
+  safe(renderChips,'chips');safe(renderHero,'hero');safe(renderBestBand,'band');safe(renderDirHint,'hint');safe(renderTodayTable,'table');
+  const n=Math.min(90,H.USD?H.USD.length:0);
+  if(n>1){
+    const arr=H.USD.slice(-n);
+    if(DATA.mode==='live'&&live.mid.USD!=null)arr[arr.length-1]=live.mid.USD;
+    const hk=$('#heroKicker');
+    if(hk)hk.textContent=histReal()?'Last 90 days · USD/ETB':'Sample history · real trend starts as you add daily rates';
+    drawLine($('#heroChart'),arr,DATES.slice(-n),{dec:2});
+  }
+}
+function renderTrends(){
+  const code=S.trends.cur,series=H[code]||[];
+  const n=Math.min(S.trends.range,series.length),d=decOf(code);
+  $('#trendTitle').textContent=code+' / ETB';
+  renderChips();
+  $$('#trendRange button').forEach(b=>b.classList.toggle('on',+b.dataset.r===S.trends.range));
+  if(n>1){
+    const arr=series.slice(-n);
+    if(DATA.mode==='live'&&live.mid[code]!=null)arr[arr.length-1]=live.mid[code];
+    drawLine($('#trendChart'),arr,DATES.slice(-n),{dec:d});
+  }
+  const s=(series.slice(-n));if(DATA.mode==='live'&&s.length&&live.mid[code]!=null)s[s.length-1]=live.mid[code];
+  const start=s[0],end=s[s.length-1];
+  let hi=-1e9,lo=1e9,iH=0,iL=0;s.forEach((v,i)=>{if(v>hi){hi=v;iH=i}if(v<lo){lo=v;iL=i}});
+  const avg=s.length?s.reduce((a,b)=>a+b,0)/s.length:0;
+  let rets=[];for(let i=1;i<s.length;i++)rets.push((s[i]-s[i-1])/s[i-1]);
+  const mean=rets.length?rets.reduce((a,b)=>a+b,0)/rets.length:0;
+  const sd=rets.length?Math.sqrt(rets.reduce((a,r)=>a+(r-mean)**2,0)/rets.length):0;
+  const dd=DATES.slice(-n),chg=start?(end-start)/start:0;
+  const stat=(l,v,i)=>`<div class="stat"><span class="s-label">${l}</span><b>${v}</b><i>${i||''}</i></div>`;
+  $('#trendStats').innerHTML=
+    (histReal()?'':stat('Data','sample','real trend soon'))+
+    stat('Start',fmt(start,d),dd[0]?dlabel(dd[0],1):'')+stat('End',fmt(end,d),'now')+
+    stat('High',fmt(hi,d),dd[iH]?dlabel(dd[iH],1):'')+stat('Low',fmt(lo,d),dd[iL]?dlabel(dd[iL],1):'')+
+    stat('Average',fmt(avg,d),'over range')+
+    `<div class="stat"><span class="s-label">Change</span><b class="${cls(chg)}">${fmtPct(chg)}</b><i>${n<=7?'week':n<=90?'quarter':'period'}</i></div>`+
+    stat('Volatility',(sd*100).toFixed(2)+'%','per day');
+  const key=S.trends.sort;
+  const list=CURRENCIES.slice().sort((a,b)=>key==='name'?a.code.localeCompare(b.code):curChg(b.code,key==='d1'?1:30)-curChg(a.code,key==='d1'?1:30));
+  $('#trendBody').innerHTML=list.map(c=>{
+    const d1=curChg(c.code,1),d30=curChg(c.code,30);
+    return `<tr data-code="${c.code}" class="${c.code===S.trends.cur?'sel':''}">
+      <td><span class="p-pair">${c.code} / ETB</span><i class="sub">${c.name}</i></td>
+      <td class="num">${fmt(live.mid[c.code],decOf(c.code))}</td>
+      <td class="num${histReal()?' '+cls(d1):''}">${histReal()?fmtPct(d1):'—'}</td>
+      <td class="num${histReal()?' '+cls(d30):''}">${histReal()?fmtPct(d30):'—'}</td>
+      <td><canvas class="sparkcv" data-code="${c.code}"></canvas></td>
+      <td class="c-go">${I.right}</td></tr>`}).join('');
+  $$('#trendBody .sparkcv').forEach(cv=>drawSpark(cv,(H[cv.dataset.code]||[]).slice(-60)));
+  $$('#trendSort button').forEach(b=>b.classList.toggle('on',b.dataset.k===key));
+}
+function renderBankList(){
+  const q=S.banks.q.trim().toLowerCase();
+  const list=BANKS.filter(b=>!q||b.name.toLowerCase().includes(q)||b.c.toLowerCase().includes(q));
+  $('#bankList').innerHTML=list.map(b=>{
+    const r=bankRates(b,'USD'),st=isStale(b.c)?' ·stale':'';
+    return `<button class="bank-item ${b.c===S.banks.sel?'on':''}" data-c="${b.c}">
+      <span class="mono-badge">${b.c.slice(0,2)}</span>
+      <span class="bi-txt"><b>${b.name}</b><i>${b.type} · ${b.br.toLocaleString()} branches</i></span>
+      <span class="bi-rate">${r?fmt(r.buy,2):'—'}<em>USD buy${st}</em></span>
+    </button>`}).join('')||'<div style="padding:16px;font-size:13px;color:var(--muted)">No banks match.</div>';
+}
+function renderBankDetail(){
+  const b=BANK[S.banks.sel],cur=S.banks.cur,d=decOf(cur),r=bankRates(b,cur);
+  const tags=[];
+  if(r){
+    const bb=bestBuy(cur),bs=bestSell(cur),t=tightest(cur);
+    if(bb&&bb.b.c===b.c)tags.push(`Best ${cur} buy`);
+    if(bs&&bs.b.c===b.c)tags.push(`Lowest ${cur} sell`);
+    if(t&&t.b.c===b.c)tags.push('Tightest spread');
+  }
+  $('#bankDetail').innerHTML=`
+    <div class="bd-head">
+      <span class="mono-badge lg">${b.c.slice(0,2)}</span>
+      <div><h2 style="margin:0">${b.name}</h2><p class="meta">${b.type} · Est. ${b.est} · ${b.br.toLocaleString()} branches · HQ Addis Ababa</p></div>
+      ${tags.length?`<span class="bd-tag">${tags[0]}</span>`:''}
+    </div>
+    <div class="chip-row" style="margin-top:18px">${CURRENCIES.map(c=>`<button class="chip ${c.code===cur?'on':''}" data-cur="${c.code}"${hasData(c.code)?'':' style="opacity:.35"'}>${c.code}</button>`).join('')}</div>
+    <div class="bd-figures">
+      <div><span class="s-label">Bank buys ${cur} at</span><span class="big-num">${r?fmt(r.buy,d):'—'}</span><span class="mini">you receive ETB</span></div>
+      <div><span class="s-label">Bank sells ${cur} at</span><span class="big-num">${r?fmt(r.sell,d):'—'}</span><span class="mini">you pay ETB</span></div>
+      <div><span class="s-label">Spread</span><span class="big-num">${r?fmt(r.spread,d):'—'}</span><span class="mini">${r?((r.spread/r.buy)*100).toFixed(2)+'% of mid':'no quote'}</span></div>
+      <div><span class="s-label">Updated</span><span class="big-num" style="font-size:17px;padding-top:8px">${ago(sourceUpdated(b.c))}</span><span class="mini">${isStale(b.c)?'<span class="down">stale — verify with bank</span>':'published sheet'}</span></div>
+    </div>
+    <div class="panel">
+      <div class="chart-head"><span class="kicker">${cur} mid · last 90 days</span></div>
+      <div class="chart-wrap"><canvas id="bankChart"></canvas><div class="chart-tip"></div></div>
+    </div>
+    <h3 style="margin:26px 0 10px">Full rate sheet</h3>
+    <div class="table-scroll"><table class="sheet">
+      <thead><tr><th>Currency</th><th class="num">Buy</th><th class="num">Sell</th><th class="num">Spread</th><th class="num">1D</th></tr></thead>
+      <tbody>${CURRENCIES.map(c=>{const rr=bankRates(b,c.code),ch=bankChg(b,c.code),dd=decOf(c.code);
+        return `<tr><td><span class="p-pair" style="font-family:var(--mono)">${c.code}</span><i class="sub">${c.name}</i></td>
+          <td class="num">${rr?fmt(rr.buy,dd):'—'}</td><td class="num">${rr?fmt(rr.sell,dd):'—'}</td>
+          <td class="num">${rr?fmt(rr.spread,dd):'—'}</td><td class="num${histReal()?' '+cls(ch):''}">${histReal()?fmtPct(ch):'—'}</td></tr>`}).join('')}</tbody>
+    </table></div>`;
+  const n=Math.min(90,(H[cur]||[]).length);
+  if(n>1)drawLine($('#bankChart'),bankSeries(b,cur,n),DATES.slice(-n),{dec:d});
+}
+function renderBanks(){safe(renderBankList,'bank list');safe(renderBankDetail,'bank detail')}
+function renderMatrix(){
+  const codes=[...CURRENCIES.map(c=>c.code),'ETB'];
+  let html='<thead><tr><th class="mx-corner">from&nbsp;/&nbsp;to</th>'+codes.map(c=>`<th class="num" data-code="${c}">${c}</th>`).join('')+'</tr></thead><tbody>';
+  for(const r of codes){
+    html+=`<tr data-r="${r}"><th>${r}</th>`;
+    const vals=codes.map(c=>r===c?null:etbPerUnit(r)/etbPerUnit(c));
+    const lg=vals.filter(v=>v!=null).map(v=>Math.log(v));
+    const lmn=Math.min(...lg),lmx=Math.max(...lg);
+    codes.forEach((c,i)=>{
+      if(r===c){html+='<td class="mx-diag">—</td>';return}
+      const v=vals[i],t=(Math.log(v)-lmn)/((lmx-lmn)||1);
+      html+=`<td class="num" data-r="${r}" data-c="${c}" data-v="${fmtSmart(v)}" style="background:rgba(11,123,61,${(0.02+t*0.15).toFixed(3)})" title="1 ${r} = ${fmtSmart(v)} ${c} — click to copy">${fmtSmart(v)}</td>`;
+    });
+    html+='</tr>';
+  }
+  $('#matrix').innerHTML=html+'</tbody>';
+}
+function renderPairs(){
+  renderMatrix();
+  $('#pairsBody').innerHTML=CURRENCIES.map(c=>{
+    const bb=bestBuy(c.code),bs=bestSell(c.code),d30=curChg(c.code,30),d=decOf(c.code);
+    return `<tr data-code="${c.code}">
+      <td><span class="p-pair">${c.code} / ETB</span><i class="sub">${c.name}</i></td>
+      <td class="num">${fmt(live.mid[c.code],d)}</td>
+      <td class="num">${bb?fmt(bb.r.buy,d)+' <i class="sub">'+bb.b.c+'</i>':'—'}</td>
+      <td class="num">${bs?fmt(bs.r.sell,d)+' <i class="sub">'+bs.b.c+'</i>':'—'}</td>
+      <td class="num">${bb&&bs?fmt(bs.r.sell-bb.r.buy,d):'—'}</td>
+      <td class="num${histReal()?' '+cls(d30):''}">${histReal()?fmtPct(d30):'—'}</td>
+      <td><button class="icon-btn bell" title="Set a price alert">${I.bell}</button></td></tr>`}).join('');
+}
+function convRate(from,to,mode){
+  if(from===to)return{rate:1,src:'Same currency'};
+  if(mode==='official')return{rate:offPerUnit(from)/offPerUnit(to),src:'NBE official reference'};
+  if(mode==='best'){
+    if(to==='ETB'){const b=bestBuy(from);if(b)return{rate:b.r.buy/per(from),src:b.b.name+' — bank buy'}}
+    if(from==='ETB'){const b=bestSell(to);if(b)return{rate:per(to)/b.r.sell,src:b.b.name+' — bank sell'}}
+  }
+  return{rate:etbPerUnit(from)/etbPerUnit(to),src:'Market average of banks'};
+}
+function updateConverter(){
+  const {from,to,mode}=S.conv;
+  const amt=parseFloat($('#cvAmt').value.replace(/,/g,''))||0;
+  if(DATA.mode==='live'&&(!hasData(from)||!hasData(to))){
+    const bad=hasData(from)?to:from;
+    $('#cvResult').textContent='—';
+    $('#cvFromName').textContent=nameOf(from);
+    $('#cvToName').textContent=nameOf(to);
+    $('#cvRateLine').innerHTML=`<em>${bad} rates are not collected yet.</em>`;
+    $('#quickBody').innerHTML='<tr><td>—</td><td class="num">—</td></tr>';
+    return;
+  }
+  const {rate,src}=convRate(from,to,mode);
+  $('#cvResult').textContent=amt?fmtSmart(amt*rate):'0.00';
+  $('#cvFromName').textContent=nameOf(from);
+  $('#cvToName').textContent=nameOf(to);
+  $('#cvRateLine').innerHTML=`<b>1 ${from} = ${fmtSmart(rate)} ${to}</b> &nbsp;·&nbsp; 1 ${to} = ${fmtSmart(1/rate)} ${from}<em>${src} · updated ${ago(DATA.genTs)}</em>`;
+  $('#quickBody').innerHTML=[1,10,100,1000,10000,100000].map(a=>
+    `<tr><td class="num" style="text-align:left">${fmt(a,0)} ${from}</td><td class="num">${fmtSmart(a*rate)} ${to}</td></tr>`).join('');
+}
+function buildConverter(){
+  const codes=['ETB',...CURRENCIES.map(c=>c.code)];
+  const opts=codes.map(c=>`<option value="${c}">${c} — ${nameOf(c)}</option>`).join('');
+  $('#cvFrom').innerHTML=opts;$('#cvTo').innerHTML=opts;
+  $('#cvFrom').value=S.conv.from;$('#cvTo').value=S.conv.to;
+}
+function renderBureaus(){
+  const cities=['All',...new Set(BUREAUS.map(u=>u.city))];
+  $('#cityChips').innerHTML=cities.map(c=>`<button class="chip ${c===S.bureaus.city?'on':''}" data-city="${c}">${c}</button>`).join('');
+  const q=S.bureaus.q.trim().toLowerCase();
+  let rows=BUREAUS.filter(u=>(S.bureaus.city==='All'||u.city===S.bureaus.city)&&(!q||u.name.toLowerCase().includes(q)||u.city.toLowerCase().includes(q)));
+  const {key,dir}=S.bureaus.sort;
+  const bb=bestBuy('USD'),bbb=bb?bb.r.buy:null;
+  const val={name:u=>u.name,buy:u=>{const r=bureauRates(u);return r?r.buy:null},sell:u=>{const r=bureauRates(u);return r?r.sell:null},spread:u=>{const r=bureauRates(u);return r?r.sell-r.buy:null},vs:u=>{const r=bureauRates(u);return r&&bbb!=null?r.buy-bbb:null}};
+  rows.sort((a,b)=>cmp(val[key](a),val[key](b),dir));
+  $('#bureauBody').innerHTML=rows.map(u=>{
+    const r=bureauRates(u),vs=r&&bbb!=null?r.buy-bbb:null;
+    const st=isStale(u.id)?' <span class="down">·stale</span>':'';
+    return `<tr class="b-row" data-n="${u.name}">
+      <td style="width:34px;color:var(--muted)"><span class="caret" style="display:inline-block">${I.chev}</span></td>
+      <td><span class="b-txt"><b>${u.name}</b><i>${u.area}</i></span></td>
+      <td style="font-size:12.5px">${u.city}</td>
+      <td style="font:400 11.5px var(--mono);color:var(--muted)">${u.hours}</td>
+      <td class="num">${r?fmt(r.buy,2):'—'}</td>
+      <td class="num">${r?fmt(r.sell,2):'—'}</td>
+      <td class="num">${r?fmt(r.sell-r.buy,2):'—'}</td>
+      <td class="num ${vs!=null?cls(vs):''}">${vs!=null?(vs>=0?'+':'−')+fmt(Math.abs(vs),2):'—'}</td></tr>
+    <tr class="b-more" data-n="${u.name}" hidden><td colspan="8"><div class="b-more-in">
+      ${['EUR','AED','GBP'].map(cc=>{const rr=bureauRates(u,cc);
+        return `<div><span class="s-label">${cc} cash</span><span class="val">${rr?fmt(rr.buy,2)+' <span style="color:var(--muted)">/</span> '+fmt(rr.sell,2):'—'}</span></div>`}).join('')}
+      <div class="b-meta"><span>License NBE ${u.lic}${st}</span><span>${u.area}, ${u.city}</span><span>${u.hours} · ${u.tel}</span></div>
+    </div></td></tr>`}).join('')||'<tr><td colspan="8" style="padding:18px;color:var(--muted)">No bureaus match your filter.</td></tr>';
+  document.querySelectorAll('#view-bureaus thead th[data-key]').forEach(th=>{
+    const on=th.dataset.key===key;th.classList.toggle('sorted',on);th.classList.toggle('asc',on&&dir===1)});
+  let bu=null,bsell=null;
+  for(const u of BUREAUS){const r=bureauRates(u);if(!r)continue;
+    if(!bu||r.buy>bu.r.buy)bu={u,r};if(!bsell||r.sell<bsell.r.sell)bsell={u,r}}
+  $('#bureauBand').innerHTML=bu?`
+   <div class="street-item"><span class="s-label">Best USD cash buy</span><span class="s-bank">${bu.u.name}</span><span class="s-rate">${fmt(bu.r.buy,2)} <small>ETB · ${bu.u.city}</small></span></div>
+   <div class="street-item"><span class="s-label">Lowest USD cash sell</span><span class="s-bank">${bsell.u.name}</span><span class="s-rate">${fmt(bsell.r.sell,2)} <small>ETB · ${bsell.u.city}</small></span></div>
+   <div class="street-item"><span class="s-label">Beats best bank by</span><span class="s-bank">on cash purchases</span><span class="s-rate up">${bbb!=null?'+'+fmt(bu.r.buy-bbb,2):'—'} <small>ETB / USD</small></span></div>
+   <div class="s-note">${BUREAUS.length} bureaus across ${new Set(BUREAUS.map(u=>u.city)).size} cities, all licensed by the National Bank of Ethiopia. Cash rates only — no account needed.</div>`
+   :`<div class="s-note" style="border-left:0;padding-left:2px">Bureau quotes are not collected yet — this board fills in as bureaus are added to the dataset.</div>`;
+}
+function updatePrices(){
+  const a=S.price.annual;
+  $$('.price-val').forEach(el=>el.textContent=fmt(+(a?el.dataset.a:el.dataset.m),0));
+  $$('.p-usd').forEach(el=>{const p=+(a?el.dataset.a:el.dataset.m);
+    el.textContent=p?'≈ $'+fmtSmart(p/etbPerUnit('USD')):'no charge, ever'});
+  $('#billNote').textContent=a?'Billed yearly — that\'s two months free vs monthly.':'Billed monthly. Switch to annual for two months free.';
+}
+const VIEW={today:renderToday,trends:renderTrends,banks:renderBanks,pairs:renderPairs,converter:updateConverter,bureaus:renderBureaus,pricing:updatePrices};
+
+/* ================= router ================= */
+function showView(v){
+  S.view=v;
+  $$('.nav-link').forEach(b=>b.classList.toggle('on',b.dataset.view===v));
+  $$('.view').forEach(s=>s.classList.toggle('on',s.id==='view-'+v));
+  window.scrollTo({top:0});
+  CHARTS.length=0;
+  const fn=VIEW[v];if(fn)safe(fn,v);
+}
+
+/* ================= clock ================= */
+const ETH_MONTHS=['መስከረም','ጥቅምት','ኅዳር','ታኅሣሥ','ጥር','የካቲት','መጋቢት','ሚያዝያ','ግንቦት','ሰኔ','ሐምሌ','ነሐሴ','ጳጉሜ'];
+function ethiopicDate(dt){
+  const jdn=Math.floor(Date.UTC(dt.getFullYear(),dt.getMonth(),dt.getDate())/864e5)+2440588;
+  const E=1723856,r=(jdn-E)%1461,n=(r%365)+365*Math.floor(r/1460);
+  return{y:4*Math.floor((jdn-E)/1461)+Math.floor(r/365)-Math.floor(r/1460),m:Math.floor(n/30),d:(n%30)+1};
+}
+function startClock(){
+  const e=ethiopicDate(new Date());
+  const eth=`${ETH_MONTHS[e.m]} ${e.d}, ${e.y}`;
+  $('#clockDate').textContent='Addis Ababa · '+eth;
+  $('#ethDate').innerHTML=`${eth} <span>· Ethiopian calendar</span>`;
+  setInterval(()=>{
+    $('#clockTime').textContent=new Date().toLocaleTimeString('en-GB',{timeZone:'Africa/Addis_Ababa',hour:'2-digit',minute:'2-digit',second:'2-digit'})+' EAT';
+    $('#heroUpdated').textContent='updated '+ago(DATA.genTs)+(DATA.mode==='live'?` · ${okCount()}/${Object.keys(DATA.sources).length} sources ok`:'');
+    $$('.c-upd').forEach(el=>{if(el.dataset.b)el.textContent=ago(sourceUpdated(el.dataset.b))});
+  },1000);
+}
+
+/* ================= toast & modal ================= */
+function toast(msg){
+  const t=document.createElement('div');t.className='toast';t.textContent=msg;
+  $('#toasts').appendChild(t);requestAnimationFrame(()=>t.classList.add('in'));
+  setTimeout(()=>{t.classList.remove('in');setTimeout(()=>t.remove(),300)},2800);
+}
+function openModal(plan){
+  $('#mPlan').textContent=plan;
+  $('#mPrice').textContent=plan==='Observer'?'Free forever':
+    plan==='Professional'?(S.price.annual?'199':'249')+' ETB /mo':(S.price.annual?'1,599':'1,999')+' ETB /mo';
+  $('#mErr').hidden=true;$('#mEmail').value='';
+  $('#overlay').hidden=false;requestAnimationFrame(()=>$('#overlay').classList.add('in'));
+  setTimeout(()=>$('#mEmail').focus(),120);
+}
+function closeModal(){$('#overlay').classList.remove('in');setTimeout(()=>$('#overlay').hidden=true,220)}
+
+/* ================= wiring ================= */
+function wire(){
+  document.addEventListener('click',e=>{const v=e.target.closest('[data-view]');if(v)showView(v.dataset.view)});
+  $('#searchWrap').innerHTML=`${I.search}<input class="input" id="bankSearchQ" placeholder="Filter banks…">`;
+  $('#bankSearchWrap').innerHTML=`${I.search}<input class="input" id="bankQ" placeholder="Search banks…">`;
+  $('#bureauSearchWrap').innerHTML=`${I.search}<input class="input" id="bureauQ" placeholder="Search bureaus…">`;
+  $('#copyRate').innerHTML=I.copy;$('#swapBtn').innerHTML=I.swap;$('#mClose').innerHTML=I.x;
+  $$('.f-chev').forEach(el=>el.innerHTML=I.chev);
+  $('#curChips').addEventListener('click',e=>{const c=e.target.closest('.chip');if(!c)return;
+    if(!hasData(c.dataset.cur)){toast(c.dataset.cur+' rates are not collected yet — the tab activates once data arrives.');return}
+    S.today.cur=c.dataset.cur;renderChips();renderTodayTable();renderDirHint()});
+  $('#dirSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+    S.today.dir=b.dataset.dir;$$('#dirSeg button').forEach(x=>x.classList.toggle('on',x===b));
+    S.today.sort={key:S.today.dir,dir:S.today.dir==='buy'?-1:1};renderTodayTable();renderDirHint()});
+  $('#rateTable').addEventListener('click',e=>{const th=e.target.closest('th[data-key]');if(!th)return;const k=th.dataset.key;
+    if(S.today.sort.key===k)S.today.sort.dir*=-1;else S.today.sort={key:k,dir:k==='bank'?1:-1};renderTodayTable()});
+  $('#searchWrap').addEventListener('input',e=>{if(e.target.id==='bankSearchQ'){S.today.q=e.target.value;renderTodayTable()}});
+  $('#copyRate').addEventListener('click',()=>{copyText(`1 USD = ${fmt(live.mid.USD,2)} ETB — Birrwatch`);toast('Copied — 1 USD = '+fmt(live.mid.USD,2)+' ETB')});
+  $('#trendRange').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;S.trends.range=+b.dataset.r;renderTrends()});
+  $('#trendChips').addEventListener('click',e=>{const c=e.target.closest('.chip');if(!c)return;
+    if(!hasData(c.dataset.cur)){toast(c.dataset.cur+' rates are not collected yet.');return}
+    S.trends.cur=c.dataset.cur;renderTrends()});
+  $('#trendSort').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;S.trends.sort=b.dataset.k;renderTrends()});
+  $('#trendBody').addEventListener('click',e=>{const tr=e.target.closest('tr[data-code]');if(!tr)return;
+    S.trends.cur=tr.dataset.code;renderTrends();$('#trendChart').scrollIntoView({behavior:'smooth',block:'center'})});
+  $('#bankSearchWrap').addEventListener('input',e=>{if(e.target.id==='bankQ'){S.banks.q=e.target.value;renderBankList()}});
+  $('#bankList').addEventListener('click',e=>{const it=e.target.closest('.bank-item');if(!it)return;S.banks.sel=it.dataset.c;renderBanks()});
+  $('#bankDetail').addEventListener('click',e=>{const c=e.target.closest('.chip[data-cur]');if(!c)return;
+    if(!hasData(c.dataset.cur)){toast(c.dataset.cur+' rates are not collected yet.');return}
+    S.banks.cur=c.dataset.cur;renderBankDetail()});
+  $('#pairsBody').addEventListener('click',e=>{
+    const bell=e.target.closest('.bell');
+    if(bell){const code=e.target.closest('tr').dataset.code,trigger=live.mid[code]*1.005;
+      bell.classList.add('on');
+      toast(`Alert set — we'll email you when ${code}/ETB crosses ${fmt(trigger,decOf(code))}.`);return}});
+  const mx=$('#matrix');
+  const hl=(r,c)=>{$$('#matrix .rc').forEach(x=>x.classList.remove('rc'));$$('#matrix .hx').forEach(x=>x.classList.remove('hx'));
+    if(!r)return;
+    $$('#matrix td[data-r]').forEach(td=>{if(td.dataset.r===r||td.dataset.c===c)td.classList.add('rc')});
+    $$('#matrix th[data-code]').forEach(th=>{if(th.dataset.code===r||th.dataset.code===c)th.classList.add('hx')})};
+  mx.addEventListener('mouseover',e=>{const td=e.target.closest('td[data-r]');if(td)hl(td.dataset.r,td.dataset.c)});
+  mx.addEventListener('mouseleave',()=>hl(null));
+  mx.addEventListener('click',e=>{const td=e.target.closest('td[data-r]');if(!td)return;
+    copyText(`1 ${td.dataset.r} = ${td.dataset.v} ${td.dataset.c}`);
+    toast(`Copied — 1 ${td.dataset.r} = ${td.dataset.v} ${td.dataset.c}`)});
+  $('#cvFrom').addEventListener('change',e=>{S.conv.from=e.target.value;updateConverter()});
+  $('#cvTo').addEventListener('change',e=>{S.conv.to=e.target.value;updateConverter()});
+  $('#cvAmt').addEventListener('input',updateConverter);
+  $('#cvMode').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+    S.conv.mode=b.dataset.m;$$('#cvMode button').forEach(x=>x.classList.toggle('on',x===b));updateConverter()});
+  $('#swapBtn').addEventListener('click',()=>{
+    [S.conv.from,S.conv.to]=[S.conv.to,S.conv.from];
+    $('#cvFrom').value=S.conv.from;$('#cvTo').value=S.conv.to;
+    const b=$('#swapBtn');b.classList.add('rot');setTimeout(()=>b.classList.remove('rot'),380);
+    updateConverter()});
+  $('#cityChips').addEventListener('click',e=>{const c=e.target.closest('.chip');if(!c)return;S.bureaus.city=c.dataset.city;renderBureaus()});
+  $('#bureauSearchWrap').addEventListener('input',e=>{if(e.target.id==='bureauQ'){S.bureaus.q=e.target.value;renderBureaus()}});
+  document.querySelector('#view-bureaus thead').addEventListener('click',e=>{
+    const th=e.target.closest('th[data-key]');if(!th)return;const k=th.dataset.key;
+    if(S.bureaus.sort.key===k)S.bureaus.sort.dir*=-1;else S.bureaus.sort={key:k,dir:k==='name'?1:-1};
+    renderBureaus()});
+  $('#bureauBody').addEventListener('click',e=>{
+    const tr=e.target.closest('.b-row');if(!tr)return;
+    const more=$(`#bureauBody .b-more[data-n="${CSS.escape(tr.dataset.n)}"]`);
+    if(more){more.hidden=!more.hidden;tr.classList.toggle('open')}});
+  $('#billSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+    S.price.annual=b.dataset.b==='a';$$('#billSeg button').forEach(x=>x.classList.toggle('on',x===b));updatePrices()});
+  $$('.btn-plan').forEach(b=>b.addEventListener('click',()=>openModal(b.dataset.plan)));
+  $('#faq').addEventListener('click',e=>{const q=e.target.closest('.faq-q');if(!q)return;q.parentElement.classList.toggle('open')});
+  $('#mGo').addEventListener('click',()=>{
+    const v=$('#mEmail').value.trim();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)){$('#mErr').hidden=false;return}
+    closeModal();toast(`You're in — confirmation sent to ${v}.`);
+  });
+  $('#mEmail').addEventListener('keydown',e=>{if(e.key==='Enter')$('#mGo').click()});
+  $('#mClose').addEventListener('click',closeModal);
+  $('#overlay').addEventListener('click',e=>{if(e.target.id==='overlay')closeModal()});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#overlay').hidden)closeModal()});
+  document.addEventListener('visibilitychange',()=>{
+    if(!document.hidden&&DATA.mode==='live'&&Date.now()-DATA.genTs>CONFIG.POLL_MS)setTimeout(pollData,200)});
+  let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{CHARTS.length=0;const fn=VIEW[S.view];if(fn)safe(fn,S.view)},180)});
+}
+
+/* ================= boot ================= */
+(function boot(){
+  buildDemo();
+  buildConverter();
+  safe(wire,'wire');
+  ensureStatus();
+  updateStatusChip();
+  renderTicker();
+  showView('today');
+  startClock();
+  setTimeout(pollData,300);
+  setInterval(pollData,CONFIG.POLL_MS);
+})();
+</script>
+</body>
+</html>
