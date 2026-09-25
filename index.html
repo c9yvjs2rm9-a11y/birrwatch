@@ -1299,5 +1299,24 @@ function wire(){
   setInterval(pollData,CONFIG.POLL_MS);
 })();
 </script>
+<script>
+/* back-button support: each page switch saves a history step */
+(function(){
+  document.addEventListener('click',e=>{
+    const t=e.target.closest('[data-view]');
+    if(!t)return;
+    const v=t.dataset.view;
+    if(typeof VIEW==='undefined'||!VIEW[v])return;
+    e.stopPropagation();e.preventDefault();
+    if(location.hash!=='#'+v)history.pushState(null,'','#'+v);
+    if(typeof showView==='function'&&S.view!==v)showView(v);
+  },true);
+  window.addEventListener('popstate',()=>{
+    const h=(location.hash||'').replace('#','');
+    const v=(typeof VIEW!=='undefined'&&VIEW[h])?h:'today';
+    if(typeof showView==='function'&&S.view!==v)showView(v);
+  });
+})();
+</script>
 </body>
 </html>
