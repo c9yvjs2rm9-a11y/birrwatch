@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generated_at": "2026-09-22T18:02:00+00:00",
+    "generated_at": "2026-09-25T21:19:00+00:00",
     "version": 1,
     "disclaimer": "Indicative rates collected from published bank rate sheets. Confirm with the bank before transacting."
   },
@@ -13,11 +13,11 @@
     "CBO": { "name": "Cooperative Bank of Oromia", "type": "bank" }
   },
   "rates": [
-    { "source": "NBE", "currency": "USD", "buy": 160.88, "sell": 160.881 },
+    { "source": "NBE", "currency": "USD", "buy": 160.79, "sell": 160.79 },
     { "source": "CBE", "currency": "USD", "buy": 160.23, "sell": 163.44 },
-    { "source": "AWB", "currency": "USD", "buy": 160.74, "sell": 163.95 },
+    { "source": "AWB", "currency": "USD", "buy": 160.81, "sell": 164.02 },
     { "source": "DBL", "currency": "USD", "buy": 160.64, "sell": 163.85 },
-    { "source": "BOA", "currency": "USD", "buy": 160.75, "sell": 163.96 },
-    { "source": "CBO", "currency": "USD", "buy": 160.71, "sell": 163.92 }
+    { "source": "BOA", "currency": "USD", "buy": 160.81, "sell": 164.02 },
+    { "source": "CBO", "currency": "USD", "buy": 160.80, "sell": 164.02 }
   ]
 }
