@@ -1,23 +1,83 @@
 {
-  "meta": {
-    "generated_at": "2026-09-25T21:19:00+00:00",
-    "version": 1,
-    "disclaimer": "Indicative rates collected from published bank rate sheets. Confirm with the bank before transacting."
+ "meta": {
+  "generated_at": "2026-09-25T18:46:15+00:00",
+  "version": 1,
+  "disclaimer": "Indicative rates collected from published bank rate sheets. Confirm with the bank before transacting."
+ },
+ "sources": {
+  "NBE": {
+   "name": "National Bank of Ethiopia",
+   "type": "official",
+   "fetched_at": "2026-09-25T21:19:00+00:00"
   },
-  "sources": {
-    "NBE": { "name": "National Bank of Ethiopia", "type": "official" },
-    "CBE": { "name": "Commercial Bank of Ethiopia", "type": "bank" },
-    "AWB": { "name": "Awash Bank", "type": "bank" },
-    "DBL": { "name": "Dashen Bank", "type": "bank" },
-    "BOA": { "name": "Bank of Abyssinia", "type": "bank" },
-    "CBO": { "name": "Cooperative Bank of Oromia", "type": "bank" }
+  "CBE": {
+   "name": "Commercial Bank of Ethiopia",
+   "type": "bank",
+   "fetched_at": "2026-09-25T21:19:00+00:00"
   },
-  "rates": [
-    { "source": "NBE", "currency": "USD", "buy": 160.79, "sell": 160.79 },
-    { "source": "CBE", "currency": "USD", "buy": 160.23, "sell": 163.44 },
-    { "source": "AWB", "currency": "USD", "buy": 160.81, "sell": 164.02 },
-    { "source": "DBL", "currency": "USD", "buy": 160.64, "sell": 163.85 },
-    { "source": "BOA", "currency": "USD", "buy": 160.81, "sell": 164.02 },
-    { "source": "CBO", "currency": "USD", "buy": 160.80, "sell": 164.02 }
-  ]
+  "AWB": {
+   "name": "Awash Bank",
+   "type": "bank",
+   "fetched_at": "2026-09-25T21:19:00+00:00"
+  },
+  "DBL": {
+   "name": "Dashen Bank",
+   "type": "bank",
+   "fetched_at": "2026-09-25T18:46:15+00:00"
+  },
+  "BOA": {
+   "name": "Bank of Abyssinia",
+   "type": "bank",
+   "fetched_at": "2026-09-25T21:19:00+00:00"
+  },
+  "CBO": {
+   "name": "Cooperative Bank of Oromia",
+   "type": "bank",
+   "fetched_at": "2026-09-25T21:19:00+00:00"
+  }
+ },
+ "rates": [
+  {
+   "source": "NBE",
+   "currency": "USD",
+   "buy": 160.79,
+   "sell": 160.79
+  },
+  {
+   "source": "CBE",
+   "currency": "USD",
+   "buy": 160.23,
+   "sell": 163.44
+  },
+  {
+   "source": "AWB",
+   "currency": "USD",
+   "buy": 160.81,
+   "sell": 164.02
+  },
+  {
+   "source": "DBL",
+   "currency": "USD",
+   "buy": 160.6407,
+   "sell": 163.8535
+  },
+  {
+   "source": "BOA",
+   "currency": "USD",
+   "buy": 160.81,
+   "sell": 164.02
+  },
+  {
+   "source": "CBO",
+   "currency": "USD",
+   "buy": 160.8,
+   "sell": 164.02
+  },
+  {
+   "source": "DBL",
+   "currency": "EUR",
+   "buy": 187.2025,
+   "sell": 190.9465
+  }
+ ]
 }
