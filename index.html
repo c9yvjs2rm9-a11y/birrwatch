@@ -9,6 +9,42 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Archivo:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&family=Noto+Sans+Ethiopic:wght@600&display=swap" rel="stylesheet">
 <style>
+/* ===== mobile layout fixes v2 ===== */
+@media(max-width:1024px){
+  .hdr-in{flex-wrap:wrap;height:auto;padding:10px 16px 0;row-gap:0}
+  .hdr-in .nav{order:3;flex:1 1 100%;width:100%;padding-bottom:8px;-webkit-overflow-scrolling:touch}
+  .hdr-clock{margin-left:auto}
+}
+@media(max-width:760px){
+  #rateTable{min-width:0!important}
+  #rateTable th:nth-child(1),#rateTable td:nth-child(1),
+  #rateTable th:nth-child(n+5),#rateTable td:nth-child(n+5){display:none}
+  #rateTable td{padding:12px 8px}
+  #rateTable .c-bank{min-width:0;gap:8px}
+  #rateTable .b-txt i{display:none}
+  #rateTable td.num{font-size:12.5px}
+  #view-trends .table-scroll table{min-width:0!important}
+  #view-trends th:nth-child(5),#view-trends td:nth-child(5),
+  #view-trends th:nth-child(6),#view-trends td:nth-child(6){display:none}
+  #view-pairs .table-scroll table:not(.matrix){min-width:0!important}
+  #view-pairs th:nth-child(5),#view-pairs td:nth-child(5),
+  #view-pairs th:nth-child(6),#view-pairs td:nth-child(6),
+  #view-pairs th:nth-child(7),#view-pairs td:nth-child(7){display:none}
+  #view-bureaus .table-scroll table{min-width:0!important}
+  #view-bureaus th:nth-child(1),#view-bureaus td:nth-child(1),
+  #view-bureaus th:nth-child(4),#view-bureaus td:nth-child(4),
+  #view-bureaus th:nth-child(7),#view-bureaus td:nth-child(7),
+  #view-bureaus th:nth-child(8),#view-bureaus td:nth-child(8){display:none}
+  table.sheet{min-width:0!important}
+  table.sheet th:nth-child(4),table.sheet td:nth-child(4),
+  table.sheet th:nth-child(5),table.sheet td:nth-child(5){display:none}
+  .matrix td,.matrix th{padding:3px 4px;font-size:8.5px}
+  .matrix{min-width:0!important}
+  .table-scroll{-webkit-overflow-scrolling:touch}
+  td{padding:11px 8px}
+  th{padding:10px 8px}
+  .plan{padding:20px 16px}
+}
 /* ===== phone fix: bank table fits screen, no swiping needed ===== */
 @media(max-width:760px){
   .table-scroll{-webkit-overflow-scrolling:touch}
