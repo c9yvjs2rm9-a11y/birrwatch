@@ -46,7 +46,7 @@ SOURCES = {
         "https://bankofabyssinia.com/",
     ]},
     "CBO": {"name": "Cooperative Bank of Oromia", "type": "bank", "urls": [
-        "https://coopbankoromia.com.et/daily-exchange-rates/",
+        "https://coopbankoromia.com.et/daily-exchange-rates/?er_date=2026-09-25&utm_source=exchange.et&utm_medium=referral&utm_campaign=data-sources",
         "https://coopbankoromi.com.et/",
     ]},
 }
