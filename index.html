@@ -9,53 +9,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Archivo:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&family=Noto+Sans+Ethiopic:wght@600&display=swap" rel="stylesheet">
 <style>
-/* ===== mobile layout fixes v2 ===== */
-@media(max-width:1024px){
-  .hdr-in{flex-wrap:wrap;height:auto;padding:10px 16px 0;row-gap:0}
-  .hdr-in .nav{order:3;flex:1 1 100%;width:100%;padding-bottom:8px;-webkit-overflow-scrolling:touch}
-  .hdr-clock{margin-left:auto}
-}
-@media(max-width:760px){
-  #rateTable{min-width:0!important}
-  #rateTable th:nth-child(1),#rateTable td:nth-child(1),
-  #rateTable th:nth-child(n+5),#rateTable td:nth-child(n+5){display:none}
-  #rateTable td{padding:12px 8px}
-  #rateTable .c-bank{min-width:0;gap:8px}
-  #rateTable .b-txt i{display:none}
-  #rateTable td.num{font-size:12.5px}
-  #view-trends .table-scroll table{min-width:0!important}
-  #view-trends th:nth-child(5),#view-trends td:nth-child(5),
-  #view-trends th:nth-child(6),#view-trends td:nth-child(6){display:none}
-  #view-pairs .table-scroll table:not(.matrix){min-width:0!important}
-  #view-pairs th:nth-child(5),#view-pairs td:nth-child(5),
-  #view-pairs th:nth-child(6),#view-pairs td:nth-child(6),
-  #view-pairs th:nth-child(7),#view-pairs td:nth-child(7){display:none}
-  #view-bureaus .table-scroll table{min-width:0!important}
-  #view-bureaus th:nth-child(1),#view-bureaus td:nth-child(1),
-  #view-bureaus th:nth-child(4),#view-bureaus td:nth-child(4),
-  #view-bureaus th:nth-child(7),#view-bureaus td:nth-child(7),
-  #view-bureaus th:nth-child(8),#view-bureaus td:nth-child(8){display:none}
-  table.sheet{min-width:0!important}
-  table.sheet th:nth-child(4),table.sheet td:nth-child(4),
-  table.sheet th:nth-child(5),table.sheet td:nth-child(5){display:none}
-  .matrix td,.matrix th{padding:3px 4px;font-size:8.5px}
-  .matrix{min-width:0!important}
-  .table-scroll{-webkit-overflow-scrolling:touch}
-  td{padding:11px 8px}
-  th{padding:10px 8px}
-  .plan{padding:20px 16px}
-}
-/* ===== phone fix: bank table fits screen, no swiping needed ===== */
-@media(max-width:760px){
-  .table-scroll{-webkit-overflow-scrolling:touch}
-  #rateTable{min-width:0!important}
-  #rateTable th:nth-child(1),#rateTable td:nth-child(1),
-  #rateTable th:nth-child(n+5),#rateTable td:nth-child(n+5){display:none}
-  #rateTable td{padding:12px 8px;font-size:13px}
-  #rateTable td.num{font-size:12.5px}
-  #rateTable .c-bank{min-width:0}
-  #rateTable .b-txt i{display:none}
-}
 :root{
   --paper:#F6F4EE; --paper2:#EFECE1; --panel:#FBFAF6;
   --ink:#191713; --ink2:#3F3B2F; --muted:#75705F;
@@ -90,7 +43,7 @@ svg{display:block}
 .brand-name{font:600 19px var(--disp);letter-spacing:-.01em}
 .nav{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;flex:1}
 .nav::-webkit-scrollbar{display:none}
-.nav-link{border:0;background:none;padding:8px 12px;border-radius:8px;font:600 13px var(--ui);color:var(--muted);white-space:nowrap}
+.nav-link{border:0;background:none;padding:9px 13px;border-radius:8px;font:600 13px var(--ui);color:var(--muted);white-space:nowrap}
 .nav-link:hover{color:var(--ink)}
 .nav-link.on{color:var(--ink);background:#EAE6D8}
 .hdr-clock{display:flex;align-items:center;gap:10px;flex-shrink:0}
@@ -99,9 +52,10 @@ svg{display:block}
 .live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);position:relative;flex-shrink:0}
 .live-dot::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:1px solid var(--green);animation:pl 2.2s ease-out infinite}
 @keyframes pl{0%{transform:scale(.4);opacity:.9}100%{transform:scale(1.3);opacity:0}}
+/* ===== phone/tablet: menu wraps into its own rows, nothing cut off ===== */
 @media(max-width:1024px){
   .hdr-in{flex-wrap:wrap;height:auto;padding:10px 16px 0;row-gap:0}
-  .nav{order:3;width:100%;padding-bottom:8px}
+  .hdr-in .nav{order:3;flex:1 1 100%;width:100%;flex-wrap:wrap;padding-bottom:8px;overflow:visible}
   .hdr-clock{margin-left:auto}
 }
 .kicker{font:500 10.5px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
@@ -115,11 +69,11 @@ h2{font-size:27px;margin-top:7px}
 .f-note{font-size:11.5px;color:var(--muted);margin-top:12px}
 .chip-row{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 6px;scrollbar-width:none;margin-bottom:16px}
 .chip-row::-webkit-scrollbar{display:none}
-.chip{border:1px solid var(--line2);background:var(--panel);border-radius:999px;padding:7px 15px;font:600 12px var(--mono);letter-spacing:.03em;color:var(--ink2);white-space:nowrap}
+.chip{border:1px solid var(--line2);background:var(--panel);border-radius:999px;padding:8px 16px;font:600 12px var(--mono);letter-spacing:.03em;color:var(--ink2);white-space:nowrap}
 .chip:hover{border-color:var(--ink)}
 .chip.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
 .seg{display:inline-flex;border:1px solid var(--line2);border-radius:10px;background:var(--panel);padding:3px;gap:2px}
-.seg button{border:0;background:transparent;font:600 12px var(--ui);color:var(--muted);padding:7px 13px;border-radius:7px;white-space:nowrap}
+.seg button{border:0;background:transparent;font:600 12px var(--ui);color:var(--muted);padding:8px 13px;border-radius:7px;white-space:nowrap}
 .seg button.on{background:var(--ink);color:var(--paper)}
 .input{border:1px solid var(--line2);background:var(--panel);border-radius:9px;padding:9px 12px;font:500 13px var(--ui);color:var(--ink);outline:none}
 .input:focus{border-color:var(--ink)}
@@ -131,7 +85,7 @@ h2{font-size:27px;margin-top:7px}
 .btn-primary:hover{background:#37331F}
 .btn-ghost{background:transparent;color:var(--ink)}
 .btn-ghost:hover{background:var(--paper2)}
-.icon-btn{width:30px;height:30px;display:inline-grid;place-items:center;border:0;background:none;border-radius:7px;color:var(--muted)}
+.icon-btn{width:32px;height:32px;display:inline-grid;place-items:center;border:0;background:none;border-radius:7px;color:var(--muted)}
 .icon-btn:hover{background:var(--paper2);color:var(--ink)}
 .icon-btn.on{color:var(--green)}
 .hero{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:46px;align-items:center;padding:26px 0 40px}
@@ -149,7 +103,7 @@ h2{font-size:27px;margin-top:7px}
 .eth-date{margin-top:14px;font:600 13px "Noto Sans Ethiopic",var(--ui);color:var(--ink2)}
 .eth-date span{font:400 11px var(--mono);color:var(--muted);margin-left:8px}
 .panel{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:18px 18px 12px}
-.chart-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.chart-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:10px;flex-wrap:wrap}
 .range-hint{font-size:11px;color:var(--muted)}
 .chart-wrap{position:relative}
 .chart-wrap canvas{width:100%;display:block;touch-action:pan-y}
@@ -171,7 +125,7 @@ h2{font-size:27px;margin-top:7px}
 .s-rate small{font-size:12px;color:var(--muted);font-weight:500;letter-spacing:0}
 .s-note{flex:1.1;min-width:200px;padding:2px 26px;border-left:1px solid var(--line);font-size:12px;color:var(--muted);align-self:center}
 @media(max-width:760px){.street-item{padding:2px 16px}.s-note{border-left:0;padding-left:2px}}
-.table-scroll{border:1px solid var(--line);border-radius:13px;background:var(--panel);overflow-x:auto}
+.table-scroll{border:1px solid var(--line);border-radius:13px;background:var(--panel);overflow-x:auto;-webkit-overflow-scrolling:touch}
 table{width:100%;border-collapse:collapse}
 th{font:500 10.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-align:left;padding:12px 14px;border-bottom:1px solid var(--line2);white-space:nowrap}
 th[data-key]{cursor:pointer;user-select:none}
@@ -181,7 +135,6 @@ th.sorted::after{content:" ↓"}
 th.sorted.asc::after{content:" ↑"}
 td{padding:13px 14px;border-bottom:1px solid var(--line);font-size:13.5px;vertical-align:middle}
 tbody tr:last-child td{border-bottom:0}
-tbody tr{transition:background .12s}
 tbody tr:hover td{background:#F1EEE2}
 .num{font-family:var(--mono);font-feature-settings:"tnum";text-align:right;white-space:nowrap}
 th.num{text-align:right}
@@ -322,6 +275,36 @@ footer{background:var(--ink);color:var(--paper);padding:64px 0 36px;margin-top:2
 .f-err{color:var(--red);font-size:12px;margin:7px 0 0}
 .modal .btn{width:100%;margin-top:16px;padding:12px}
 .f-note-c{font-size:11px;color:var(--muted);text-align:center;margin-top:13px}
+/* ===== phone: tables fit the screen, secondary columns hidden ===== */
+@media(max-width:760px){
+  #rateTable{min-width:0!important}
+  #rateTable th:nth-child(1),#rateTable td:nth-child(1),
+  #rateTable th:nth-child(n+5),#rateTable td:nth-child(n+5){display:none}
+  #rateTable td{padding:12px 8px}
+  #rateTable .c-bank{min-width:0;gap:8px}
+  #rateTable .b-txt i{display:none}
+  #rateTable td.num{font-size:12.5px}
+  #view-trends .table-scroll table{min-width:0!important}
+  #view-trends th:nth-child(5),#view-trends td:nth-child(5),
+  #view-trends th:nth-child(6),#view-trends td:nth-child(6){display:none}
+  #view-pairs .table-scroll table:not(.matrix){min-width:0!important}
+  #view-pairs th:nth-child(5),#view-pairs td:nth-child(5),
+  #view-pairs th:nth-child(6),#view-pairs td:nth-child(6),
+  #view-pairs th:nth-child(7),#view-pairs td:nth-child(7){display:none}
+  #view-bureaus .table-scroll table{min-width:0!important}
+  #view-bureaus th:nth-child(1),#view-bureaus td:nth-child(1),
+  #view-bureaus th:nth-child(4),#view-bureaus td:nth-child(4),
+  #view-bureaus th:nth-child(7),#view-bureaus td:nth-child(7),
+  #view-bureaus th:nth-child(8),#view-bureaus td:nth-child(8){display:none}
+  table.sheet{min-width:0!important}
+  table.sheet th:nth-child(4),table.sheet td:nth-child(4),
+  table.sheet th:nth-child(5),table.sheet td:nth-child(5){display:none}
+  .matrix{min-width:0!important}
+  .matrix td,.matrix th{padding:3px 4px;font-size:8.5px}
+  td{padding:11px 8px}
+  th{padding:10px 8px}
+  .plan{padding:20px 16px}
+}
 </style>
 </head>
 <body>
@@ -379,7 +362,7 @@ footer{background:var(--ink);color:var(--paper);padding:64px 0 36px;margin-top:2
   <div class="chip-row" id="curChips"></div>
   <p class="hint" id="dirHint" style="margin:-6px 0 14px"></p>
   <div class="table-scroll">
-    <table id="rateTable" style="min-width:860px">
+    <table id="rateTable">
       <thead><tr>
         <th></th><th data-key="bank">Bank</th>
         <th data-key="buy" class="num">Bank buys</th>
@@ -413,9 +396,9 @@ footer{background:var(--ink);color:var(--paper);padding:64px 0 36px;margin-top:2
       <button data-k="d30" class="on">30D</button><button data-k="d1">1D</button><button data-k="name">A–Z</button>
     </div>
   </div>
-  <p class="hint" style="margin:-10px 0 14px">Click any row to load it into the chart above.</p>
+  <p class="hint" style="margin:-10px 0 14px">Tap any row to load it into the chart above.</p>
   <div class="table-scroll">
-    <table style="min-width:760px">
+    <table>
       <thead><tr><th>Pair</th><th class="num">Rate</th><th class="num">1D</th><th class="num">30D</th><th>60-day trend</th><th></th></tr></thead>
       <tbody id="trendBody"></tbody>
     </table>
@@ -436,12 +419,12 @@ footer{background:var(--ink);color:var(--paper);padding:64px 0 36px;margin-top:2
 <section class="view" id="view-pairs">
   <div class="block-head" style="margin-top:8px">
     <div><span class="kicker">04 — Pairs</span><h2>Cross-rate matrix</h2></div>
-    <p class="hint">Derived from live ETB market mids. Click any cell to copy the conversion.</p>
+    <p class="hint">Derived from live ETB market mids. Tap any cell to copy the conversion.</p>
   </div>
-  <div class="table-scroll"><table class="matrix" id="matrix" style="min-width:880px"></table></div>
+  <div class="table-scroll"><table class="matrix" id="matrix"></table></div>
   <div class="block-head"><div><h2>Popular ETB pairs</h2></div><p class="hint">Best buy and sell across all banks, right now.</p></div>
   <div class="table-scroll">
-    <table style="min-width:820px">
+    <table>
       <thead><tr><th>Pair</th><th class="num">Mid</th><th class="num">Best buy</th><th class="num">Best sell</th><th class="num">Market spread</th><th class="num">30D</th><th>Alert</th></tr></thead>
       <tbody id="pairsBody"></tbody>
     </table>
@@ -495,7 +478,7 @@ footer{background:var(--ink);color:var(--paper);padding:64px 0 36px;margin-top:2
   </div>
   <div class="street-band" id="bureauBand"></div>
   <div class="table-scroll" style="margin-top:26px">
-    <table style="min-width:860px">
+    <table>
       <thead><tr>
         <th></th><th data-key="name">Bureau</th><th>City</th><th>Hours</th>
         <th data-key="buy" class="num">USD buy</th><th data-key="sell" class="num">USD sell</th>
@@ -504,7 +487,7 @@ footer{background:var(--ink);color:var(--paper);padding:64px 0 36px;margin-top:2
       <tbody id="bureauBody"></tbody>
     </table>
   </div>
-  <p class="f-note">Cash rates at the counter. Bureaus are licensed by the National Bank of Ethiopia and typically quote tighter cash spreads than bank branches. Click a row for the full board.</p>
+  <p class="f-note">Cash rates at the counter. Bureaus are licensed by the National Bank of Ethiopia and typically quote tighter cash spreads than bank branches. Tap a row for the full board.</p>
 </section>
 
 <section class="view" id="view-pricing">
@@ -807,7 +790,7 @@ function updateStatusChip(){
     el.title='Dataset generated '+new Date(DATA.genTs).toLocaleString();
   }else{
     el.innerHTML='<span style="width:6px;height:6px;border-radius:50%;background:#B93A1B;flex-shrink:0"></span>DEMO DATA';
-    el.title='Showing simulated data — run the scraper to go live.';
+    el.title='Showing simulated data — add data/rates.json to go live.';
   }
 }
 
@@ -950,7 +933,7 @@ function renderTodayTable(){
   $$('#rateTable th[data-key]').forEach(th=>{const on=th.dataset.key===key;th.classList.toggle('sorted',on);th.classList.toggle('asc',on&&dir===1)});
   const note=$('#view-today .f-note');
   if(note)note.textContent=DATA.mode==='live'
-    ?'Rates collected from published bank rate sheets — indicative only. Confirm with the bank before transacting. Table swipes sideways.'
+    ?'Rates collected from published bank rate sheets — indicative only. Confirm with the bank before transacting.'
     :'Illustrative dataset for demonstration — figures are simulated, not live market quotes. Bank "buys" = the rate at which the bank purchases foreign cash/FX from you.';
 }
 function renderToday(){
@@ -975,7 +958,7 @@ function renderTrends(){
     if(DATA.mode==='live'&&live.mid[code]!=null)arr[arr.length-1]=live.mid[code];
     drawLine($('#trendChart'),arr,DATES.slice(-n),{dec:d});
   }
-  const s=(series.slice(-n));if(DATA.mode==='live'&&s.length&&live.mid[code]!=null)s[s.length-1]=live.mid[code];
+  const s=series.slice(-n);if(DATA.mode==='live'&&s.length&&live.mid[code]!=null)s[s.length-1]=live.mid[code];
   const start=s[0],end=s[s.length-1];
   let hi=-1e9,lo=1e9,iH=0,iL=0;s.forEach((v,i)=>{if(v>hi){hi=v;iH=i}if(v<lo){lo=v;iL=i}});
   const avg=s.length?s.reduce((a,b)=>a+b,0)/s.length:0;
@@ -1065,7 +1048,7 @@ function renderMatrix(){
     codes.forEach((c,i)=>{
       if(r===c){html+='<td class="mx-diag">—</td>';return}
       const v=vals[i],t=(Math.log(v)-lmn)/((lmx-lmn)||1);
-      html+=`<td class="num" data-r="${r}" data-c="${c}" data-v="${fmtSmart(v)}" style="background:rgba(11,123,61,${(0.02+t*0.15).toFixed(3)})" title="1 ${r} = ${fmtSmart(v)} ${c} — click to copy">${fmtSmart(v)}</td>`;
+      html+=`<td class="num" data-r="${r}" data-c="${c}" data-v="${fmtSmart(v)}" title="1 ${r} = ${fmtSmart(v)} ${c} — tap to copy">${fmtSmart(v)}</td>`;
     });
     html+='</tr>';
   }
@@ -1168,13 +1151,19 @@ const VIEW={today:renderToday,trends:renderTrends,banks:renderBanks,pairs:render
 
 /* ================= router ================= */
 function showView(v){
+  if(!VIEW[v])return;
   S.view=v;
   $$('.nav-link').forEach(b=>b.classList.toggle('on',b.dataset.view===v));
   $$('.view').forEach(s=>s.classList.toggle('on',s.id==='view-'+v));
   window.scrollTo({top:0});
   CHARTS.length=0;
-  const fn=VIEW[v];if(fn)safe(fn,v);
+  try{if(location.hash!=='#'+v)history.replaceState(null,'','#'+v)}catch(e){}
+  safe(VIEW[v],v);
 }
+window.addEventListener('hashchange',()=>{
+  const h=(location.hash||'').replace('#','');
+  if(h&&VIEW[h]&&h!==S.view)showView(h);
+});
 
 /* ================= clock ================= */
 const ETH_MONTHS=['መስከረም','ጥቅምት','ኅዳር','ታኅሣሥ','ጥር','የካቲት','መጋቢት','ሚያዝያ','ግንቦት','ሰኔ','ሐምሌ','ነሐሴ','ጳጉሜ'];
@@ -1291,7 +1280,7 @@ function wire(){
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#overlay').hidden)closeModal()});
   document.addEventListener('visibilitychange',()=>{
     if(!document.hidden&&DATA.mode==='live'&&Date.now()-DATA.genTs>CONFIG.POLL_MS)setTimeout(pollData,200)});
-  let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{CHARTS.length=0;const fn=VIEW[S.view];if(fn)safe(fn,S.view)},180)});
+  let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{CHARTS.length=0;safe(VIEW[S.view],S.view)},180)});
 }
 
 /* ================= boot ================= */
@@ -1302,7 +1291,8 @@ function wire(){
   ensureStatus();
   updateStatusChip();
   renderTicker();
-  showView('today');
+  const initial=(location.hash||'').replace('#','');
+  showView(VIEW[initial]?initial:'today');
   startClock();
   setTimeout(pollData,300);
   setInterval(pollData,CONFIG.POLL_MS);
