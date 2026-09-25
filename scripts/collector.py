@@ -42,7 +42,7 @@ SOURCES = {
         "https://dashenbanksc.com/",
     ]},
     "BOA": {"name": "Bank of Abyssinia", "type": "bank", "urls": [
-        "https://bankofabyssinia.com/exchange-rate/",
+        "https://www.bankofabyssinia.com/exchange-rate-2/",
         "https://bankofabyssinia.com/",
     ]},
     "CBO": {"name": "Cooperative Bank of Oromia", "type": "bank", "urls": [
