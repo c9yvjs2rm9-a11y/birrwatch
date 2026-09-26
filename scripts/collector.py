@@ -56,10 +56,10 @@ SOURCES = {
         "https://www.bankofabyssinia.com/exchange-rate-2/",
         "https://bankofabyssinia.com/",
     ]},
-    "CBO": {"name": "Cooperative Bank of Oromia", "type": "bank", "urls": [
-        "https://coopbankoromi.com.et/exchange-rate/",
-        "https://www.coopbankoromi.com.et/exchange-rate/",
-        "https://coopbankoromi.com.et/",
+        "CBO": {"name": "Cooperative Bank of Oromia", "type": "bank", "urls": [
+        "https://coopbankoromia.com.et/",
+        "https://coopbankoromia.com.et/exchange-rate/",
+        "https://www.coopbankoromia.com.et/",
     ]},
 }
 
@@ -182,10 +182,14 @@ def parse_page(html):
 
 
 def parse_cards(html):
-    """Fallback for banks that show rates as styled cards/tickers, not tables.
-    Looks for small elements that mention a currency AND both a buy and a sell
-    word, with at least two plausible numbers. Guards filter bad matches."""
+    """Fallback for banks that show rates as cards/tickers, not tables.
+    Mode A: element mentions a currency AND buy & sell words -> first two numbers.
+    Mode B (relaxed): element mentions a currency and EXACTLY two numbers, e.g.
+    CBO's 'USD 160.8053 164.0214' cards — accepted only on exchange-rate pages.
+    Range, spread and jump guards still filter bad matches."""
     soup = BeautifulSoup(html, "html.parser")
+    page_text = norm(soup.get_text(" ", strip=True))
+    exchange_page = "EXCHANGE" in page_text or "EXCHANGE RATE" in page_text
     cands = []
     for el in soup.find_all(["div", "section", "article", "li", "span", "p"]):
         t = el.get_text(" ", strip=True)
@@ -194,8 +198,6 @@ def parse_cards(html):
         u = norm(t)
         cur = match_currency(u)
         if not cur:
-            continue
-        if not (any(w in u for w in BUY_W) and any(w in u for w in SELL_W)):
             continue
         nums = []
         for m in NUM.findall(t):
@@ -207,13 +209,17 @@ def parse_cards(html):
                 nums.append(v)
         if len(nums) < 2:
             continue
+        has_bs = any(w in u for w in BUY_W) and any(w in u for w in SELL_W)
+        if not has_bs:
+            if not exchange_page or len(nums) != 2:
+                continue
         buy, sell = nums[0], nums[1]
         if buy > sell:
             buy, sell = sell, buy
-        cands.append((len(t), cur, buy, sell))
-    cands.sort()          # prefer the most specific (smallest) card
+        cands.append((len(t), cur, buy, sell, has_bs))
+    cands.sort(key=lambda c: (0 if c[4] else 1, c[0]))   # explicit cards first, then most specific
     out = {}
-    for _, cur, b, s in cands:
+    for _, cur, b, s, _ in cands:
         if cur in out or not plausible(b, s):
             continue
         out[cur] = (b, s)
@@ -294,13 +300,34 @@ def attempt_dynamic(url):
     ctx = None
     try:
         ctx = browser.new_context(user_agent=UA, viewport={"width": 1280, "height": 900},
-                                  ignore_https_errors=True)   # handles cert problems too
+                                  ignore_https_errors=True)
         page = ctx.new_page()
         try:
             page.goto(url, wait_until="domcontentloaded", timeout=40000)
-            page.wait_for_timeout(5000)          # let JavaScript paint the numbers
-            html = page.content()
-            return (html, None) if html and len(html) > 500 else (None, "empty render")
+            page.wait_for_timeout(6000)
+            try:                                   # nudge lazy-loading content
+                page.mouse.wheel(0, 1500)
+                page.wait_for_timeout(1500)
+                page.mouse.wheel(0, -1500)
+                page.wait_for_timeout(800)
+            except Exception:
+                pass
+            html = page.content() or ""
+            try:                                   # also read embedded iframes
+                for f in page.frames:
+                    if f == page.main_frame:
+                        continue
+                    try:
+                        fh = f.content()
+                        if fh and len(fh) > 500:
+                            html += "\n" + fh
+                    except Exception:
+                        pass
+                except Exception:
+                    pass
+            if html and len(html) > 500:
+                return html, None
+            return None, "empty render"
         finally:
             page.close()
     except Exception as e:
