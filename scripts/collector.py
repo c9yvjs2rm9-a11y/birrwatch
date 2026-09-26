@@ -31,7 +31,7 @@ except Exception:
 ROOT = Path(__file__).resolve().parents[1]
 RATES = ROOT / "data" / "rates.json"
 
-WANT = ("USD", "EUR")      # currencies the robot collects
+WANT = ("USD", "EUR", "AED", "SAR", "GBP", "CNY")   # currencies the robot collects      # currencies the robot collects
 MAX_JUMP = 0.15            # ignore a fetched value that moved >15% vs stored
 MIN_SPREAD = 0.0008        # real quotes have >=0.08% spread; averages are flat
 
@@ -296,8 +296,9 @@ def attempt_dynamic(url):
     try:
         browser = get_browser()
     except Exception:
-        return None, "browser unavailable"
+        return None, "browser unavailable", []
     ctx = None
+    info = []
     try:
         ctx = browser.new_context(user_agent=UA, viewport={"width": 1280, "height": 900},
                                   ignore_https_errors=True)
@@ -312,26 +313,45 @@ def attempt_dynamic(url):
                 page.wait_for_timeout(800)
             except Exception:
                 pass
+            try:                                 # date-filter pages: tap Search if present
+                btn = page.locator("input[type=submit], button[type=submit], "
+                                   "button:has-text('Search'), a:has-text('Search'), "
+                                   "button:has-text('Go')").first
+                if btn.count() > 0:
+                    btn.click(timeout=3000)
+                    page.wait_for_timeout(3500)
+                    info.append("clicked search")
+            except Exception:
+                pass
             html = page.content() or ""
+            try:
+                ntab = len(BeautifulSoup(html, "html.parser").find_all("table"))
+                info.append(f"main: {ntab} tables")
+            except Exception:
+                pass
             try:                                 # also read embedded iframes
                 for f in page.frames:
                     if f == page.main_frame:
                         continue
+                    fu = (f.url or "")[:70]
                     try:
                         fh = f.content()
                         if fh and len(fh) > 500:
                             html += "\n" + fh
+                            info.append(f"frame {fu}: {len(fh)} bytes")
+                        else:
+                            info.append(f"frame {fu}: empty")
                     except Exception:
-                        pass
+                        info.append(f"frame {fu}: unreadable")
             except Exception:
                 pass
             if html and len(html) > 500:
-                return html, None
-            return None, "empty render"
+                return html, None, info
+            return None, "empty render", info
         finally:
             page.close()
     except Exception as e:
-        return None, type(e).__name__
+        return None, type(e).__name__, info
     finally:
         try:
             if ctx:
@@ -370,14 +390,14 @@ def collect_source(cfg):
             notes.append(f"{short(url)}: HTTP 200 · {n} tables · {'rate words found' if kw else 'no rate words'}")
         else:
             notes.append(f"{short(url)}: {err}")
-        dhtml, derr = attempt_dynamic(url)       # browser also fixes SSL/bot issues
+                dhtml, derr, dinfo = attempt_dynamic(url)   # browser also fixes SSL/bot issues
         if dhtml:
             got = parse_any(dhtml)
             if got:
                 return got, "browser", notes
-            notes.append("browser: parsed 0")
+            notes.append("browser: parsed 0 (" + "; ".join(dinfo) + ")")
         else:
-            notes.append(f"browser: {derr}")
+            notes.append(f"browser: {derr} (" + "; ".join(dinfo) + ")")
     return got, via, notes
 
 
