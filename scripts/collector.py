@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Birrwatch robot collector v3 — visits bank rate pages, updates data/rates.json.
+# Birrwatch robot collector v4 — visits bank rate pages, updates data/rates.json.
 #
 # TO FIX OR ADD A BANK:
 #   1. Open the bank's rate page in your browser (numbers visible immediately,
@@ -7,36 +7,47 @@
 #   2. In SOURCES below, paste that address as the FIRST entry in that bank's
 #      "urls" list. Keep quotes and commas exactly as they are.
 #   3. Commit, then run: Actions tab -> collector -> Run workflow.
-# v3: ignores "weighted average" / near-flat reference tables — only real
-#     counter-quote tables (buy/sell with a genuine spread) are accepted.
+# v4: tolerates broken site certificates (BOA), parses card-style layouts as
+#     well as tables (AWB), retries flaky sites (CBO), skips average tables.
 
 import json
 import os
 import re
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
 import requests
 from bs4 import BeautifulSoup
 
+try:
+    import urllib3
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+except Exception:
+    pass
+
 ROOT = Path(__file__).resolve().parents[1]
 RATES = ROOT / "data" / "rates.json"
 
 WANT = ("USD", "EUR")      # currencies the robot collects
-MAX_JUMP = 0.15            # ignore a fetched value that moved >15% vs stored (parse-error guard)
-MIN_SPREAD = 0.0008        # a real quote table has at least a 0.08% spread; averages are flatter
+MAX_JUMP = 0.15            # ignore a fetched value that moved >15% vs stored
+MIN_SPREAD = 0.0008        # real quotes have >=0.08% spread; averages are flat
 
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 HEADERS = {"User-Agent": UA}
 
 SOURCES = {
     "CBE": {"name": "Commercial Bank of Ethiopia", "type": "bank", "urls": [
+        "https://combanketh.et/exchange-rate/",
+        "https://combanketh.et/exchange-rates/",
         "https://combanketh.et/exchange-rate",
         "https://combanketh.et/",
     ]},
     "AWB": {"name": "Awash Bank", "type": "bank", "urls": [
+        "https://www.awashbank.com/exchange-rates/",
         "https://www.awashbank.com/exchange-rate/",
+        "https://www.awashbank.com/rates/",
         "https://www.awashbank.com/",
     ]},
     "DBL": {"name": "Dashen Bank", "type": "bank", "urls": [
@@ -102,6 +113,11 @@ def number(cell):
         return None
 
 
+def plausible(b, s):
+    return bool(b and s and 20 < b < 5000 and 20 < s < 5000
+                and b <= s < b * 1.25 and (s - b) / b >= MIN_SPREAD)
+
+
 def table_rows(table):
     rows = []
     for tr in table.find_all("tr"):
@@ -148,7 +164,6 @@ def parse_page(html):
         if not head:
             continue
         hi, bcol, scol = head
-        # guard 1: skip reference tables labelled as averages
         header_txt = norm(" ".join(rows[hi]) + " " + (" ".join(rows[hi + 1]) if hi + 1 < len(rows) else ""))
         if "AVERAGE" in header_txt:
             continue
@@ -160,17 +175,63 @@ def parse_page(html):
             if not cur or cur in out:
                 continue
             buy, sell = number(r[bcol]), number(r[scol])
-            if buy and sell and 20 < buy < 5000 and 20 < sell < 5000 and buy <= sell < buy * 1.25:
+            if plausible(buy, sell):
                 out[cur] = (buy, sell)
-        if not out:
-            continue
-        # guard 2: a real quote table has a genuine spread; average tables are nearly flat
-        widest = max((s - b) / b for b, s in out.values())
-        if widest < MIN_SPREAD:
-            continue
         if len(out) > len(best):
             best = out
     return best
+
+
+def parse_cards(html):
+    """Fallback for banks that show rates as styled cards/tickers, not tables.
+    Looks for small elements that mention a currency AND both a buy and a sell
+    word, with at least two plausible numbers. Guards filter bad matches."""
+    soup = BeautifulSoup(html, "html.parser")
+    cands = []
+    for el in soup.find_all(["div", "section", "article", "li", "span", "p"]):
+        t = el.get_text(" ", strip=True)
+        if not t or len(t) > 160:
+            continue
+        u = norm(t)
+        cur = match_currency(u)
+        if not cur:
+            continue
+        if not (any(w in u for w in BUY_W) and any(w in u for w in SELL_W)):
+            continue
+        nums = []
+        for m in NUM.findall(t):
+            try:
+                v = float(m.replace(",", ""))
+            except ValueError:
+                continue
+            if 20 < v < 5000:
+                nums.append(v)
+        if len(nums) < 2:
+            continue
+        buy, sell = nums[0], nums[1]
+        if buy > sell:
+            buy, sell = sell, buy
+        cands.append((len(t), cur, buy, sell))
+    cands.sort()          # prefer the most specific (smallest) card
+    out = {}
+    for _, cur, b, s in cands:
+        if cur in out or not plausible(b, s):
+            continue
+        out[cur] = (b, s)
+    return out
+
+
+def parse_any(html):
+    try:
+        got = parse_page(html)
+    except Exception:
+        got = {}
+    if not got:
+        try:
+            got = parse_cards(html)
+        except Exception:
+            got = {}
+    return got
 
 
 def diagnose(html):
@@ -187,15 +248,30 @@ def short(url):
 
 # ---------- fetching ----------
 def attempt_static(url):
-    try:
-        r = requests.get(url, headers=HEADERS, timeout=30)
-        if r.status_code == 200 and len(r.text) > 500:
-            return r.text, None
-        return None, f"HTTP {r.status_code}"
-    except requests.exceptions.Timeout:
-        return None, "timeout"
-    except Exception as e:
-        return None, type(e).__name__
+    last = "failed"
+    for attempt in range(3):                     # retries for flaky sites (CBO)
+        try:
+            r = requests.get(url, headers=HEADERS, timeout=30)
+            if r.status_code == 200 and len(r.text) > 500:
+                return r.text, None
+            last = f"HTTP {r.status_code}"
+            if r.status_code == 404:
+                return None, last                # wrong address — don't retry
+        except requests.exceptions.SSLError:
+            try:                                 # tolerate broken certificates (BOA)
+                r = requests.get(url, headers=HEADERS, timeout=30, verify=False)
+                if r.status_code == 200 and len(r.text) > 500:
+                    return r.text, None
+                last = f"HTTP {r.status_code} (ssl-relaxed)"
+            except Exception as e:
+                last = f"SSL ({type(e).__name__})"
+        except requests.exceptions.Timeout:
+            last = "timeout"
+        except Exception as e:
+            last = type(e).__name__
+        if attempt < 2:
+            time.sleep(5)
+    return None, last
 
 
 _PW = None
@@ -216,8 +292,11 @@ def attempt_dynamic(url):
         browser = get_browser()
     except Exception:
         return None, "browser unavailable"
+    ctx = None
     try:
-        page = browser.new_page(user_agent=UA, viewport={"width": 1280, "height": 900})
+        ctx = browser.new_context(user_agent=UA, viewport={"width": 1280, "height": 900},
+                                  ignore_https_errors=True)   # handles cert problems too
+        page = ctx.new_page()
         try:
             page.goto(url, wait_until="domcontentloaded", timeout=40000)
             page.wait_for_timeout(5000)          # let JavaScript paint the numbers
@@ -227,6 +306,12 @@ def attempt_dynamic(url):
             page.close()
     except Exception as e:
         return None, type(e).__name__
+    finally:
+        try:
+            if ctx:
+                ctx.close()
+        except Exception:
+            pass
 
 
 def cleanup():
@@ -251,28 +336,22 @@ def collect_source(cfg):
     got, via, notes = {}, "", []
     for url in cfg["urls"]:
         html, err = attempt_static(url)
-        if not html:
+        if html:
+            got = parse_any(html)
+            if got:
+                return got, "static", notes
+            n, kw = diagnose(html)
+            notes.append(f"{short(url)}: HTTP 200 · {n} tables · {'rate words found' if kw else 'no rate words'}")
+        else:
             notes.append(f"{short(url)}: {err}")
-            continue
-        try:
-            got = parse_page(html)
-        except Exception:
-            got = {}
-        if got:
-            return got, "static", notes
-        n, kw = diagnose(html)
-        notes.append(f"{short(url)}: HTTP 200 · {n} tables · {'rate words found' if kw else 'no rate words'}")
-        dhtml, derr = attempt_dynamic(url)
-        if not dhtml:
+        dhtml, derr = attempt_dynamic(url)       # browser also fixes SSL/bot issues
+        if dhtml:
+            got = parse_any(dhtml)
+            if got:
+                return got, "browser", notes
+            notes.append("browser: parsed 0")
+        else:
             notes.append(f"browser: {derr}")
-            continue
-        try:
-            got = parse_page(dhtml)
-        except Exception:
-            got = {}
-        if got:
-            return got, "browser", notes
-        notes.append("browser: parsed 0")
     return got, via, notes
 
 
@@ -333,6 +412,7 @@ def main():
                 summary.append(f"| {sid} | ✓ {', '.join(kept)} ({via}) |")
             elif not warned:
                 summary.append(f"| {sid} | ⚠ nothing usable — kept previous values |")
+            time.sleep(4)                        # polite pause between banks
     finally:
         cleanup()
 
