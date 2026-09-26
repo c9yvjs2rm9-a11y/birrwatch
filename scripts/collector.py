@@ -39,12 +39,14 @@ HEADERS = {"User-Agent": UA}
 
 SOURCES = {
     "CBE": {"name": "Commercial Bank of Ethiopia", "type": "bank", "urls": [
+            "https://combanketh.et/exchange-rates?srcPage=home",
         "https://combanketh.et/exchange-rate/",
         "https://combanketh.et/exchange-rates/",
         "https://combanketh.et/exchange-rate",
         "https://combanketh.et/",
     ]},
     "AWB": {"name": "Awash Bank", "type": "bank", "urls": [
+            "https://awashbank.com/exchange-historical/",
         "https://www.awashbank.com/exchange-rates/",
         "https://www.awashbank.com/exchange-rate/",
         "https://www.awashbank.com/rates/",
@@ -55,6 +57,7 @@ SOURCES = {
         "https://dashenbanksc.com/",
     ]},
     "BOA": {"name": "Bank of Abyssinia", "type": "bank", "urls": [
+            "https://www.bankofabyssinia.com/exchange-rate-2/",
         "https://bankofabyssinia.com/exchange-rate/",
         "https://bankofabyssinia.com/",
     ]},
