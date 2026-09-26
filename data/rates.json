@@ -1,6 +1,6 @@
 {
  "meta": {
-  "generated_at": "2026-09-26T05:30:33+00:00",
+  "generated_at": "2026-09-26T08:32:18+00:00",
   "version": 1,
   "disclaimer": "Indicative rates collected from published bank rate sheets. Confirm with the bank before transacting."
  },
@@ -23,7 +23,7 @@
   "DBL": {
    "name": "Dashen Bank",
    "type": "bank",
-   "fetched_at": "2026-09-26T05:30:33+00:00"
+   "fetched_at": "2026-09-26T08:32:18+00:00"
   },
   "BOA": {
    "name": "Bank of Abyssinia",
@@ -33,7 +33,7 @@
   "CBO": {
    "name": "Cooperative Bank of Oromia",
    "type": "bank",
-   "fetched_at": "2026-09-26T05:30:33+00:00"
+   "fetched_at": "2026-09-26T08:32:18+00:00"
   }
  },
  "rates": [
@@ -70,8 +70,8 @@
   {
    "source": "CBO",
    "currency": "USD",
-   "buy": 160.8,
-   "sell": 164.02
+   "buy": 163.5829,
+   "sell": 163.6737
   },
   {
    "source": "DBL",
