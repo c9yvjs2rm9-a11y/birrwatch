@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-# Birrwatch robot collector — visits bank rate pages, updates data/rates.json.
+# Birrwatch robot collector v2 — visits bank rate pages, updates data/rates.json.
 #
 # TO FIX OR ADD A BANK:
-#   1. Open the bank's exchange-rate page in your browser (numbers visible
-#      immediately, without clicking any button) and copy its address.
+#   1. Open the bank's rate page in your browser (numbers visible immediately,
+#      without clicking anything) and copy its address.
 #   2. In SOURCES below, paste that address as the FIRST entry in that bank's
-#      "urls" list. Keep the quotation marks and commas exactly as they are.
+#      "urls" list. Keep quotes and commas exactly as they are.
 #   3. Commit, then run: Actions tab -> collector -> Run workflow.
-# If a bank keeps failing, nothing breaks — its previous numbers remain and
-# you can still type that bank's rates by hand into data/rates.json.
+# Each failure reports its reason in the run summary:
+#   HTTP 200 + "no rate keywords" = numbers drawn by JavaScript (browser fallback tries this)
+#   HTTP 403 = site blocks robots; HTTP 404/timeout = wrong or dead address.
 
 import json
 import os
@@ -26,7 +27,8 @@ RATES = ROOT / "data" / "rates.json"
 WANT = ("USD", "EUR")      # currencies the robot collects
 MAX_JUMP = 0.15            # ignore a fetched value that moved >15% vs stored (parse-error guard)
 
-HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; BirrwatchBot/1.0)"}
+UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+HEADERS = {"User-Agent": UA}
 
 SOURCES = {
     "CBE": {"name": "Commercial Bank of Ethiopia", "type": "bank", "urls": [
@@ -42,11 +44,11 @@ SOURCES = {
         "https://dashenbanksc.com/",
     ]},
     "BOA": {"name": "Bank of Abyssinia", "type": "bank", "urls": [
-        "https://www.bankofabyssinia.com/exchange-rate-2/",
+        "https://bankofabyssinia.com/exchange-rate/",
         "https://bankofabyssinia.com/",
     ]},
     "CBO": {"name": "Cooperative Bank of Oromia", "type": "bank", "urls": [
-        "https://coopbankoromia.com.et/daily-exchange-rates/?er_date=2026-09-25&utm_source=exchange.et&utm_medium=referral&utm_campaign=data-sources",
+        "https://coopbankoromi.com.et/exchange-rate/",
         "https://coopbankoromi.com.et/",
     ]},
 }
@@ -118,9 +120,6 @@ def table_rows(table):
 
 
 def detect_header(rows):
-    # find the header row: a row whose cells (combined with the row below,
-    # to handle two-row headers like "Buying | Cash | Transactional") contain
-    # both buy and sell words. Prefer the cash columns.
     for i, row in enumerate(rows):
         nxt = rows[i + 1] if i + 1 < len(rows) else []
         width = max(len(row), len(nxt))
@@ -164,15 +163,71 @@ def parse_page(html):
     return best
 
 
-def fetch(url):
-    for _ in range(2):
+def diagnose(html):
+    """Why did parsing fail? Count tables and look for rate keywords in the text."""
+    soup = BeautifulSoup(html, "html.parser")
+    text = soup.get_text(" ", strip=True).upper()
+    n = len(soup.find_all("table"))
+    kw = any(w in text for w in BUY_W) and any(w in text for w in SELL_W)
+    return n, kw
+
+
+def short(url):
+    return re.sub(r"^https?://(www\.)?", "", url).rstrip("/")[:34]
+
+
+# ---------- fetching ----------
+def attempt_static(url):
+    try:
+        r = requests.get(url, headers=HEADERS, timeout=30)
+        if r.status_code == 200 and len(r.text) > 500:
+            return r.text, None
+        return None, f"HTTP {r.status_code}"
+    except requests.exceptions.Timeout:
+        return None, "timeout"
+    except Exception as e:
+        return None, type(e).__name__
+
+
+_PW = None
+_BROWSER = None
+
+
+def get_browser():
+    global _PW, _BROWSER
+    if _BROWSER is None:
+        from playwright.sync_api import sync_playwright
+        _PW = sync_playwright().start()
+        _BROWSER = _PW.chromium.launch(args=["--no-sandbox"])
+    return _BROWSER
+
+
+def attempt_dynamic(url):
+    try:
+        browser = get_browser()
+    except Exception:
+        return None, "browser unavailable"
+    try:
+        page = browser.new_page(user_agent=UA, viewport={"width": 1280, "height": 900})
         try:
-            r = requests.get(url, headers=HEADERS, timeout=30)
-            if r.status_code == 200 and len(r.text) > 500:
-                return r.text
-        except Exception:
-            pass
-    return None
+            page.goto(url, wait_until="domcontentloaded", timeout=40000)
+            page.wait_for_timeout(5000)          # let JavaScript paint the numbers
+            html = page.content()
+            return (html, None) if html and len(html) > 500 else (None, "empty render")
+        finally:
+            page.close()
+    except Exception as e:
+        return None, type(e).__name__
+
+
+def cleanup():
+    try:
+        if _BROWSER:
+            _BROWSER.close()
+        if _PW:
+            _PW.stop()
+    except Exception:
+        pass
 
 
 # ---------- main ----------
@@ -183,9 +238,40 @@ def write_summary(text):
             f.write(text + "\n")
 
 
+def collect_source(cfg):
+    """Try every URL: plain fetch first, real browser if numbers aren't in the HTML."""
+    got, via, notes = {}, "", []
+    for url in cfg["urls"]:
+        html, err = attempt_static(url)
+        if not html:
+            notes.append(f"{short(url)}: {err}")
+            continue
+        try:
+            got = parse_page(html)
+        except Exception:
+            got = {}
+        if got:
+            return got, "static", notes
+        n, kw = diagnose(html)
+        notes.append(f"{short(url)}: HTTP 200 · {n} tables · {'rate words found' if kw else 'no rate words'}")
+        dhtml, derr = attempt_dynamic(url)
+        if not dhtml:
+            notes.append(f"browser: {derr}")
+            continue
+        try:
+            got = parse_page(dhtml)
+        except Exception:
+            got = {}
+        if got:
+            return got, "browser", notes
+        notes.append("browser: parsed 0")
+    return got, via, notes
+
+
 def main():
     if not RATES.exists():
         print("data/rates.json not found — nothing to update.")
+        cleanup()
         return 1
     doc = json.loads(RATES.read_text(encoding="utf-8"))
     sources = doc.setdefault("sources", {})
@@ -193,7 +279,6 @@ def main():
     old_gen = (doc.get("meta") or {}).get("generated_at", "")
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
 
-    # every source gets an honest freshness stamp; unknown ones inherit the file's old timestamp
     for s in sources.values():
         if not s.get("fetched_at"):
             s["fetched_at"] = old_gen or now
@@ -203,56 +288,49 @@ def main():
     summary = []
     applied_any = False
 
-    for sid, cfg in SOURCES.items():
-        got, err = {}, "page unreachable"
-        for url in cfg["urls"]:
-            html = fetch(url)
-            if not html:
+    try:
+        for sid, cfg in SOURCES.items():
+            got, via, notes = collect_source(cfg)
+            if not got:
+                detail = "; ".join(notes) if notes else "unknown"
+                summary.append(f"| {sid} | ✗ {detail} — kept previous values |")
                 continue
-            try:
-                got = parse_page(html)
-            except Exception:
-                got = {}
-            if got:
-                err = None
-                break
-            err = "no rate table found"
-        if not got:
-            summary.append(f"| {sid} | ✗ {err} — kept previous values |")
-            continue
-        kept = []
-        for cur in WANT:
-            if cur not in got:
-                continue
-            buy, sell = got[cur]
-            prev = quotes.get((sid, cur))
-            if prev and prev.get("buy"):
-                try:
-                    if abs(buy / float(prev["buy"]) - 1) > MAX_JUMP:
-                        summary.append(f"| {sid} | ⚠ {cur} skipped — fetched {buy} vs stored {prev['buy']} (>15%) |")
-                        continue
-                except (TypeError, ZeroDivisionError):
-                    pass
-            q = quotes.get((sid, cur))
-            if q:
-                q["buy"], q["sell"] = buy, sell
-            else:
-                row = {"source": sid, "currency": cur, "buy": buy, "sell": sell}
-                rates.append(row)
-                quotes[(sid, cur)] = row
-            kept.append(f"{cur} {buy}/{sell}")
-        if kept:
-            applied_any = True
-            s = sources.setdefault(sid, {"name": cfg["name"], "type": cfg["type"]})
-            s["name"], s["type"] = cfg["name"], cfg["type"]
-            s["fetched_at"] = now
-            summary.append(f"| {sid} | ✓ {', '.join(kept)} |")
-        else:
-            summary.append(f"| {sid} | ⚠ nothing usable — kept previous values |")
+            kept, warned = [], False
+            for cur in WANT:
+                if cur not in got:
+                    continue
+                buy, sell = got[cur]
+                prev = quotes.get((sid, cur))
+                if prev and prev.get("buy"):
+                    try:
+                        if abs(buy / float(prev["buy"]) - 1) > MAX_JUMP:
+                            summary.append(f"| {sid} | ⚠ {cur} skipped — fetched {buy} vs stored {prev['buy']} (>15% jump, likely misread) |")
+                            warned = True
+                            continue
+                    except (TypeError, ZeroDivisionError):
+                        pass
+                q = quotes.get((sid, cur))
+                if q:
+                    q["buy"], q["sell"] = buy, sell
+                else:
+                    row = {"source": sid, "currency": cur, "buy": buy, "sell": sell}
+                    rates.append(row)
+                    quotes[(sid, cur)] = row
+                kept.append(f"{cur} {buy:g}/{sell:g}")
+            if kept:
+                applied_any = True
+                s = sources.setdefault(sid, {"name": cfg["name"], "type": cfg["type"]})
+                s["name"], s["type"] = cfg["name"], cfg["type"]
+                s["fetched_at"] = now
+                summary.append(f"| {sid} | ✓ {', '.join(kept)} ({via}) |")
+            elif not warned:
+                summary.append(f"| {sid} | ⚠ nothing usable — kept previous values |")
+    finally:
+        cleanup()
 
     if not applied_any:
-        text = ("## Robot collection — FAILED\n\nNo bank could be read. "
-                "rates.json was not changed.\n\n| Source | Result |\n|---|---|\n" + "\n".join(summary))
+        text = ("## Robot collection — FAILED\n\nNo bank could be read. rates.json was not changed.\n\n"
+                "| Source | Result |\n|---|---|\n" + "\n".join(summary))
         print(text)
         write_summary(text)
         return 1
@@ -260,8 +338,9 @@ def main():
     doc.setdefault("meta", {})["generated_at"] = now
     RATES.write_text(json.dumps(doc, indent=1) + "\n", encoding="utf-8")
 
-    ok = sum(1 for line in summary if "✓" in line)
-    text = f"## Robot collection — {ok}/{len(SOURCES)} banks updated\n\n| Source | Result |\n|---|---|\n" + "\n".join(summary)
+    ok = sum(1 for line in summary if line.startswith("| ") and "✓" in line)
+    text = (f"## Robot collection — {ok}/{len(SOURCES)} banks updated\n\n"
+            "| Source | Result |\n|---|---|\n" + "\n".join(summary))
     print(text)
     write_summary(text)
     return 0
