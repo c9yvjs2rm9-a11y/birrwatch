@@ -19,7 +19,9 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install parser libraries
-        run: pip install requests beautifulsoup4
+        run: pip install requests beautifulsoup4 playwright
+      - name: Install browser for JavaScript pages
+        run: python -m playwright install --with-deps chromium
       - name: Collect bank rates
         run: python3 scripts/collector.py
       - name: Commit updated rates
