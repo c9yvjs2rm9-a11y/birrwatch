@@ -39,17 +39,13 @@ HEADERS = {"User-Agent": UA}
 
 SOURCES = {
     "CBE": {"name": "Commercial Bank of Ethiopia", "type": "bank", "urls": [
-            "https://combanketh.et/exchange-rates?srcPage=home",
-        "https://combanketh.et/exchange-rate/",
+        "https://combanketh.et/exchange-rates?srcPage=home",
         "https://combanketh.et/exchange-rates/",
-        "https://combanketh.et/exchange-rate",
         "https://combanketh.et/",
     ]},
     "AWB": {"name": "Awash Bank", "type": "bank", "urls": [
-            "https://awashbank.com/exchange-historical/",
-        "https://www.awashbank.com/exchange-rates/",
-        "https://www.awashbank.com/exchange-rate/",
-        "https://www.awashbank.com/rates/",
+        "https://awashbank.com/exchange-historical/",
+        "https://www.awashbank.com/exchange-historical/",
         "https://www.awashbank.com/",
     ]},
     "DBL": {"name": "Dashen Bank", "type": "bank", "urls": [
@@ -57,12 +53,12 @@ SOURCES = {
         "https://dashenbanksc.com/",
     ]},
     "BOA": {"name": "Bank of Abyssinia", "type": "bank", "urls": [
-            "https://www.bankofabyssinia.com/exchange-rate-2/",
-        "https://bankofabyssinia.com/exchange-rate/",
+        "https://www.bankofabyssinia.com/exchange-rate-2/",
         "https://bankofabyssinia.com/",
     ]},
     "CBO": {"name": "Cooperative Bank of Oromia", "type": "bank", "urls": [
         "https://coopbankoromi.com.et/exchange-rate/",
+        "https://www.coopbankoromi.com.et/exchange-rate/",
         "https://coopbankoromi.com.et/",
     ]},
 }
