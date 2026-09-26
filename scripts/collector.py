@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Birrwatch robot collector v5 — visits bank rate pages, updates data/rates.json.
+# Birrwatch robot collector v6 — visits bank rate pages, updates data/rates.json.
 #
 # TO FIX OR ADD A BANK:
 #   1. Open the bank's rate page in your browser (numbers visible immediately,
@@ -7,9 +7,9 @@
 #   2. In SOURCES below, paste that address as the FIRST entry in that bank's
 #      "urls" list. Keep quotes and commas exactly as they are.
 #   3. Commit, then run: Actions tab -> collector -> Run workflow.
-# v5: one clean file — correct CBO domain (coopbankoromia.com.et), relaxed
-#     card parser for CBO's homepage, iframe+scroll browser rendering for
-#     Awash, SSL tolerance (BOA), retries, average-table guard, jump guard.
+# v6: complete file — six currencies (USD EUR AED SAR GBP CNY), correct domains,
+#     browser with search-click + iframe reading + table diagnostics (Awash),
+#     SSL tolerance (BOA), retries, average-table guard, jump guard.
 
 import json
 import os
@@ -31,7 +31,7 @@ except Exception:
 ROOT = Path(__file__).resolve().parents[1]
 RATES = ROOT / "data" / "rates.json"
 
-WANT = ("USD", "EUR", "AED", "SAR", "GBP", "CNY")   # currencies the robot collects      # currencies the robot collects
+WANT = ("USD", "EUR", "AED", "SAR", "GBP", "CNY")   # currencies the robot collects
 MAX_JUMP = 0.15            # ignore a fetched value that moved >15% vs stored
 MIN_SPREAD = 0.0008        # real quotes have >=0.08% spread; averages are flat
 
@@ -82,10 +82,26 @@ def match_currency(text):
         return "USD"
     if "EUR" in toks:
         return "EUR"
+    if "GBP" in toks:
+        return "GBP"
+    if "AED" in toks:
+        return "AED"
+    if "SAR" in toks:
+        return "SAR"
+    if "CNY" in toks:
+        return "CNY"
     if "UNITED STATES" in t or ("US DOLLAR" in t and "AUSTRALIAN" not in t):
         return "USD"
     if "EURO" in t and "BOND" not in t:
         return "EUR"
+    if "POUND" in t and "STERLING" in t:
+        return "GBP"
+    if "DIRHAM" in t:
+        return "AED"
+    if "RIYAL" in t:
+        return "SAR"
+    if "YUAN" in t or "RENMINBI" in t:
+        return "CNY"
     return None
 
 
@@ -114,7 +130,7 @@ def number(cell):
 
 
 def plausible(b, s):
-    return bool(b and s and 20 < b < 5000 and 20 < s < 5000
+    return bool(b and s and 0.5 < b < 5000 and 0.5 < s < 5000
                 and b <= s < b * 1.25 and (s - b) / b >= MIN_SPREAD)
 
 
@@ -186,8 +202,7 @@ def parse_cards(html):
     """Fallback for banks that show rates as cards/tickers, not tables.
     Mode A: element mentions a currency AND buy & sell words -> first two numbers.
     Mode B (relaxed): element mentions a currency and EXACTLY two numbers,
-    e.g. CBO's 'USD 160.8053 164.0214' cards — only accepted on exchange pages.
-    Range, spread and jump guards still filter bad matches."""
+    e.g. CBO's 'USD 160.8053 164.0214' cards — only accepted on exchange pages."""
     soup = BeautifulSoup(html, "html.parser")
     page_text = norm(soup.get_text(" ", strip=True))
     exchange_page = "EXCHANGE" in page_text
@@ -206,7 +221,7 @@ def parse_cards(html):
                 v = float(m.replace(",", ""))
             except ValueError:
                 continue
-            if 20 < v < 5000:
+            if 0.5 < v < 5000:
                 nums.append(v)
         if len(nums) < 2:
             continue
@@ -217,7 +232,7 @@ def parse_cards(html):
         if buy > sell:
             buy, sell = sell, buy
         cands.append((len(t), cur, buy, sell, has_bs))
-    cands.sort(key=lambda c: (0 if c[4] else 1, c[0]))   # explicit cards first, then most specific
+    cands.sort(key=lambda c: (0 if c[4] else 1, c[0]))
     out = {}
     for _, cur, b, s, _ in cands:
         if cur in out or not plausible(b, s):
@@ -254,16 +269,16 @@ def short(url):
 # ---------- fetching ----------
 def attempt_static(url):
     last = "failed"
-    for attempt in range(3):                     # retries for flaky sites
+    for attempt in range(3):
         try:
             r = requests.get(url, headers=HEADERS, timeout=30)
             if r.status_code == 200 and len(r.text) > 500:
                 return r.text, None
             last = f"HTTP {r.status_code}"
             if r.status_code == 404:
-                return None, last                # wrong address — don't retry
+                return None, last
         except requests.exceptions.SSLError:
-            try:                                 # tolerate broken certificates (BOA)
+            try:
                 r = requests.get(url, headers=HEADERS, timeout=30, verify=False)
                 if r.status_code == 200 and len(r.text) > 500:
                     return r.text, None
@@ -307,13 +322,13 @@ def attempt_dynamic(url):
             page.goto(url, wait_until="domcontentloaded", timeout=40000)
             page.wait_for_timeout(6000)
             try:
-                page.mouse.wheel(0, 1500)        # nudge lazy-loading content
+                page.mouse.wheel(0, 1500)
                 page.wait_for_timeout(1500)
                 page.mouse.wheel(0, -1500)
                 page.wait_for_timeout(800)
             except Exception:
                 pass
-            try:                                 # date-filter pages: tap Search if present
+            try:
                 btn = page.locator("input[type=submit], button[type=submit], "
                                    "button:has-text('Search'), a:has-text('Search'), "
                                    "button:has-text('Go')").first
@@ -329,7 +344,7 @@ def attempt_dynamic(url):
                 info.append(f"main: {ntab} tables")
             except Exception:
                 pass
-            try:                                 # also read embedded iframes
+            try:
                 for f in page.frames:
                     if f == page.main_frame:
                         continue
@@ -390,7 +405,7 @@ def collect_source(cfg):
             notes.append(f"{short(url)}: HTTP 200 · {n} tables · {'rate words found' if kw else 'no rate words'}")
         else:
             notes.append(f"{short(url)}: {err}")
-                dhtml, derr, dinfo = attempt_dynamic(url)   # browser also fixes SSL/bot issues
+        dhtml, derr, dinfo = attempt_dynamic(url)
         if dhtml:
             got = parse_any(dhtml)
             if got:
@@ -458,7 +473,7 @@ def main():
                 summary.append(f"| {sid} | ✓ {', '.join(kept)} ({via}) |")
             elif not warned:
                 summary.append(f"| {sid} | ⚠ nothing usable — kept previous values |")
-            time.sleep(4)                        # polite pause between banks
+            time.sleep(4)
     finally:
         cleanup()
 
