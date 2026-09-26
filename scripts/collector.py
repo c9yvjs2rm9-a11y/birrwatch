@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Birrwatch robot collector v2 — visits bank rate pages, updates data/rates.json.
+# Birrwatch robot collector v3 — visits bank rate pages, updates data/rates.json.
 #
 # TO FIX OR ADD A BANK:
 #   1. Open the bank's rate page in your browser (numbers visible immediately,
@@ -7,9 +7,8 @@
 #   2. In SOURCES below, paste that address as the FIRST entry in that bank's
 #      "urls" list. Keep quotes and commas exactly as they are.
 #   3. Commit, then run: Actions tab -> collector -> Run workflow.
-# Each failure reports its reason in the run summary:
-#   HTTP 200 + "no rate keywords" = numbers drawn by JavaScript (browser fallback tries this)
-#   HTTP 403 = site blocks robots; HTTP 404/timeout = wrong or dead address.
+# v3: ignores "weighted average" / near-flat reference tables — only real
+#     counter-quote tables (buy/sell with a genuine spread) are accepted.
 
 import json
 import os
@@ -26,6 +25,7 @@ RATES = ROOT / "data" / "rates.json"
 
 WANT = ("USD", "EUR")      # currencies the robot collects
 MAX_JUMP = 0.15            # ignore a fetched value that moved >15% vs stored (parse-error guard)
+MIN_SPREAD = 0.0008        # a real quote table has at least a 0.08% spread; averages are flatter
 
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 HEADERS = {"User-Agent": UA}
@@ -148,6 +148,10 @@ def parse_page(html):
         if not head:
             continue
         hi, bcol, scol = head
+        # guard 1: skip reference tables labelled as averages
+        header_txt = norm(" ".join(rows[hi]) + " " + (" ".join(rows[hi + 1]) if hi + 1 < len(rows) else ""))
+        if "AVERAGE" in header_txt:
+            continue
         out = {}
         for r in rows[hi + 1:]:
             if len(r) <= max(bcol, scol):
@@ -158,13 +162,18 @@ def parse_page(html):
             buy, sell = number(r[bcol]), number(r[scol])
             if buy and sell and 20 < buy < 5000 and 20 < sell < 5000 and buy <= sell < buy * 1.25:
                 out[cur] = (buy, sell)
+        if not out:
+            continue
+        # guard 2: a real quote table has a genuine spread; average tables are nearly flat
+        widest = max((s - b) / b for b, s in out.values())
+        if widest < MIN_SPREAD:
+            continue
         if len(out) > len(best):
             best = out
     return best
 
 
 def diagnose(html):
-    """Why did parsing fail? Count tables and look for rate keywords in the text."""
     soup = BeautifulSoup(html, "html.parser")
     text = soup.get_text(" ", strip=True).upper()
     n = len(soup.find_all("table"))
@@ -239,7 +248,6 @@ def write_summary(text):
 
 
 def collect_source(cfg):
-    """Try every URL: plain fetch first, real browser if numbers aren't in the HTML."""
     got, via, notes = {}, "", []
     for url in cfg["urls"]:
         html, err = attempt_static(url)
