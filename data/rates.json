@@ -1,6 +1,6 @@
 {
  "meta": {
-  "generated_at": "2026-09-29T05:33:33+00:00",
+  "generated_at": "2026-09-29T08:36:29+00:00",
   "version": 1,
   "disclaimer": "Indicative rates collected from published bank rate sheets. Confirm with the bank before transacting."
  },
@@ -23,17 +23,17 @@
   "DBL": {
    "name": "Dashen Bank",
    "type": "bank",
-   "fetched_at": "2026-09-29T05:33:33+00:00"
+   "fetched_at": "2026-09-29T08:36:29+00:00"
   },
   "BOA": {
    "name": "Bank of Abyssinia",
    "type": "bank",
-   "fetched_at": "2026-09-29T05:33:33+00:00"
+   "fetched_at": "2026-09-29T08:36:29+00:00"
   },
   "CBO": {
    "name": "Cooperative Bank of Oromia",
    "type": "bank",
-   "fetched_at": "2026-09-29T05:33:33+00:00"
+   "fetched_at": "2026-09-29T08:36:29+00:00"
   }
  },
  "rates": [
@@ -64,14 +64,14 @@
   {
    "source": "BOA",
    "currency": "USD",
-   "buy": 161.2534,
-   "sell": 164.4785
+   "buy": 161.2584,
+   "sell": 164.4836
   },
   {
    "source": "CBO",
    "currency": "USD",
-   "buy": 160.8153,
-   "sell": 164.0316
+   "buy": 160.8253,
+   "sell": 164.0418
   },
   {
    "source": "DBL",
@@ -82,8 +82,8 @@
   {
    "source": "CBO",
    "currency": "EUR",
-   "buy": 187.2571,
-   "sell": 191.0022
+   "buy": 187.2721,
+   "sell": 191.0175
   },
   {
    "source": "CBE",
@@ -94,8 +94,8 @@
   {
    "source": "BOA",
    "currency": "EUR",
-   "buy": 187.9082,
-   "sell": 191.6664
+   "buy": 187.9132,
+   "sell": 191.6715
   },
   {
    "source": "DBL",
@@ -136,8 +136,8 @@
   {
    "source": "BOA",
    "currency": "GBP",
-   "buy": 215.3587,
-   "sell": 219.6659
+   "buy": 215.3637,
+   "sell": 219.671
   },
   {
    "source": "BOA",
@@ -148,20 +148,20 @@
   {
    "source": "CBO",
    "currency": "AED",
-   "buy": 46.239,
-   "sell": 47.1638
+   "buy": 46.254,
+   "sell": 47.1791
   },
   {
    "source": "CBO",
    "currency": "SAR",
-   "buy": 45.2628,
-   "sell": 46.1681
+   "buy": 45.2878,
+   "sell": 46.1936
   },
   {
    "source": "CBO",
    "currency": "GBP",
-   "buy": 213.1422,
-   "sell": 217.405
+   "buy": 213.1572,
+   "sell": 217.4203
   },
   {
    "source": "CBO",
