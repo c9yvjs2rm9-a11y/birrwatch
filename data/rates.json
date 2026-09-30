@@ -1,6 +1,6 @@
 {
  "meta": {
-  "generated_at": "2026-09-30T08:37:33+00:00",
+  "generated_at": "2026-09-30T11:32:49+00:00",
   "version": 1,
   "disclaimer": "Indicative rates collected from published bank rate sheets. Confirm with the bank before transacting."
  },
@@ -13,7 +13,7 @@
   "CBE": {
    "name": "Commercial Bank of Ethiopia",
    "type": "bank",
-   "fetched_at": "2026-09-30T08:37:33+00:00"
+   "fetched_at": "2026-09-30T11:32:49+00:00"
   },
   "AWB": {
    "name": "Awash Bank",
@@ -23,17 +23,17 @@
   "DBL": {
    "name": "Dashen Bank",
    "type": "bank",
-   "fetched_at": "2026-09-30T08:37:33+00:00"
+   "fetched_at": "2026-09-30T11:32:49+00:00"
   },
   "BOA": {
    "name": "Bank of Abyssinia",
    "type": "bank",
-   "fetched_at": "2026-09-30T08:37:33+00:00"
+   "fetched_at": "2026-09-30T11:32:49+00:00"
   },
   "CBO": {
    "name": "Cooperative Bank of Oromia",
    "type": "bank",
-   "fetched_at": "2026-09-30T08:37:33+00:00"
+   "fetched_at": "2026-09-30T11:32:49+00:00"
   }
  },
  "rates": [
