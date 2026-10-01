@@ -1,15 +1,10 @@
 #!/usr/bin/env python3
-# Birrwatch robot collector v6 — visits bank rate pages, updates data/rates.json.
+# Birrwatch robot collector v7 — banks + indicative USDT/ETB P2P reference.
 #
-# TO FIX OR ADD A BANK:
-#   1. Open the bank's rate page in your browser (numbers visible immediately,
-#      without clicking anything) and copy its address.
-#   2. In SOURCES below, paste that address as the FIRST entry in that bank's
-#      "urls" list. Keep quotes and commas exactly as they are.
-#   3. Commit, then run: Actions tab -> collector -> Run workflow.
-# v6: complete file — six currencies (USD EUR AED SAR GBP CNY), correct domains,
-#     browser with search-click + iframe reading + table diagnostics (Awash),
-#     SSL tolerance (BOA), retries, average-table guard, jump guard.
+# TO FIX OR ADD A BANK: see SOURCES below. Commit, then Actions -> Run workflow.
+# v7 adds: USDT/ETB parallel reference from public P2P books (Binance -> KuCoin
+# -> Bybit). Stored as source "P2P" (type "market") — never mixes with bank
+# averages. If all P2P endpoints fail, it is skipped and can be entered by hand.
 
 import json
 import os
@@ -31,7 +26,7 @@ except Exception:
 ROOT = Path(__file__).resolve().parents[1]
 RATES = ROOT / "data" / "rates.json"
 
-WANT = ("USD", "EUR", "AED", "SAR", "GBP", "CNY")   # currencies the robot collects
+WANT = ("USD", "EUR", "AED", "SAR", "GBP", "CNY")   # currencies collected from banks
 MAX_JUMP = 0.15            # ignore a fetched value that moved >15% vs stored
 MIN_SPREAD = 0.0008        # real quotes have >=0.08% spread; averages are flat
 
@@ -64,7 +59,7 @@ SOURCES = {
     ]},
 }
 
-# ---------- parsing ----------
+# ---------- parsing (banks) ----------
 NUM = re.compile(r"\d[\d,]*(?:\.\d+)?")
 BUY_W = ("BUY", "BUYING", "BID", "PURCHAS")
 SELL_W = ("SELL", "SELLING", "OFFER", "ASK", "SOLD")
@@ -78,19 +73,10 @@ def norm(s):
 def match_currency(text):
     t = norm(text)
     toks = set(t.split())
-    if "USD" in toks:
-        return "USD"
-    if "EUR" in toks:
-        return "EUR"
-    if "GBP" in toks:
-        return "GBP"
-    if "AED" in toks:
-        return "AED"
-    if "SAR" in toks:
-        return "SAR"
-    if "CNY" in toks:
-        return "CNY"
-    if "UNITED STATES" in t or ("US DOLLAR" in t and "AUSTRALIAN" not in t):
+    for code in ("USD", "EUR", "GBP", "AED", "SAR", "CNY"):
+        if code in toks:
+            return code
+    if "UNITED STATES" in t or "US DOLLAR" in t:
         return "USD"
     if "EURO" in t and "BOND" not in t:
         return "EUR"
@@ -199,10 +185,6 @@ def parse_page(html):
 
 
 def parse_cards(html):
-    """Fallback for banks that show rates as cards/tickers, not tables.
-    Mode A: element mentions a currency AND buy & sell words -> first two numbers.
-    Mode B (relaxed): element mentions a currency and EXACTLY two numbers,
-    e.g. CBO's 'USD 160.8053 164.0214' cards — only accepted on exchange pages."""
     soup = BeautifulSoup(html, "html.parser")
     page_text = norm(soup.get_text(" ", strip=True))
     exchange_page = "EXCHANGE" in page_text
@@ -266,7 +248,121 @@ def short(url):
     return re.sub(r"^https?://(www\.)?", "", url).rstrip("/")[:34]
 
 
-# ---------- fetching ----------
+# ---------- USDT/ETB P2P reference ----------
+def fetch_json(url, payload=None):
+    try:
+        h = {**HEADERS, "Accept": "application/json"}
+        if payload is None:
+            r = requests.get(url, headers=h, timeout=25)
+        else:
+            h["Content-Type"] = "application/json"
+            r = requests.post(url, headers=h, data=json.dumps(payload), timeout=25)
+        if r.status_code == 200:
+            return r.json(), None
+        return None, f"HTTP {r.status_code}"
+    except Exception as e:
+        return None, type(e).__name__
+
+
+def median(vals):
+    v = sorted(vals)
+    n = len(v)
+    return v[n // 2] if n % 2 else (v[n // 2 - 1] + v[n // 2]) / 2
+
+
+def p2p_prices(doc, side_key, price_path):
+    out = []
+    for item in (doc.get("data") or [])[:10]:
+        try:
+            node = item
+            for k in price_path:
+                node = node[k]
+            p = float(str(node).replace(",", ""))
+            if 20 < p < 5000:
+                out.append(p)
+        except (KeyError, TypeError, ValueError, IndexError):
+            continue
+    return out
+
+
+def p2p_binance(notes):
+    """BUY-ads = market buys your USDT (our 'buy'); SELL-ads = market sells to you ('sell')."""
+    sides = {}
+    for side in ("BUY", "SELL"):
+        doc, err = fetch_json(
+            "https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search",
+            {"page": 1, "rows": 10, "asset": "USDT", "fiat": "ETB",
+             "tradeType": side, "payTypes": [], "publisherType": None})
+        if doc is None:
+            notes.append(f"binance {side}: {err}")
+            return None
+        prices = p2p_prices(doc, side, ["adv", "price"])
+        if len(prices) < 3:
+            notes.append(f"binance {side}: thin book")
+            return None
+        sides[side] = median(prices)
+    return sides["BUY"], sides["SELL"], "binance"
+
+
+def p2p_kucoin(notes):
+    sides = {}
+    for side in ("BUY", "SELL"):
+        doc, err = fetch_json(
+            f"https://www.kucoin.com/_api/otc/ad/list?currency=USDT&legalCurrency=ETB&page=1&pageSize=10&side={side}&status=PUTUP")
+        if doc is None:
+            notes.append(f"kucoin {side}: {err}")
+            return None
+        prices = []
+        for item in (((doc.get("data") or {}).get("list")) or [])[:10]:
+            try:
+                p = float(str(item.get("price")).replace(",", ""))
+                if 20 < p < 5000:
+                    prices.append(p)
+            except (TypeError, ValueError):
+                continue
+        if len(prices) < 3:
+            notes.append(f"kucoin {side}: thin book")
+            return None
+        sides[side] = median(prices)
+    return sides["BUY"], sides["SELL"], "kucoin"
+
+
+def p2p_bybit(notes):
+    """Single-side fallback: derive an indicative 0.3% spread around the median."""
+    doc, err = fetch_json(
+        "https://api2.bybit.com/fiat/otc/item/online",
+        {"tokenId": "USDT", "currency": "ETB", "side": "1", "page": "", "size": "10"})
+    if doc is None:
+        notes.append(f"bybit: {err}")
+        return None
+    prices = []
+    for item in (((doc.get("result") or {}).get("item")) or [])[:10]:
+        try:
+            p = float(str(item.get("price")).replace(",", ""))
+            if 20 < p < 5000:
+                prices.append(p)
+        except (TypeError, ValueError):
+            continue
+    if len(prices) < 3:
+        notes.append("bybit: thin book")
+        return None
+    m = median(prices)
+    return m * 0.997, m * 1.003, "bybit (indicative spread)"
+
+
+def fetch_p2p():
+    notes = []
+    for fn in (p2p_binance, p2p_kucoin, p2p_bybit):
+        got = fn(notes)
+        if got:
+            buy, sell, src = got
+            if buy > sell:
+                buy, sell = sell, buy
+            return buy, sell, src, notes
+    return None, None, None, notes
+
+
+# ---------- fetching (banks) ----------
 def attempt_static(url):
     last = "failed"
     for attempt in range(3):
@@ -416,6 +512,24 @@ def collect_source(cfg):
     return got, via, notes
 
 
+def apply_quote(quotes, rates, sid, cur, buy, sell, now):
+    prev = quotes.get((sid, cur))
+    if prev and prev.get("buy"):
+        try:
+            if abs(buy / float(prev["buy"]) - 1) > MAX_JUMP:
+                return f"⚠ {cur} skipped — fetched {buy:g} vs stored {prev['buy']} (>15% jump)"
+        except (TypeError, ZeroDivisionError):
+            pass
+    q = quotes.get((sid, cur))
+    if q:
+        q["buy"], q["sell"] = buy, sell
+    else:
+        row = {"source": sid, "currency": cur, "buy": buy, "sell": sell}
+        rates.append(row)
+        quotes[(sid, cur)] = row
+    return f"✓ {cur} {buy:g}/{sell:g}"
+
+
 def main():
     if not RATES.exists():
         print("data/rates.json not found — nothing to update.")
@@ -448,23 +562,12 @@ def main():
                 if cur not in got:
                     continue
                 buy, sell = got[cur]
-                prev = quotes.get((sid, cur))
-                if prev and prev.get("buy"):
-                    try:
-                        if abs(buy / float(prev["buy"]) - 1) > MAX_JUMP:
-                            summary.append(f"| {sid} | ⚠ {cur} skipped — fetched {buy} vs stored {prev['buy']} (>15% jump, likely misread) |")
-                            warned = True
-                            continue
-                    except (TypeError, ZeroDivisionError):
-                        pass
-                q = quotes.get((sid, cur))
-                if q:
-                    q["buy"], q["sell"] = buy, sell
+                res = apply_quote(quotes, rates, sid, cur, buy, sell, now)
+                if res.startswith("⚠"):
+                    summary.append(f"| {sid} | {res} |")
+                    warned = True
                 else:
-                    row = {"source": sid, "currency": cur, "buy": buy, "sell": sell}
-                    rates.append(row)
-                    quotes[(sid, cur)] = row
-                kept.append(f"{cur} {buy:g}/{sell:g}")
+                    kept.append(res[2:])
             if kept:
                 applied_any = True
                 s = sources.setdefault(sid, {"name": cfg["name"], "type": cfg["type"]})
@@ -474,11 +577,25 @@ def main():
             elif not warned:
                 summary.append(f"| {sid} | ⚠ nothing usable — kept previous values |")
             time.sleep(4)
+
+        # ---- USDT/ETB parallel reference (market source, separate from banks) ----
+        buy, sell, src, pnotes = fetch_p2p()
+        if buy and sell:
+            res = apply_quote(quotes, rates, "P2P", "USDT", round(buy, 2), round(sell, 2), now)
+            if res.startswith("⚠"):
+                summary.append(f"| P2P | {res} |")
+            else:
+                applied_any = True
+                sources["P2P"] = {"name": "USDT/ETB — P2P market (indicative)",
+                                  "type": "market", "fetched_at": now}
+                summary.append(f"| P2P | ✓ USDT {buy:.2f}/{sell:.2f} ({src}) |")
+        else:
+            summary.append("| P2P | ✗ " + "; ".join(pnotes) + " — enter by hand if needed |")
     finally:
         cleanup()
 
     if not applied_any:
-        text = ("## Robot collection — FAILED\n\nNo bank could be read. rates.json was not changed.\n\n"
+        text = ("## Robot collection — FAILED\n\nNo source could be read. rates.json was not changed.\n\n"
                 "| Source | Result |\n|---|---|\n" + "\n".join(summary))
         print(text)
         write_summary(text)
@@ -488,7 +605,7 @@ def main():
     RATES.write_text(json.dumps(doc, indent=1) + "\n", encoding="utf-8")
 
     ok = sum(1 for line in summary if line.startswith("| ") and "✓" in line)
-    text = (f"## Robot collection — {ok}/{len(SOURCES)} banks updated\n\n"
+    text = (f"## Robot collection — {ok} sources updated\n\n"
             "| Source | Result |\n|---|---|\n" + "\n".join(summary))
     print(text)
     write_summary(text)
