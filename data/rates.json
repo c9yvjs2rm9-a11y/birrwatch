@@ -1,6 +1,6 @@
 {
  "meta": {
-  "generated_at": "2026-10-01T05:34:35+00:00",
+  "generated_at": "2026-10-01T08:38:10+00:00",
   "version": 1,
   "disclaimer": "Indicative rates collected from published bank rate sheets. Confirm with the bank before transacting."
  },
@@ -13,7 +13,7 @@
   "CBE": {
    "name": "Commercial Bank of Ethiopia",
    "type": "bank",
-   "fetched_at": "2026-10-01T05:34:35+00:00"
+   "fetched_at": "2026-10-01T08:38:10+00:00"
   },
   "AWB": {
    "name": "Awash Bank",
@@ -23,17 +23,17 @@
   "DBL": {
    "name": "Dashen Bank",
    "type": "bank",
-   "fetched_at": "2026-10-01T05:34:35+00:00"
+   "fetched_at": "2026-10-01T08:38:10+00:00"
   },
   "BOA": {
    "name": "Bank of Abyssinia",
    "type": "bank",
-   "fetched_at": "2026-10-01T05:34:35+00:00"
+   "fetched_at": "2026-10-01T08:38:10+00:00"
   },
   "CBO": {
    "name": "Cooperative Bank of Oromia",
    "type": "bank",
-   "fetched_at": "2026-10-01T05:34:35+00:00"
+   "fetched_at": "2026-10-01T08:38:10+00:00"
   }
  },
  "rates": [
@@ -58,20 +58,20 @@
   {
    "source": "DBL",
    "currency": "USD",
-   "buy": 160.8227,
-   "sell": 164.0392
+   "buy": 160.8277,
+   "sell": 164.0443
   },
   {
    "source": "BOA",
    "currency": "USD",
-   "buy": 161.2634,
-   "sell": 164.4887
+   "buy": 161.2779,
+   "sell": 164.5035
   },
   {
    "source": "CBO",
    "currency": "USD",
-   "buy": 160.8303,
-   "sell": 164.0469
+   "buy": 160.8353,
+   "sell": 164.052
   },
   {
    "source": "DBL",
@@ -94,8 +94,8 @@
   {
    "source": "BOA",
    "currency": "EUR",
-   "buy": 187.9182,
-   "sell": 191.6766
+   "buy": 187.9382,
+   "sell": 191.697
   },
   {
    "source": "DBL",
@@ -118,8 +118,8 @@
   {
    "source": "DBL",
    "currency": "CNY",
-   "buy": 22.3123,
-   "sell": 22.7585
+   "buy": 22.313,
+   "sell": 22.7593
   },
   {
    "source": "BOA",
@@ -136,8 +136,8 @@
   {
    "source": "BOA",
    "currency": "GBP",
-   "buy": 215.3687,
-   "sell": 219.6761
+   "buy": 215.3923,
+   "sell": 219.7001
   },
   {
    "source": "BOA",
