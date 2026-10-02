@@ -53,7 +53,6 @@ svg{display:block}
 .live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);position:relative;flex-shrink:0}
 .live-dot::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:1px solid var(--green);animation:pl 2.2s ease-out infinite}
 @keyframes pl{0%{transform:scale(.4);opacity:.9}100%{transform:scale(1.3);opacity:0}}
-/* ===== phone/tablet: menu wraps into its own rows, nothing cut off ===== */
 @media(max-width:1024px){
   .hdr-in{flex-wrap:wrap;height:auto;padding:10px 16px 0;row-gap:0}
   .hdr-in .nav{order:3;flex:1 1 100%;width:100%;flex-wrap:wrap;padding-bottom:8px;overflow:visible}
@@ -276,7 +275,6 @@ footer{background:var(--ink);color:var(--paper);padding:64px 0 36px;margin-top:2
 .f-err{color:var(--red);font-size:12px;margin:7px 0 0}
 .modal .btn{width:100%;margin-top:16px;padding:12px}
 .f-note-c{font-size:11px;color:var(--muted);text-align:center;margin-top:13px}
-/* ===== phone: tables fit the screen, secondary columns hidden ===== */
 @media(max-width:760px){
   #rateTable{min-width:0!important}
   #rateTable th:nth-child(1),#rateTable td:nth-child(1),
@@ -349,6 +347,8 @@ footer{background:var(--ink);color:var(--paper);padding:64px 0 36px;margin-top:2
   </div>
 
   <div class="street-band" id="bestBand"></div>
+
+  <div class="panel" id="p2pCard" style="margin-top:26px"></div>
 
   <div class="block-head">
     <div><span class="kicker">01 — All banks</span><h2>Bank comparison</h2></div>
@@ -540,6 +540,7 @@ footer{background:var(--ink);color:var(--paper);padding:64px 0 36px;margin-top:2
   <h2 style="margin-top:56px">Questions, answered</h2>
   <div class="faq" id="faq">
     <div class="faq-item"><button class="faq-q">Where does the rate data come from?<span class="f-chev"></span></button><div class="faq-a"><div><p>We aggregate the published daily rate sheets of Ethiopia's commercial banks and NBE-licensed FX bureaus, and cross-check against the National Bank of Ethiopia's official reference rate. Observer accounts see end-of-day figures; Professional accounts see updates the moment a bank publishes.</p></div></div></div>
+    <div class="faq-item"><button class="faq-q">What is the USDT/ETB parallel reference?<span class="f-chev"></span></button><div class="faq-a"><div><p>An indicative midpoint aggregated from public peer-to-peer market listings, where USDT (a dollar proxy) trades against birr. It reflects the parallel market, not bank or NBE pricing — it is shown for reference only, is not an offer to trade, and no guarantee exists that any counterparty is available at that price.</p></div></div></div>
     <div class="faq-item"><button class="faq-q">Buy rate or sell rate — which one applies to me?<span class="f-chev"></span></button><div class="faq-a"><div><p>If you're handing dollars to a bank and receiving birr, look at the bank's <b>buy</b> rate — higher is better for you. If you're paying birr to receive dollars, look at the <b>sell</b> rate — lower is better. The comparison table's toggle flips the highlight to the column you care about.</p></div></div></div>
     <div class="faq-item"><button class="faq-q">Why not just check my bank's app?<span class="f-chev"></span></button><div class="faq-a"><div><p>Because your bank quotes one rate and every other bank quotes a different one. Spreads between the best and worst bank can exceed 1 ETB per dollar — on a $10,000 transfer that's real money lost to the wrong counter.</p></div></div></div>
     <div class="faq-item"><button class="faq-q">Can I pay in birr?<span class="f-chev"></span></button><div class="faq-a"><div><p>Yes — Telebirr, Chapa, and cards are all accepted. Prices are set in birr on purpose; we don't think an Ethiopian rate service should bill you in someone else's currency.</p></div></div></div>
@@ -564,7 +565,7 @@ footer{background:var(--ink);color:var(--paper);padding:64px 0 36px;margin-top:2
       </div>
     </div>
     <div class="f-bottom">
-      <b>Birrwatch</b> is an independent exchange-rate tracker for Ethiopia. Rates are collected from published bank rate sheets — indicative only, not financial advice. Confirm with your bank or bureau before transacting.<br>© 2025 Birrwatch · Made in Addis Ababa · <span style="font-family:'Noto Sans Ethiopic'">አዲስ አበባ</span>
+      <b>Birrwatch</b> is an independent exchange-rate tracker for Ethiopia. Bank rates are collected from published rate sheets; the USDT/ETB card is an indicative parallel-market reference from public P2P listings — not a bank or NBE rate and not an offer to trade. Confirm with your bank or bureau before transacting.<br>© 2025 Birrwatch · Made in Addis Ababa · <span style="font-family:'Noto Sans Ethiopic'">አዲስ አበባ</span>
     </div>
   </div>
 </footer>
@@ -624,6 +625,7 @@ const CURRENCIES=[
  {code:'CNY',name:'Chinese Yuan',per:1,anchor:21.79,vol:.0016,drift:.00030,seed:83,peg:.13858},
  {code:'JPY',name:'Japanese Yen (per 100)',per:100,anchor:106.42,vol:.0046,drift:.00078,seed:97},
  {code:'KES',name:'Kenyan Shilling',per:1,anchor:1.2186,vol:.0030,drift:.00022,seed:103},
+ {code:'USDT',name:'Tether — P2P parallel reference',per:1,anchor:171.50,vol:.0050,drift:.00090,seed:113},
 ];
 const CUR=Object.fromEntries(CURRENCIES.map(c=>[c.code,c]));
 const decOf=c=>c==='KES'?4:2;
@@ -672,14 +674,16 @@ const live={mid:{},off:{}};
 
 const srcKey=(b,c)=>b+'|'+c;
 const histReal=()=>DATA.mode!=='live'||DATA.histReal;
-const hasData=c=>DATA.mode!=='live'||BANKS.some(b=>bankRates(b,c));
+const hasData=c=>DATA.mode!=='live'||BANKS.some(b=>bankRates(b,c))||!!DATA.quotes['P2P|'+c];
 function storeQuote(id,code){return DATA.quotes[srcKey(id,code)]||null}
 function per(code){return CUR[code]?CUR[code].per:1}
 function etbPerUnit(code){return code==='ETB'?1:live.mid[code]/per(code)}
 function offPerUnit(code){return code==='ETB'?1:(live.off[code]||live.mid[code]*.9955)/per(code)}
 function nameOf(code){return code==='ETB'?'Ethiopian Birr':CUR[code].name}
+function p2pQuote(){return DATA.mode==='live'?storeQuote('P2P','USDT'):demoQuote('P2P','USDT')}
 
 function demoQuote(id,code){
+  if(id==='P2P'&&code==='USDT'){const m=live.mid.USDT;return{buy:m*0.996,sell:m*1.004,spread:m*0.008}}
   const b=BANK[id],u=BUREAU[id],mid=live.mid[code],scale=mid/live.mid.USD;
   if(b){const half=b.spread*scale/2;let buy=mid-half+b.bias*half*.55,sell=mid+half+b.bias*half*.22;
     if(sell-buy<half*.8)sell=buy+half*.8;return{buy,sell,spread:sell-buy}}
@@ -703,15 +707,17 @@ function okCount(){const ids=Object.keys(DATA.sources);return ids.filter(id=>!is
 function avgMid(code){let n=0,t=0;for(const b of BANKS){const r=bankRates(b,code);if(r){n++;t+=(r.buy+r.sell)/2}}return n?t/n:live.mid[code]}
 
 function recomputeMids(){
-  const sums={},official={};
+  const sums={},official={},market={};
   for(const r of DATA.rates){
     const s=DATA.sources[r.source];if(!s)continue;
     const mid=(+r.buy + +r.sell)/2;
     if(s.type==='official')official[r.currency]=mid;
+    else if(s.type==='market')market[r.currency]=mid;
     else if(s.type==='bank'){(sums[r.currency]??={n:0,t:0});sums[r.currency].n++;sums[r.currency].t+=mid}
   }
   for(const c of CURRENCIES){
-    live.mid[c.code]=sums[c.code]?sums[c.code].t/sums[c.code].n:(H[c.code]?H[c.code][H[c.code].length-1]:c.anchor);
+    live.mid[c.code]=sums[c.code]?sums[c.code].t/sums[c.code].n:
+      (market[c.code]!=null?market[c.code]:(H[c.code]?H[c.code][H[c.code].length-1]:c.anchor));
     live.off[c.code]=official[c.code]||live.mid[c.code]*.9955;
   }
 }
@@ -895,6 +901,27 @@ function renderBestBand(){
    <div class="street-item"><span class="s-label">Tightest spread</span><span class="s-bank">${t?t.b.name:'—'}</span><span class="s-rate">${t?fmt(t.r.spread,2):'—'} <small>ETB</small></span></div>
    <div class="s-note">Cash & electronic rates from the published sheets of ${nb} bank${nb===1?'':'s'} — more banks join as their sheets are added.</div>`;
 }
+function renderP2P(){
+  const el=$('#p2pCard');if(!el)return;
+  const q=p2pQuote();
+  if(!q){
+    el.innerHTML=`<div class="chart-head"><span class="kicker">Parallel market reference · USDT/ETB</span><span class="range-hint">indicative</span></div>
+    <p class="hint" style="margin:8px 0 4px">USDT/ETB is not collected yet — the robot adds it when P2P sources respond. Bank and NBE rates are unaffected.</p>`;
+    return;
+  }
+  const mid=(q.buy+q.sell)/2, bank=avgMid('USD');
+  const prem=bank?(mid/bank-1):null;
+  const ts=DATA.mode==='live'?sourceUpdated('P2P'):Date.now();
+  el.innerHTML=`
+   <div class="chart-head"><span class="kicker">Parallel market reference · USDT/ETB</span><span class="range-hint">indicative — P2P market, not bank or NBE</span></div>
+   <div class="bd-figures" style="border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:10px 0 0;padding:14px 0">
+     <div><span class="s-label">Mid</span><span class="big-num">${fmt(mid,2)}</span><span class="mini">ETB per 1 USDT</span></div>
+     <div><span class="s-label">Buy / Sell</span><span class="big-num" style="font-size:19px;padding-top:6px">${fmt(q.buy,2)} / ${fmt(q.sell,2)}</span><span class="mini">median of top listings</span></div>
+     <div><span class="s-label">vs bank USD</span><span class="big-num ${prem!=null&&prem>=0?'up':'down'}" style="font-size:19px;padding-top:6px">${prem!=null?(prem>=0?'+':'−')+Math.abs(prem*100).toFixed(1)+'%':'—'}</span><span class="mini">parallel premium</span></div>
+     <div><span class="s-label">Updated</span><span class="big-num" style="font-size:17px;padding-top:8px">${ago(ts)}</span><span class="mini">public P2P order books</span></div>
+   </div>
+   <p class="mini" style="margin-top:10px">Aggregated from public peer-to-peer listings and shown for reference only — not a bank or NBE rate, not an offer to trade, and no guarantee any counterparty is available at this price.</p>`;
+}
 function renderChips(){
   const mk=()=>CURRENCIES.map(c=>{const ok=hasData(c.code);
     return `<button class="chip ${c.code===S.today.cur?'on':''}" data-cur="${c.code}" title="${c.name}"${ok?'':' style="opacity:.35"'}>${c.code}</button>`}).join('');
@@ -903,6 +930,7 @@ function renderChips(){
 }
 function renderDirHint(){
   const cur=S.today.cur;
+  if(cur==='USDT'){$('#dirHint').innerHTML='USDT/ETB is a parallel-market reference from P2P sources (card above) — banks do not quote USDT.';return}
   if(S.today.dir==='buy'){
     const b=bestBuy(cur);
     $('#dirHint').innerHTML=b?`Selling <b>${cur}</b>? A higher <b>buy</b> rate gets you more birr. Best today: <b>${b.b.name}</b> — ${fmt(b.r.buy,decOf(cur))} ETB.`:`No ${cur} buy quotes published yet.`;
@@ -913,6 +941,22 @@ function renderDirHint(){
 }
 function renderTodayTable(){
   const cur=S.today.cur,q=S.today.q.trim().toLowerCase(),d=decOf(cur);
+  if(cur==='USDT'){
+    const qp=p2pQuote(),ch=histReal()?curChg('USDT',1):null;
+    $('#rateBody').innerHTML=qp?`<tr>
+      <td class="c-idx">01</td>
+      <td><span class="c-bank"><span class="mono-badge">P2</span><span class="b-txt"><b>P2P market — parallel reference</b><i>indicative · not a bank or NBE quote</i></span></span></td>
+      <td class="num hl">${fmt(qp.buy,d)}</td>
+      <td class="num">${fmt(qp.sell,d)}</td>
+      <td class="num">${fmt(qp.sell-qp.buy,d)}</td>
+      <td class="num${ch!=null?' '+cls(ch):''}">${ch!=null?fmtPct(ch):'—'}</td>
+      <td class="c-spark"><canvas class="sparkcv" data-b="__P2P__"></canvas></td>
+      <td class="c-upd">${ago(DATA.mode==='live'?sourceUpdated('P2P'):Date.now())}</td></tr>`
+      :`<tr><td colspan="8" style="color:var(--muted);padding:18px">USDT/ETB not collected yet — the reference appears when P2P data arrives.</td></tr>`;
+    $$('#rateBody .sparkcv').forEach(cv=>drawSpark(cv,(H.USDT||[]).slice(-60)));
+    $$('#rateTable th[data-key]').forEach(th=>th.classList.remove('sorted','asc'));
+    return;
+  }
   let rows=BANKS.filter(b=>!q||b.name.toLowerCase().includes(q)||b.c.toLowerCase().includes(q));
   const {key,dir}=S.today.sort;
   const val={bank:b=>b.name,buy:b=>{const r=bankRates(b,cur);return r?r.buy:null},sell:b=>{const r=bankRates(b,cur);return r?r.sell:null},spread:b=>{const r=bankRates(b,cur);return r?r.spread:null},chg:b=>bankChg(b,cur),upd:b=>sourceUpdated(b.c)};
@@ -938,7 +982,7 @@ function renderTodayTable(){
     :'Illustrative dataset for demonstration — figures are simulated, not live market quotes. Bank "buys" = the rate at which the bank purchases foreign cash/FX from you.';
 }
 function renderToday(){
-  safe(renderChips,'chips');safe(renderHero,'hero');safe(renderBestBand,'band');safe(renderDirHint,'hint');safe(renderTodayTable,'table');
+  safe(renderChips,'chips');safe(renderHero,'hero');safe(renderBestBand,'band');safe(renderP2P,'p2p');safe(renderDirHint,'hint');safe(renderTodayTable,'table');
   const n=Math.min(90,H.USD?H.USD.length:0);
   if(n>1){
     const arr=H.USD.slice(-n);
@@ -980,7 +1024,7 @@ function renderTrends(){
   $('#trendBody').innerHTML=list.map(c=>{
     const d1=curChg(c.code,1),d30=curChg(c.code,30);
     return `<tr data-code="${c.code}" class="${c.code===S.trends.cur?'sel':''}">
-      <td><span class="p-pair">${c.code} / ETB</span><i class="sub">${c.name}</i></td>
+      <td><span class="p-pair">${c.code} / ETB</span><i class="sub">${c.code==='USDT'?'P2P parallel reference':c.name}</i></td>
       <td class="num">${fmt(live.mid[c.code],decOf(c.code))}</td>
       <td class="num${histReal()?' '+cls(d1):''}">${histReal()?fmtPct(d1):'—'}</td>
       <td class="num${histReal()?' '+cls(d30):''}">${histReal()?fmtPct(d30):'—'}</td>
@@ -1060,7 +1104,7 @@ function renderPairs(){
   $('#pairsBody').innerHTML=CURRENCIES.map(c=>{
     const bb=bestBuy(c.code),bs=bestSell(c.code),d30=curChg(c.code,30),d=decOf(c.code);
     return `<tr data-code="${c.code}">
-      <td><span class="p-pair">${c.code} / ETB</span><i class="sub">${c.name}</i></td>
+      <td><span class="p-pair">${c.code} / ETB</span><i class="sub">${c.code==='USDT'?'P2P parallel market — not quoted by banks':c.name}</i></td>
       <td class="num">${fmt(live.mid[c.code],d)}</td>
       <td class="num">${bb?fmt(bb.r.buy,d)+' <i class="sub">'+bb.b.c+'</i>':'—'}</td>
       <td class="num">${bs?fmt(bs.r.sell,d)+' <i class="sub">'+bs.b.c+'</i>':'—'}</td>
@@ -1075,7 +1119,8 @@ function convRate(from,to,mode){
     if(to==='ETB'){const b=bestBuy(from);if(b)return{rate:b.r.buy/per(from),src:b.b.name+' — bank buy'}}
     if(from==='ETB'){const b=bestSell(to);if(b)return{rate:per(to)/b.r.sell,src:b.b.name+' — bank sell'}}
   }
-  return{rate:etbPerUnit(from)/etbPerUnit(to),src:'Market average of banks'};
+  const usdt=from==='USDT'||to==='USDT';
+  return{rate:etbPerUnit(from)/etbPerUnit(to),src:usdt?'P2P market reference (indicative)':'Market average of banks'};
 }
 function updateConverter(){
   const {from,to,mode}=S.conv;
