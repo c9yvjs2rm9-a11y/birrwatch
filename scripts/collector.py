@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
-# Birrwatch robot collector v8 — banks + parallel USDT/ETB reference.
+# Birrwatch robot collector v9 — 32 banks + FX bureaus + parallel USDT/ETB.
 #
-# TO FIX OR ADD A BANK: see SOURCES below. Commit, then Actions -> Run workflow.
-# v8 parallel sources, in order:
-#   1. ebr.exchange  — static fetch, embedded __NEXT_DATA__, real-browser run
-#                      WITH network capture (reads the site's own JSON traffic)
-#   2. Binance P2P   3. KuCoin P2P   4. Bybit (indicative spread)
-# Stored as source "P2P" (type "market") — never mixes with bank averages.
+# TO FIX A FAILING SOURCE: open its rate page in your browser (numbers visible
+# immediately, no clicking), copy the address, paste it as the FIRST url in
+# that source's list. Commit, then Actions -> Run workflow.
+# NOTE: URLs marked "# guess" are best-effort starting points — failures are
+# normal and self-reported in the run summary.
+# v9 adds: 27 new banks, 6 FX bureaus (incl. Google-Sheets CSV for Taypay),
+# keeping: ebr.exchange parallel source, P2P fallbacks, browser w/ network
+# capture, SSL tolerance, retries, average-table guard, jump guard.
 
+import csv
+import io
 import json
 import os
 import re
@@ -28,9 +32,9 @@ except Exception:
 ROOT = Path(__file__).resolve().parents[1]
 RATES = ROOT / "data" / "rates.json"
 
-WANT = ("USD", "EUR", "AED", "SAR", "GBP", "CNY")   # currencies collected from banks
-MAX_JUMP = 0.15            # ignore a fetched value that moved >15% vs stored
-MIN_SPREAD = 0.0008        # real quotes have >=0.08% spread; averages are flat
+WANT = ("USD", "EUR", "AED", "SAR", "GBP", "CNY")   # currencies collected
+MAX_JUMP = 0.15
+MIN_SPREAD = 0.0008
 
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 HEADERS = {"User-Agent": UA}
@@ -38,14 +42,13 @@ HEADERS = {"User-Agent": UA}
 EBR_URL = "https://ebr.exchange/"
 
 SOURCES = {
+    # ---------- proven banks ----------
     "CBE": {"name": "Commercial Bank of Ethiopia", "type": "bank", "urls": [
         "https://combanketh.et/exchange-rates?srcPage=home",
-        "https://combanketh.et/exchange-rates/",
         "https://combanketh.et/",
     ]},
     "AWB": {"name": "Awash Bank", "type": "bank", "urls": [
         "https://awashbank.com/exchange-historical/",
-        "https://www.awashbank.com/exchange-historical/",
         "https://www.awashbank.com/",
     ]},
     "DBL": {"name": "Dashen Bank", "type": "bank", "urls": [
@@ -59,11 +62,141 @@ SOURCES = {
     "CBO": {"name": "Cooperative Bank of Oromia", "type": "bank", "urls": [
         "https://coopbankoromia.com.et/",
         "https://coopbankoromia.com.et/exchange-rate/",
-        "https://www.coopbankoromia.com.et/",
     ]},
+    # ---------- new banks (urls are best guesses — verify via failures) ----------
+    "ORB": {"name": "Oromia Bank", "type": "bank", "urls": [
+        "https://oromiabank.com/exchange-rate/",
+        "https://oromiabank.com/",
+    ]},
+    "ABY": {"name": "Abay Bank", "type": "bank", "urls": [
+        "https://abaybank.com.et/exchange-rate/",
+        "https://abaybank.com.et/",
+    ]},
+    "NIB": {"name": "Nib International Bank", "type": "bank", "urls": [
+        "https://nibbank.com.et/exchange-rate/",
+        "https://nibbank.com.et/",
+    ]},
+    "WGB": {"name": "Wegagen Bank", "type": "bank", "urls": [
+        "https://wegagenbank.com/exchange-rate/",
+        "https://wegagenbank.com/",
+    ]},
+    "ZEM": {"name": "Zemen Bank", "type": "bank", "urls": [
+        "https://zemenbank.com/exchange-rate/",
+        "https://zemenbank.com/",
+    ]},
+    "HIB": {"name": "Hibret Bank", "type": "bank", "urls": [
+        "https://hibretbank.com/exchange-rate/",
+        "https://hibretbank.com/",
+    ]},
+    "BRH": {"name": "Berhan Bank", "type": "bank", "urls": [
+        "https://berhanbank.com/exchange-rate/",
+        "https://berhanbank.com/",
+    ]},
+    "BUN": {"name": "Bunna Bank", "type": "bank", "urls": [
+        "https://bunnabank.com.et/exchange-rate/",
+        "https://bunnabank.com.et/",
+    ]},
+    "ENB": {"name": "Enat Bank", "type": "bank", "urls": [
+        "https://enatbank.com/exchange-rate/",
+        "https://enatbank.com/",
+    ]},
+    "ZZB": {"name": "ZamZam Bank", "type": "bank", "urls": [
+        "https://zamzambank.com.et/exchange-rate/",
+        "https://zamzambank.com.et/",
+    ]},
+    "AIB": {"name": "Addis International Bank", "type": "bank", "urls": [
+        "https://addisinternationalbank.com/exchange-rate/",   # guess
+        "https://addisinternationalbank.com/",                  # guess
+    ]},
+    "AHB": {"name": "Ahadu Bank", "type": "bank", "urls": [
+        "https://ahadubank.com/exchange-rate/",                 # guess
+        "https://ahadubank.com/",                               # guess
+    ]},
+    "AMB": {"name": "Amhara Bank", "type": "bank", "urls": [
+        "https://amharabank.com/exchange-rate/",                # guess
+        "https://amharabank.com/",                              # guess
+    ]},
+    "ANB": {"name": "Anbesa Bank", "type": "bank", "urls": [
+        "https://anbesabank.com/exchange-rate/",                # guess
+        "https://anbesabank.com/",                              # guess
+    ]},
+    "DBE": {"name": "Development Bank of Ethiopia", "type": "bank", "urls": [
+        "https://dbe.com.et/exchange-rate/",                    # guess
+        "https://dbe.com.et/",                                  # guess
+    ]},
+    "GDB": {"name": "Gadaa Bank", "type": "bank", "urls": [
+        "https://gadaabank.com/exchange-rate/",                 # guess
+        "https://gadaabank.com/",                               # guess
+    ]},
+    "GLB": {"name": "Global Bank Ethiopia", "type": "bank", "urls": [
+        "https://globalbankethiopia.com/exchange-rate/",        # guess
+        "https://globalbankethiopia.com/",                      # guess
+    ]},
+    "GOH": {"name": "Goh Betoch Bank", "type": "bank", "urls": [
+        "https://gohbetochbank.com/exchange-rate/",             # guess
+        "https://gohbetochbank.com/",                           # guess
+    ]},
+    "HJB": {"name": "Hijra Bank", "type": "bank", "urls": [
+        "https://hijrabank.com/exchange-rate/",                 # guess
+        "https://hijrabank.com/",                               # guess
+    ]},
+    "OMO": {"name": "Omo Bank", "type": "bank", "urls": [
+        "https://omobank.com/exchange-rate/",                   # guess
+        "https://omobank.com/",                                 # guess
+    ]},
+    "RMB": {"name": "Rammis Bank", "type": "bank", "urls": [
+        "https://rammisbank.com/exchange-rate/",                # guess
+        "https://rammisbank.com/",                              # guess
+    ]},
+    "SHB": {"name": "Shabelle Bank", "type": "bank", "urls": [
+        "https://shabellebank.com.et/exchange-rate/",           # guess
+        "https://shabellebank.com.et/",                         # guess
+    ]},
+    "SDB": {"name": "Sidama Bank", "type": "bank", "urls": [
+        "https://sidamabank.com/exchange-rate/",                # guess
+        "https://sidamabank.com/",                              # guess
+    ]},
+    "SQB": {"name": "Siinqee Bank", "type": "bank", "urls": [
+        "https://siinqeebank.com/exchange-rate/",               # guess
+        "https://siinqeebank.com/",                             # guess
+    ]},
+    "SKB": {"name": "Siket Bank", "type": "bank", "urls": [
+        "https://siketbank.com/exchange-rate/",                 # guess
+        "https://siketbank.com/",                               # guess
+    ]},
+    "TSB": {"name": "Tsedey Bank", "type": "bank", "urls": [
+        "https://tsedeybank.com/exchange-rate/",                # guess
+        "https://tsedeybank.com/",                              # guess
+    ]},
+    "THB": {"name": "Tsehay Bank", "type": "bank", "urls": [
+        "https://tsehaybank.com/exchange-rate/",                # guess
+        "https://tsehaybank.com/",                              # guess
+    ]},
+    # ---------- FX bureaus ----------
+    "AMM": {"name": "Ammann Forex Bureau", "type": "bureau", "urls": [
+        "https://ammannforexbureau.com/",
+    ]},
+    "AYO": {"name": "AYOTAN Forex Bureau", "type": "bureau", "urls": [
+        "https://ayotanforextrading.com/",
+    ]},
+    "HAR": {"name": "Haron Forex Bureau", "type": "bureau", "urls": [
+        "https://www.haronforex.com/",
+    ]},
+    "TAY": {"name": "Taypay Forex Bureau", "type": "bureau", "method": "csv", "urls": [
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7rZVlNT4C3L7Big_5ZfnQOCB7dAmuY388AG0YJCDc3HB-xoVX8PtCbPJZngJHYbNeEFLSCMHGOvLN/pub?gid=0&single=true&output=csv",
+    ]},
+    "DBH": {"name": "DBH Forex Bureau", "type": "bureau", "urls": [
+        "https://dbhforex.com/",
+    ]},
+    "ETH": {"name": "Ethio Forex Bureau", "type": "bureau", "urls": [
+        "https://www.ethioforextrading.com/exchange-rates",
+        "https://www.ethioforextrading.com/",
+    ]},
+    # Rooha (ROO) and Robust (ROB): add entries here once you send their URLs, e.g.
+    # "ROO": {"name": "Rooha Forex Bureau", "type": "bureau", "urls": ["https://..."]},
 }
 
-# ---------- parsing (banks) ----------
+# ---------- parsing (banks & bureaus) ----------
 NUM = re.compile(r"\d[\d,]*(?:\.\d+)?")
 BUY_W = ("BUY", "BUYING", "BID", "PURCHAS")
 SELL_W = ("SELL", "SELLING", "OFFER", "ASK", "SOLD")
@@ -126,6 +259,42 @@ def plausible(b, s):
                 and b <= s < b * 1.25 and (s - b) / b >= MIN_SPREAD)
 
 
+def parse_csv_rates(text):
+    """Google-Sheets-published CSV (Taypay): any row with a currency token and
+    two plausible numbers -> buy/sell (ordered)."""
+    out = {}
+    for row in csv.reader(io.StringIO(text)):
+        cells = [(c or "").strip() for c in row]
+        if not any(cells):
+            continue
+        cur = None
+        for c in cells:
+            m = match_currency(c)
+            if m:
+                cur = m
+                break
+        if not cur or cur in out:
+            continue
+        nums = []
+        for c in cells:
+            if not c:
+                continue
+            try:
+                v = float(c.replace(",", ""))
+            except ValueError:
+                continue
+            if 0.5 < v < 5000:
+                nums.append(v)
+        if len(nums) < 2:
+            continue
+        b, s = nums[0], nums[1]
+        if b > s:
+            b, s = s, b
+        if plausible(b, s):
+            out[cur] = (b, s)
+    return out
+
+
 def table_rows(table):
     rows = []
     for tr in table.find_all("tr"):
@@ -183,6 +352,8 @@ def parse_page(html):
             if not cur or cur in out:
                 continue
             buy, sell = number(r[bcol]), number(r[scol])
+            if buy and sell and buy > sell:
+                buy, sell = sell, buy
             if plausible(buy, sell):
                 out[cur] = (buy, sell)
         if len(out) > len(best):
@@ -267,7 +438,6 @@ PRICE_KEYS = ("price", "rate", "buy", "sell", "bid", "ask", "etb")
 
 
 def walk_prices(node, out, depth=0):
-    """Recursively collect price-like numbers from parsed JSON."""
     if depth > 9 or len(out) > 400:
         return
     if isinstance(node, dict):
@@ -285,7 +455,6 @@ def walk_prices(node, out, depth=0):
 
 
 def text_candidates(html):
-    """Numbers that appear right after USDT/ETB mentions in visible text."""
     try:
         soup = BeautifulSoup(html, "html.parser")
         txt = soup.get_text(" ", strip=True)
@@ -323,9 +492,9 @@ def decide_from_candidates(buys, sells, prices, label):
 # ---------- fetching ----------
 def attempt_static(url):
     last = "failed"
-    for attempt in range(3):
+    for attempt in range(2):
         try:
-            r = requests.get(url, headers=HEADERS, timeout=30)
+            r = requests.get(url, headers=HEADERS, timeout=25)
             if r.status_code == 200 and len(r.text) > 500:
                 return r.text, None
             last = f"HTTP {r.status_code}"
@@ -333,7 +502,7 @@ def attempt_static(url):
                 return None, last
         except requests.exceptions.SSLError:
             try:
-                r = requests.get(url, headers=HEADERS, timeout=30, verify=False)
+                r = requests.get(url, headers=HEADERS, timeout=25, verify=False)
                 if r.status_code == 200 and len(r.text) > 500:
                     return r.text, None
                 last = f"HTTP {r.status_code} (ssl-relaxed)"
@@ -343,8 +512,8 @@ def attempt_static(url):
             last = "timeout"
         except Exception as e:
             last = type(e).__name__
-        if attempt < 2:
-            time.sleep(5)
+        if attempt < 1:
+            time.sleep(3)
     return None, last
 
 
@@ -362,8 +531,6 @@ def get_browser():
 
 
 def attempt_dynamic(url):
-    """Real-browser render. Returns (html, err, info, captured_json).
-    captured_json = [(url, body)] of the site's own JSON responses."""
     try:
         browser = get_browser()
     except Exception:
@@ -392,12 +559,12 @@ def attempt_dynamic(url):
             pass
         try:
             page.goto(url, wait_until="domcontentloaded", timeout=40000)
-            page.wait_for_timeout(6000)
+            page.wait_for_timeout(5000)
             try:
                 page.mouse.wheel(0, 1500)
-                page.wait_for_timeout(1500)
+                page.wait_for_timeout(1200)
                 page.mouse.wheel(0, -1500)
-                page.wait_for_timeout(800)
+                page.wait_for_timeout(600)
             except Exception:
                 pass
             try:
@@ -406,7 +573,7 @@ def attempt_dynamic(url):
                                    "button:has-text('Go')").first
                 if btn.count() > 0:
                     btn.click(timeout=3000)
-                    page.wait_for_timeout(3500)
+                    page.wait_for_timeout(3000)
                     info.append("clicked search")
             except Exception:
                 pass
@@ -420,12 +587,10 @@ def attempt_dynamic(url):
                 for f in page.frames:
                     if f == page.main_frame:
                         continue
-                    fu = (f.url or "")[:70]
                     try:
                         fh = f.content()
                         if fh and len(fh) > 500:
                             html += "\n" + fh
-                            info.append(f"frame {fu}: {len(fh)} bytes")
                     except Exception:
                         pass
             except Exception:
@@ -459,7 +624,6 @@ def cleanup():
 def fetch_ebr(notes):
     all_prices, buys, sells = [], [], []
     caps = []
-    # Phase 1 — static: embedded data + visible text + tables/cards
     html, err = attempt_static(EBR_URL)
     if html:
         soup = BeautifulSoup(html, "html.parser")
@@ -467,11 +631,8 @@ def fetch_ebr(notes):
         if nd:
             try:
                 walk_prices(json.loads(nd.get_text() or ""), all_prices)
-                notes.append("ebr: next-data found")
             except Exception:
-                notes.append("ebr: next-data unparsable")
-        else:
-            notes.append("ebr static: no next-data script")
+                pass
         all_prices.extend(text_candidates(html))
         for cur, (b, s) in (parse_any(html) or {}).items():
             if cur in ("USD", "USDT"):
@@ -480,7 +641,6 @@ def fetch_ebr(notes):
         notes.append(f"ebr static: {len(all_prices)} candidates")
     else:
         notes.append(f"ebr static: {err}")
-    # Phase 2 — browser with network capture
     bhtml, berr, binfo, caps = attempt_dynamic(EBR_URL)
     if bhtml:
         for _u, body in caps:
@@ -499,8 +659,6 @@ def fetch_ebr(notes):
     r = decide_from_candidates(buys, sells, all_prices, "ebr.exchange")
     if r:
         return r[0], r[1], r[2]
-    if caps:
-        notes.append("ebr captured endpoints: " + ", ".join(u[:48] for u, _ in caps[:3]))
     return None
 
 
@@ -605,8 +763,8 @@ def fetch_parallel():
             buy, sell, src = got
             if buy > sell:
                 buy, sell = sell, buy
-            return buy, sell, src, notes
-    return None, None, None, notes
+            return buy, sell, src
+    return None, None, None
 
 
 # ---------- main ----------
@@ -618,6 +776,21 @@ def write_summary(text):
 
 
 def collect_source(cfg):
+    if cfg.get("method") == "csv":
+        notes = []
+        for url in cfg["urls"]:
+            try:
+                r = requests.get(url, headers=HEADERS, timeout=30)
+                if r.status_code != 200:
+                    notes.append(f"csv: HTTP {r.status_code}")
+                    continue
+                got = parse_csv_rates(r.text)
+                if got:
+                    return got, "csv", notes
+                notes.append("csv: no usable rows")
+            except Exception as e:
+                notes.append(f"csv: {type(e).__name__}")
+        return {}, "", notes
     got, via, notes = {}, "", []
     for url in cfg["urls"]:
         html, err = attempt_static(url)
@@ -704,10 +877,9 @@ def main():
                 summary.append(f"| {sid} | ✓ {', '.join(kept)} ({via}) |")
             elif not warned:
                 summary.append(f"| {sid} | ⚠ nothing usable — kept previous values |")
-            time.sleep(4)
+            time.sleep(3)
 
-        # ---- parallel USDT/ETB reference (market source, separate from banks) ----
-        buy, sell, src, pnotes = fetch_parallel()
+        buy, sell, src = fetch_parallel()
         if buy and sell:
             res = apply_quote(quotes, rates, "P2P", "USDT", round(buy, 2), round(sell, 2))
             if res.startswith("⚠"):
@@ -718,7 +890,7 @@ def main():
                                   "type": "market", "fetched_at": now}
                 summary.append(f"| P2P | ✓ USDT {buy:.2f}/{sell:.2f} ({src}) |")
         else:
-            summary.append("| P2P | ✗ " + "; ".join(pnotes) + " — kept previous values |")
+            summary.append("| P2P | ✗ ebr + fallbacks failed — kept previous values |")
     finally:
         cleanup()
 
