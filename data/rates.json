@@ -1,6 +1,6 @@
 {
  "meta": {
-  "generated_at": "2026-10-02T11:34:14+00:00",
+  "generated_at": "2026-10-02T13:58:37+00:00",
   "version": 1,
   "disclaimer": "Indicative rates collected from published bank rate sheets. Confirm with the bank before transacting."
  },
@@ -13,7 +13,7 @@
   "CBE": {
    "name": "Commercial Bank of Ethiopia",
    "type": "bank",
-   "fetched_at": "2026-10-02T11:34:14+00:00"
+   "fetched_at": "2026-10-02T13:58:37+00:00"
   },
   "AWB": {
    "name": "Awash Bank",
@@ -23,17 +23,22 @@
   "DBL": {
    "name": "Dashen Bank",
    "type": "bank",
-   "fetched_at": "2026-10-02T11:34:14+00:00"
+   "fetched_at": "2026-10-02T13:58:37+00:00"
   },
   "BOA": {
    "name": "Bank of Abyssinia",
    "type": "bank",
-   "fetched_at": "2026-10-02T11:34:14+00:00"
+   "fetched_at": "2026-10-02T13:58:37+00:00"
   },
   "CBO": {
    "name": "Cooperative Bank of Oromia",
    "type": "bank",
-   "fetched_at": "2026-10-02T11:34:14+00:00"
+   "fetched_at": "2026-10-02T13:58:37+00:00"
+  },
+  "P2P": {
+   "name": "USDT/ETB \u2014 parallel market (ebr.exchange (indicative spread); indicative)",
+   "type": "market",
+   "fetched_at": "2026-10-02T13:58:37+00:00"
   }
  },
  "rates": [
@@ -174,6 +179,12 @@
    "currency": "GBP",
    "buy": 214.5575,
    "sell": 218.8487
+  },
+  {
+   "source": "P2P",
+   "currency": "USDT",
+   "buy": 193.4,
+   "sell": 194.56
   }
  ]
 }
