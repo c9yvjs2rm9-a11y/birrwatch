@@ -498,7 +498,7 @@ def fetch_ebr(notes):
         notes.append(f"ebr browser: {berr} (" + "; ".join(binfo) + ")")
     r = decide_from_candidates(buys, sells, all_prices, "ebr.exchange")
     if r:
-        return r[0], r[1], r[2], notes
+        return r[0], r[1], r[2]
     if caps:
         notes.append("ebr captured endpoints: " + ", ".join(u[:48] for u, _ in caps[:3]))
     return None
