@@ -1,0 +1,3 @@
+[
+  { "id": "a1", "pair": "USD", "dir": "above", "target": 165, "email": "user@example.com", "status": "armed" }
+]
