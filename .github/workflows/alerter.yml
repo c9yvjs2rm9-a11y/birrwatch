@@ -1,0 +1,32 @@
+name: alerter
+on:
+  schedule:
+    - cron: "43 5,8,11 * * *"   # 20 min after each collector run, Addis time
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: alerter
+
+jobs:
+  alert:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install requests
+      - name: Evaluate alerts
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+        run: python3 scripts/alerter.py
+      - name: Commit alert state
+        run: |
+          git config user.name "birrwatch-bot"
+          git config user.email "bot@birrwatch.local"
+          git add data/alerts.json data/alerts_state.json
+          git diff --cached --quiet || git commit -m "alerts: $(date -u +%FT%TZ)"
+          git push
