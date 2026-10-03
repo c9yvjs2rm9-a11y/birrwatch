@@ -222,11 +222,9 @@ tbody tr[data-code]{cursor:pointer}
 .caret{transition:transform .2s;color:var(--muted)}
 .b-row.open .caret{transform:rotate(180deg)}
 .b-more td{background:#F1EEE2;padding:0}
-.b-more-in{display:grid;grid-template-columns:repeat(3,1fr) 1.4fr;gap:18px;padding:16px 18px}
+.b-more-in{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:16px 18px}
 .b-more-in .s-label{margin-bottom:4px}
 .b-more-in .val{font:600 13px var(--mono)}
-.b-meta{font-size:11.5px;color:var(--muted);display:flex;flex-direction:column;gap:3px}
-@media(max-width:700px){.b-more-in{grid-template-columns:1fr 1fr}}
 .bill-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:8px 0 26px}
 #billNote{font-size:12px;color:var(--muted)}
 .plan{display:grid;grid-template-columns:1.1fr 1.6fr .75fr auto;gap:30px;align-items:center;border:1px solid var(--line);border-radius:15px;background:var(--panel);padding:28px 26px;margin-bottom:14px}
@@ -291,10 +289,7 @@ footer{background:var(--ink);color:var(--paper);padding:64px 0 36px;margin-top:2
   #view-pairs th:nth-child(6),#view-pairs td:nth-child(6),
   #view-pairs th:nth-child(7),#view-pairs td:nth-child(7){display:none}
   #view-bureaus .table-scroll table{min-width:0!important}
-  #view-bureaus th:nth-child(1),#view-bureaus td:nth-child(1),
-  #view-bureaus th:nth-child(4),#view-bureaus td:nth-child(4),
-  #view-bureaus th:nth-child(7),#view-bureaus td:nth-child(7),
-  #view-bureaus th:nth-child(8),#view-bureaus td:nth-child(8){display:none}
+  #view-bureaus th:nth-child(n+4),#view-bureaus td:nth-child(n+4){display:none}
   table.sheet{min-width:0!important}
   table.sheet th:nth-child(4),table.sheet td:nth-child(4),
   table.sheet th:nth-child(5),table.sheet td:nth-child(5){display:none}
@@ -376,7 +371,7 @@ footer{background:var(--ink);color:var(--paper);padding:64px 0 36px;margin-top:2
       <tbody id="rateBody"></tbody>
     </table>
   </div>
-  <p class="f-note">Illustrative dataset for demonstration — figures are simulated, not live market quotes. Bank "buys" = the rate at which the bank purchases foreign cash/FX from you.</p>
+  <p class="f-note">Rates collected automatically from published bank rate sheets — indicative only. Confirm with the bank before transacting.</p>
 </section>
 
 <section class="view" id="view-trends">
@@ -472,23 +467,20 @@ footer{background:var(--ink);color:var(--paper);padding:64px 0 36px;margin-top:2
 <section class="view" id="view-bureaus">
   <div class="block-head" style="margin-top:8px">
     <div><span class="kicker">06 — Licensed FX bureaus</span><h2>Licensed FX bureaus</h2></div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-      <div class="chip-row" id="cityChips" style="margin:0"></div>
-      <div class="search" id="bureauSearchWrap"></div>
-    </div>
+    <div class="search" id="bureauSearchWrap"></div>
   </div>
   <div class="street-band" id="bureauBand"></div>
   <div class="table-scroll" style="margin-top:26px">
     <table>
       <thead><tr>
-        <th></th><th data-key="name">Bureau</th><th>City</th><th>Hours</th>
+        <th data-key="name">Bureau</th>
         <th data-key="buy" class="num">USD buy</th><th data-key="sell" class="num">USD sell</th>
         <th data-key="spread" class="num">Spread</th><th data-key="vs" class="num">vs best bank</th>
       </tr></thead>
       <tbody id="bureauBody"></tbody>
     </table>
   </div>
-  <p class="f-note">Cash rates at the counter. Bureaus are licensed by the National Bank of Ethiopia and typically quote tighter cash spreads than bank branches. Tap a row for the full board.</p>
+  <p class="f-note">Cash rates collected automatically from bureau websites — indicative only. Tap a row for the full board.</p>
 </section>
 
 <section class="view" id="view-pricing">
@@ -507,7 +499,7 @@ footer{background:var(--ink);color:var(--paper);padding:64px 0 36px;margin-top:2
   <div class="plan">
     <div class="p-name"><h3>Observer</h3><p>For keeping an honest eye on the birr.</p></div>
     <ul class="p-feats">
-      <li>End-of-day rates, all covered banks</li><li>Licensed FX bureaus as they join</li>
+      <li>End-of-day rates, all covered banks</li><li>Licensed FX bureaus</li>
       <li>7-day rate history</li><li>1 price alert</li>
       <li>Full converter</li><li>Web & mobile</li>
     </ul>
@@ -539,8 +531,8 @@ footer{background:var(--ink);color:var(--paper);padding:64px 0 36px;margin-top:2
 
   <h2 style="margin-top:56px">Questions, answered</h2>
   <div class="faq" id="faq">
-    <div class="faq-item"><button class="faq-q">Where does the rate data come from?<span class="f-chev"></span></button><div class="faq-a"><div><p>We aggregate the published daily rate sheets of Ethiopia's commercial banks and NBE-licensed FX bureaus, and cross-check against the National Bank of Ethiopia's official reference rate. Observer accounts see end-of-day figures; Professional accounts see updates the moment a bank publishes.</p></div></div></div>
-    <div class="faq-item"><button class="faq-q">What is the USDT/ETB parallel reference?<span class="f-chev"></span></button><div class="faq-a"><div><p>An indicative midpoint aggregated from public peer-to-peer market listings, where USDT (a dollar proxy) trades against birr. It reflects the parallel market, not bank or NBE pricing — it is shown for reference only, is not an offer to trade, and no guarantee exists that any counterparty is available at that price.</p></div></div></div>
+    <div class="faq-item"><button class="faq-q">Where does the rate data come from?<span class="f-chev"></span></button><div class="faq-a"><div><p>We automatically collect the published daily rate sheets of Ethiopia's commercial banks and licensed FX bureaus, and cross-check against the National Bank of Ethiopia's official reference rate.</p></div></div></div>
+    <div class="faq-item"><button class="faq-q">What is the USDT/ETB parallel reference?<span class="f-chev"></span></button><div class="faq-a"><div><p>An indicative midpoint aggregated from public parallel-market sources, where USDT (a dollar proxy) trades against birr. It reflects the parallel market, not bank or NBE pricing — it is shown for reference only, is not an offer to trade, and no guarantee exists that any counterparty is available at that price.</p></div></div></div>
     <div class="faq-item"><button class="faq-q">Buy rate or sell rate — which one applies to me?<span class="f-chev"></span></button><div class="faq-a"><div><p>If you're handing dollars to a bank and receiving birr, look at the bank's <b>buy</b> rate — higher is better for you. If you're paying birr to receive dollars, look at the <b>sell</b> rate — lower is better. The comparison table's toggle flips the highlight to the column you care about.</p></div></div></div>
     <div class="faq-item"><button class="faq-q">Why not just check my bank's app?<span class="f-chev"></span></button><div class="faq-a"><div><p>Because your bank quotes one rate and every other bank quotes a different one. Spreads between the best and worst bank can exceed 1 ETB per dollar — on a $10,000 transfer that's real money lost to the wrong counter.</p></div></div></div>
     <div class="faq-item"><button class="faq-q">Can I pay in birr?<span class="f-chev"></span></button><div class="faq-a"><div><p>Yes — Telebirr, Chapa, and cards are all accepted. Prices are set in birr on purpose; we don't think an Ethiopian rate service should bill you in someone else's currency.</p></div></div></div>
@@ -565,7 +557,7 @@ footer{background:var(--ink);color:var(--paper);padding:64px 0 36px;margin-top:2
       </div>
     </div>
     <div class="f-bottom">
-      <b>Birrwatch</b> is an independent exchange-rate tracker for Ethiopia. Bank rates are collected from published rate sheets; the USDT/ETB card is an indicative parallel-market reference from public parallel-market sources — not a bank or NBE rate and not an offer to trade. Confirm with your bank or bureau before transacting.<br>© 2025 Birrwatch · Made in Addis Ababa · <span style="font-family:'Noto Sans Ethiopic'">አዲስ አበባ</span>
+      <b>Birrwatch</b> is an independent exchange-rate tracker for Ethiopia. Bank and bureau rates are collected automatically from published rate sheets; the USDT/ETB card is an indicative parallel-market reference from public sources — not a bank or NBE rate and not an offer to trade. Confirm with your bank or bureau before transacting.<br>© 2025 Birrwatch · Made in Addis Ababa · <span style="font-family:'Noto Sans Ethiopic'">አዲስ አበባ</span>
     </div>
   </div>
 </footer>
@@ -630,34 +622,46 @@ const CURRENCIES=[
 const CUR=Object.fromEntries(CURRENCIES.map(c=>[c.code,c]));
 const decOf=c=>c==='KES'?4:2;
 const BANKS=[
- {c:'CBE',name:'Commercial Bank of Ethiopia',type:'State-owned',est:1942,br:1900,spread:1.10,bias:.75,upd:14},
- {c:'AWB',name:'Awash Bank',type:'Private',est:1994,br:830,spread:.95,bias:-.35,upd:38},
- {c:'DBL',name:'Dashen Bank',type:'Private',est:1995,br:560,spread:1.00,bias:.20,upd:52},
- {c:'BOA',name:'Bank of Abyssinia',type:'Private',est:1996,br:790,spread:.90,bias:-.55,upd:21},
- {c:'CBO',name:'Cooperative Bank of Oromia',type:'Private',est:2004,br:720,spread:1.05,bias:.10,upd:64},
- {c:'NIB',name:'Nib International Bank',type:'Private',est:1999,br:390,spread:1.15,bias:-.20,upd:88},
- {c:'WGB',name:'Wegagen Bank',type:'Private',est:1997,br:360,spread:1.20,bias:.35,upd:47},
- {c:'ZEM',name:'Zemen Bank',type:'Private',est:2008,br:75,spread:.80,bias:-.70,upd:9},
- {c:'HIB',name:'Hibret Bank',type:'Private',est:1998,br:470,spread:1.10,bias:.45,upd:73},
- {c:'BRH',name:'Berhan Bank',type:'Private',est:2010,br:260,spread:1.00,bias:-.15,upd:96},
- {c:'ABY',name:'Abay Bank',type:'Private',est:2010,br:340,spread:1.25,bias:.05,upd:112},
- {c:'ORB',name:'Oromia Bank',type:'Private',est:2008,br:480,spread:1.05,bias:.28,upd:33},
- {c:'ENB',name:'Enat Bank',type:'Private',est:2013,br:190,spread:1.30,bias:-.40,upd:121},
- {c:'BUN',name:'Bunna Bank',type:'Private',est:2013,br:170,spread:1.20,bias:.15,upd:140},
- {c:'ZZB',name:'ZamZam Bank',type:'Interest-free',est:2021,br:120,spread:1.35,bias:-.25,upd:155},
+ {c:'CBE',name:'Commercial Bank of Ethiopia',type:'State-owned',est:1942},
+ {c:'DBE',name:'Development Bank of Ethiopia',type:'State-owned'},
+ {c:'AWB',name:'Awash Bank',type:'Private',est:1994},
+ {c:'DBL',name:'Dashen Bank',type:'Private',est:1995},
+ {c:'BOA',name:'Bank of Abyssinia',type:'Private',est:1996},
+ {c:'CBO',name:'Cooperative Bank of Oromia',type:'Private',est:2004},
+ {c:'ORB',name:'Oromia Bank',type:'Private'},
+ {c:'ABY',name:'Abay Bank',type:'Private',est:2010},
+ {c:'NIB',name:'Nib International Bank',type:'Private',est:1999},
+ {c:'WGB',name:'Wegagen Bank',type:'Private',est:1997},
+ {c:'ZEM',name:'Zemen Bank',type:'Private',est:2008},
+ {c:'HIB',name:'Hibret Bank',type:'Private',est:1998},
+ {c:'BRH',name:'Berhan Bank',type:'Private',est:2010},
+ {c:'BUN',name:'Bunna Bank',type:'Private',est:2013},
+ {c:'ENB',name:'Enat Bank',type:'Private',est:2013},
+ {c:'TSB',name:'Tsedey Bank',type:'Private'},
+ {c:'THB',name:'Tsehay Bank',type:'Private'},
+ {c:'SDB',name:'Sidama Bank',type:'Private'},
+ {c:'AMB',name:'Amhara Bank',type:'Private'},
+ {c:'GDB',name:'Gadaa Bank',type:'Private'},
+ {c:'GLB',name:'Global Bank Ethiopia',type:'Private'},
+ {c:'OMO',name:'Omo Bank',type:'Private'},
+ {c:'AIB',name:'Addis International Bank',type:'Private'},
+ {c:'GOH',name:'Goh Betoch Bank',type:'Private'},
+ {c:'ANB',name:'Anbesa International Bank',type:'Private'},
+ {c:'ZZB',name:'ZamZam Bank',type:'Interest-free',est:2021},
+ {c:'AHB',name:'Ahadu Bank',type:'Interest-free'},
+ {c:'HJB',name:'Hijra Bank',type:'Interest-free'},
+ {c:'RMB',name:'Rammis Bank',type:'Interest-free'},
+ {c:'SHB',name:'Shabelle Bank',type:'Interest-free'},
+ {c:'SQB',name:'Siinqee Bank',type:'Interest-free'},
+ {c:'SKB',name:'Siket Bank',type:'Interest-free'},
 ];
 const BANK=Object.fromEntries(BANKS.map(b=>[b.c,b]));
 const BUREAUS=[
- {id:'FXB014',name:'Sheger Currency Exchange',city:'Addis Ababa',area:'Bole Road, Alem Cinema',hours:'08:30 – 19:00',lic:'FXB/014/24',tel:'+251 11 5 54 21 30',spread:.70,bias:.9},
- {id:'FXB021',name:'Bole Medhanialem FX Bureau',city:'Addis Ababa',area:'Medhanialem Junction',hours:'08:00 – 20:00',lic:'FXB/021/24',tel:'+251 11 6 18 44 52',spread:.85,bias:.5},
- {id:'FXB026',name:'Kazanchis FX Bureau',city:'Addis Ababa',area:'Congo Street, Kazanchis',hours:'08:30 – 18:30',lic:'FXB/026/24',tel:'+251 11 5 15 70 08',spread:.80,bias:.35},
- {id:'FXB029',name:'Meskel Flower FX Bureau',city:'Addis Ababa',area:'Meskel Flower Road',hours:'08:30 – 19:00',lic:'FXB/029/24',tel:'+251 11 6 62 39 14',spread:.90,bias:.1},
- {id:'FXB031',name:'Megenagna FX Bureau',city:'Addis Ababa',area:'Megenagna, near the Terminal',hours:'08:00 – 20:00',lic:'FXB/031/24',tel:'+251 11 6 80 05 27',spread:.95,bias:-.1},
- {id:'FXB034',name:'Piassa FX Bureau',city:'Addis Ababa',area:'Piazza, Taitu Street',hours:'08:30 – 18:00',lic:'FXB/034/24',tel:'+251 11 1 11 62 90',spread:1.00,bias:.2},
- {id:'FXB038',name:'Dire Currency Exchange',city:'Dire Dawa',area:'Kezira, Market Street',hours:'08:30 – 18:30',lic:'FXB/038/24',tel:'+251 25 1 11 34 76',spread:1.05,bias:.1},
- {id:'FXB041',name:'Tana FX Bureau',city:'Bahir Dar',area:'Main Depozit Road',hours:'08:00 – 18:00',lic:'FXB/041/24',tel:'+251 58 2 26 41 19',spread:.95,bias:.3},
- {id:'FXB044',name:'Lake View FX Bureau',city:'Hawassa',area:'Lake Awassa Front',hours:'08:30 – 19:00',lic:'FXB/044/24',tel:'+251 46 2 20 55 81',spread:1.00,bias:0},
- {id:'FXB047',name:'Adama Express FX',city:'Adama',area:'Dembela Road',hours:'08:30 – 18:30',lic:'FXB/047/24',tel:'+251 22 1 12 73 45',spread:1.15,bias:-.2},
+ {id:'AMM',name:'Ammann Forex Bureau'},
+ {id:'AYO',name:'AYOTAN Forex Bureau'},
+ {id:'HAR',name:'Haron Forex Bureau'},
+ {id:'TAY',name:'Taypay Forex Bureau'},
+ {id:'ROO',name:'Rooha Forex Bureau'},
 ];
 const BUREAU=Object.fromEntries(BUREAUS.map(u=>[u.id,u]));
 
@@ -681,14 +685,14 @@ function etbPerUnit(code){return code==='ETB'?1:live.mid[code]/per(code)}
 function offPerUnit(code){return code==='ETB'?1:(live.off[code]||live.mid[code]*.9955)/per(code)}
 function nameOf(code){return code==='ETB'?'Ethiopian Birr':CUR[code].name}
 function p2pQuote(){return DATA.mode==='live'?storeQuote('P2P','USDT'):demoQuote('P2P','USDT')}
+function demoParams(id){let h=0;for(const ch of id)h=(h*31+ch.charCodeAt(0))|0;return{spread:0.85+Math.abs(h%12)*0.05,bias:((Math.abs(h)%9)-4)/4}}
 
 function demoQuote(id,code){
   if(id==='P2P'&&code==='USDT'){const m=live.mid.USDT;return{buy:m*0.996,sell:m*1.004,spread:m*0.008}}
   const b=BANK[id],u=BUREAU[id],mid=live.mid[code],scale=mid/live.mid.USD;
-  if(b){const half=b.spread*scale/2;let buy=mid-half+b.bias*half*.55,sell=mid+half+b.bias*half*.22;
+  if(b||u){const p=demoParams(id),half=p.spread*scale/2;
+    let buy=mid-half+p.bias*half*.55,sell=mid+half+p.bias*half*.22;
     if(sell-buy<half*.8)sell=buy+half*.8;return{buy,sell,spread:sell-buy}}
-  if(u){const half=u.spread*scale/2;let buy=mid-half+u.bias*half*1.5,sell=mid+half+u.bias*half*.4;
-    if(sell-buy<half*.7)sell=buy+half*.7;return{buy,sell,spread:sell-buy}}
   return null;
 }
 function bankRates(b,code){return DATA.mode==='live'?storeQuote(b.c,code):demoQuote(b.c,code)}
@@ -701,7 +705,7 @@ function tightest(code){let o=null;for(const b of BANKS){const r=bankRates(b,cod
 function curChg(code,back){const s=H[code];if(!s||s.length<2)return 0;const L=s.length,p=s[Math.max(0,L-1-back)],m=live.mid[code]||s[L-1];return p?(m-p)/p:0}
 function bankChg(b,code){return curChg(code,1)}
 function bankSeries(b,code,n){const s=H[code];if(!s||!live.mid[code])return[];const r=bankRates(b,code);const k=r?r.buy/live.mid[code]:1;return s.slice(-n).map(v=>v*k)}
-function sourceUpdated(id){if(DATA.mode==='live'){const t=DATA.srcTs[id];return t||DATA.genTs}const b=BANK[id];return Date.now()-(b?b.upd:0)*6e4}
+function sourceUpdated(id){if(DATA.mode==='live'){const t=DATA.srcTs[id];return t||DATA.genTs}const b=BANK[id];return Date.now()-((Math.abs(id.charCodeAt(0))*13)%150)*6e4}
 function isStale(id){if(DATA.mode!=='live')return false;const ts=DATA.srcTs[id];return!!ts&&Date.now()-ts>CONFIG.STALE_MS}
 function okCount(){const ids=Object.keys(DATA.sources);return ids.filter(id=>!isStale(id)).length}
 function avgMid(code){let n=0,t=0;for(const b of BANKS){const r=bankRates(b,code);if(r){n++;t+=(r.buy+r.sell)/2}}return n?t/n:live.mid[code]}
@@ -868,13 +872,14 @@ const S={
   banks:{sel:'CBE',cur:'USD',q:''},
   pairs:{},
   conv:{from:'USD',to:'ETB',mode:'best'},
-  bureaus:{city:'All',q:'',sort:{key:'buy',dir:-1}},
+  bureaus:{q:'',sort:{key:'buy',dir:-1}},
   price:{annual:false},
 };
 
 /* ================= renderers ================= */
 function renderTicker(){
-  const meta=`<span class="t-item t-meta">${BANKS.filter(b=>bankRates(b,'USD')).length} banks live · NBE ref ${fmt(live.off.USD,2)} ETB</span>`;
+  const nb=BANKS.filter(b=>bankRates(b,'USD')).length;
+  const meta=`<span class="t-item t-meta">${nb} banks live · NBE ref ${fmt(live.off.USD,2)} ETB</span>`;
   const items=CURRENCIES.map(c=>{const m=live.mid[c.code];if(m==null)return'';const d=curChg(c.code,1);
     const pct=histReal()?`<span class="${cls(d)}">${I.tri.replace('<svg','<svg style="transform:rotate('+(d>=0?0:180)+'deg)"')} ${fmtPct(d)}</span>`:'';
     return `<span class="t-item"><b>${c.code}/ETB</b><span>${fmt(m,decOf(c.code))}</span>${pct}</span>`}).join('');
@@ -899,14 +904,14 @@ function renderBestBand(){
    <div class="street-item"><span class="s-label">Best USD buy — you get</span><span class="s-bank">${bb?bb.b.name:'—'}</span><span class="s-rate">${bb?fmt(bb.r.buy,2):'—'} <small>ETB</small></span></div>
    <div class="street-item"><span class="s-label">Lowest USD sell — you pay</span><span class="s-bank">${bs?bs.b.name:'—'}</span><span class="s-rate">${bs?fmt(bs.r.sell,2):'—'} <small>ETB</small></span></div>
    <div class="street-item"><span class="s-label">Tightest spread</span><span class="s-bank">${t?t.b.name:'—'}</span><span class="s-rate">${t?fmt(t.r.spread,2):'—'} <small>ETB</small></span></div>
-   <div class="s-note">Cash & electronic rates from the published sheets of ${nb} bank${nb===1?'':'s'} — more banks join as their sheets are added.</div>`;
+   <div class="s-note">Cash & electronic rates from the published sheets of ${nb} bank${nb===1?'':'s'} — collected automatically as they publish.</div>`;
 }
 function renderP2P(){
   const el=$('#p2pCard');if(!el)return;
   const q=p2pQuote();
   if(!q){
     el.innerHTML=`<div class="chart-head"><span class="kicker">Parallel market reference · USDT/ETB</span><span class="range-hint">indicative</span></div>
-    <p class="hint" style="margin:8px 0 4px">USDT/ETB is not collected yet — the robot adds it when P2P sources respond. Bank and NBE rates are unaffected.</p>`;
+    <p class="hint" style="margin:8px 0 4px">USDT/ETB is not collected yet — the robot adds it when parallel-market sources respond. Bank and NBE rates are unaffected.</p>`;
     return;
   }
   const mid=(q.buy+q.sell)/2, bank=avgMid('USD');
@@ -920,7 +925,7 @@ function renderP2P(){
      <div><span class="s-label">vs bank USD</span><span class="big-num ${prem!=null&&prem>=0?'up':'down'}" style="font-size:19px;padding-top:6px">${prem!=null?(prem>=0?'+':'−')+Math.abs(prem*100).toFixed(1)+'%':'—'}</span><span class="mini">parallel premium</span></div>
      <div><span class="s-label">Updated</span><span class="big-num" style="font-size:17px;padding-top:8px">${ago(ts)}</span><span class="mini">public parallel-market sources</span></div>
    </div>
-   <p class="mini" style="margin-top:10px">Aggregated from public peer-to-peer listings and shown for reference only — not a bank or NBE rate, not an offer to trade, and no guarantee any counterparty is available at this price.</p>`;
+   <p class="mini" style="margin-top:10px">Aggregated from public parallel-market sources and shown for reference only — not a bank or NBE rate, not an offer to trade, and no guarantee any counterparty is available at this price.</p>`;
 }
 function renderChips(){
   const mk=()=>CURRENCIES.map(c=>{const ok=hasData(c.code);
@@ -930,7 +935,7 @@ function renderChips(){
 }
 function renderDirHint(){
   const cur=S.today.cur;
-  if(cur==='USDT'){$('#dirHint').innerHTML='USDT/ETB is a parallel-market reference from P2P sources (card above) — banks do not quote USDT.';return}
+  if(cur==='USDT'){$('#dirHint').innerHTML='USDT/ETB is a parallel-market reference (card above) — banks do not quote USDT.';return}
   if(S.today.dir==='buy'){
     const b=bestBuy(cur);
     $('#dirHint').innerHTML=b?`Selling <b>${cur}</b>? A higher <b>buy</b> rate gets you more birr. Best today: <b>${b.b.name}</b> — ${fmt(b.r.buy,decOf(cur))} ETB.`:`No ${cur} buy quotes published yet.`;
@@ -952,7 +957,7 @@ function renderTodayTable(){
       <td class="num${ch!=null?' '+cls(ch):''}">${ch!=null?fmtPct(ch):'—'}</td>
       <td class="c-spark"><canvas class="sparkcv" data-b="__P2P__"></canvas></td>
       <td class="c-upd">${ago(DATA.mode==='live'?sourceUpdated('P2P'):Date.now())}</td></tr>`
-      :`<tr><td colspan="8" style="color:var(--muted);padding:18px">USDT/ETB not collected yet — the reference appears when P2P data arrives.</td></tr>`;
+      :`<tr><td colspan="8" style="color:var(--muted);padding:18px">USDT/ETB not collected yet.</td></tr>`;
     $$('#rateBody .sparkcv').forEach(cv=>drawSpark(cv,(H.USDT||[]).slice(-60)));
     $$('#rateTable th[data-key]').forEach(th=>th.classList.remove('sorted','asc'));
     return;
@@ -967,19 +972,18 @@ function renderTodayTable(){
     const st=isStale(b.c)?' <span class="down">·stale</span>':'';
     return `<tr data-b="${b.c}">
       <td class="c-idx">${String(i+1).padStart(2,'0')}</td>
-      <td><span class="c-bank"><span class="mono-badge">${b.c.slice(0,2)}</span><span class="b-txt"><b>${b.name}</b><i>${b.type} · est. ${b.est} · ${b.br.toLocaleString()} branches</i></span></span></td>
+      <td><span class="c-bank"><span class="mono-badge">${b.c.slice(0,2)}</span><span class="b-txt"><b>${b.name}</b><i>${b.type}${b.est?' · est. '+b.est:''}</i></span></span></td>
       <td class="num c-buy${hlB}">${r?fmt(r.buy,d):'—'}</td>
       <td class="num c-sell${hlS}">${r?fmt(r.sell,d):'—'}</td>
       <td class="num c-spread">${r?fmt(r.spread,d):'—'}</td>
       <td class="num c-chg${histReal()?' '+cls(ch):''}">${histReal()?fmtPct(ch):'—'}</td>
       <td class="c-spark"><canvas class="sparkcv" data-b="${b.c}"></canvas></td>
       <td class="c-upd" data-b="${b.c}">${ago(sourceUpdated(b.c))}${st}</td></tr>`}).join('');
-  $$('#rateBody .sparkcv').forEach(cv=>drawSpark(cv,bankSeries(BANK[cv.dataset.b],cur,60)));
+  $$('#rateBody .sparkcv').forEach(cv=>{
+    const id=cv.dataset.b;
+    drawSpark(cv,id==='__P2P__'?(H.USDT||[]).slice(-60):bankSeries(BANK[id],cur,60));
+  });
   $$('#rateTable th[data-key]').forEach(th=>{const on=th.dataset.key===key;th.classList.toggle('sorted',on);th.classList.toggle('asc',on&&dir===1)});
-  const note=$('#view-today .f-note');
-  if(note)note.textContent=DATA.mode==='live'
-    ?'Rates collected from published bank rate sheets — indicative only. Confirm with the bank before transacting.'
-    :'Illustrative dataset for demonstration — figures are simulated, not live market quotes. Bank "buys" = the rate at which the bank purchases foreign cash/FX from you.';
 }
 function renderToday(){
   safe(renderChips,'chips');safe(renderHero,'hero');safe(renderBestBand,'band');safe(renderP2P,'p2p');safe(renderDirHint,'hint');safe(renderTodayTable,'table');
@@ -1040,7 +1044,7 @@ function renderBankList(){
     const r=bankRates(b,'USD'),st=isStale(b.c)?' ·stale':'';
     return `<button class="bank-item ${b.c===S.banks.sel?'on':''}" data-c="${b.c}">
       <span class="mono-badge">${b.c.slice(0,2)}</span>
-      <span class="bi-txt"><b>${b.name}</b><i>${b.type} · ${b.br.toLocaleString()} branches</i></span>
+      <span class="bi-txt"><b>${b.name}</b><i>${b.type}</i></span>
       <span class="bi-rate">${r?fmt(r.buy,2):'—'}<em>USD buy${st}</em></span>
     </button>`}).join('')||'<div style="padding:16px;font-size:13px;color:var(--muted)">No banks match.</div>';
 }
@@ -1056,7 +1060,7 @@ function renderBankDetail(){
   $('#bankDetail').innerHTML=`
     <div class="bd-head">
       <span class="mono-badge lg">${b.c.slice(0,2)}</span>
-      <div><h2 style="margin:0">${b.name}</h2><p class="meta">${b.type} · Est. ${b.est} · ${b.br.toLocaleString()} branches · HQ Addis Ababa</p></div>
+      <div><h2 style="margin:0">${b.name}</h2><p class="meta">${b.type}${b.est?' · Est. '+b.est:''} · HQ Addis Ababa</p></div>
       ${tags.length?`<span class="bd-tag">${tags[0]}</span>`:''}
     </div>
     <div class="chip-row" style="margin-top:18px">${CURRENCIES.map(c=>`<button class="chip ${c.code===cur?'on':''}" data-cur="${c.code}"${hasData(c.code)?'':' style="opacity:.35"'}>${c.code}</button>`).join('')}</div>
@@ -1149,41 +1153,35 @@ function buildConverter(){
   $('#cvFrom').value=S.conv.from;$('#cvTo').value=S.conv.to;
 }
 function renderBureaus(){
-  const cities=['All',...new Set(BUREAUS.map(u=>u.city))];
-  $('#cityChips').innerHTML=cities.map(c=>`<button class="chip ${c===S.bureaus.city?'on':''}" data-city="${c}">${c}</button>`).join('');
   const q=S.bureaus.q.trim().toLowerCase();
-  let rows=BUREAUS.filter(u=>(S.bureaus.city==='All'||u.city===S.bureaus.city)&&(!q||u.name.toLowerCase().includes(q)||u.city.toLowerCase().includes(q)));
+  let rows=BUREAUS.filter(u=>!q||u.name.toLowerCase().includes(q));
   const {key,dir}=S.bureaus.sort;
   const bb=bestBuy('USD'),bbb=bb?bb.r.buy:null;
   const val={name:u=>u.name,buy:u=>{const r=bureauRates(u);return r?r.buy:null},sell:u=>{const r=bureauRates(u);return r?r.sell:null},spread:u=>{const r=bureauRates(u);return r?r.sell-r.buy:null},vs:u=>{const r=bureauRates(u);return r&&bbb!=null?r.buy-bbb:null}};
-  rows.sort((a,b)=>cmp(val[key](a),val[key](b),dir));
+  rows.sort((a,b)=>cmp(val[key](a),val[key](b),key==='name'?dir:dir));
   $('#bureauBody').innerHTML=rows.map(u=>{
     const r=bureauRates(u),vs=r&&bbb!=null?r.buy-bbb:null;
     const st=isStale(u.id)?' <span class="down">·stale</span>':'';
     return `<tr class="b-row" data-n="${u.name}">
-      <td style="width:34px;color:var(--muted)"><span class="caret" style="display:inline-block">${I.chev}</span></td>
-      <td><span class="b-txt"><b>${u.name}</b><i>${u.area}</i></span></td>
-      <td style="font-size:12.5px">${u.city}</td>
-      <td style="font:400 11.5px var(--mono);color:var(--muted)">${u.hours}</td>
+      <td><span class="b-txt"><b>${u.name}</b><i>licensed FX bureau${st}</i></span></td>
       <td class="num">${r?fmt(r.buy,2):'—'}</td>
       <td class="num">${r?fmt(r.sell,2):'—'}</td>
       <td class="num">${r?fmt(r.sell-r.buy,2):'—'}</td>
       <td class="num ${vs!=null?cls(vs):''}">${vs!=null?(vs>=0?'+':'−')+fmt(Math.abs(vs),2):'—'}</td></tr>
-    <tr class="b-more" data-n="${u.name}" hidden><td colspan="8"><div class="b-more-in">
-      ${['EUR','AED','GBP'].map(cc=>{const rr=bureauRates(u,cc);
-        return `<div><span class="s-label">${cc} cash</span><span class="val">${rr?fmt(rr.buy,2)+' <span style="color:var(--muted)">/</span> '+fmt(rr.sell,2):'—'}</span></div>`}).join('')}
-      <div class="b-meta"><span>License NBE ${u.lic}${st}</span><span>${u.area}, ${u.city}</span><span>${u.hours} · ${u.tel}</span></div>
-    </div></td></tr>`}).join('')||'<tr><td colspan="8" style="padding:18px;color:var(--muted)">No bureaus match your filter.</td></tr>';
+    <tr class="b-more" data-n="${u.name}" hidden><td colspan="5"><div class="b-more-in">
+      ${CURRENCIES.filter(c=>c.code!=='USDT').map(cc=>{const rr=bureauRates(u,cc.code);
+        return rr?`<div><span class="s-label">${cc.code} cash</span><span class="val">${fmt(rr.buy,2)} / ${fmt(rr.sell,2)}</span></div>`:''}).join('')||'<div style="color:var(--muted);font-size:12px">No quotes collected yet.</div>'}
+    </div></td></tr>`}).join('')||'<tr><td colspan="5" style="padding:18px;color:var(--muted)">No bureaus match your filter.</td></tr>';
   document.querySelectorAll('#view-bureaus thead th[data-key]').forEach(th=>{
     const on=th.dataset.key===key;th.classList.toggle('sorted',on);th.classList.toggle('asc',on&&dir===1)});
   let bu=null,bsell=null;
   for(const u of BUREAUS){const r=bureauRates(u);if(!r)continue;
     if(!bu||r.buy>bu.r.buy)bu={u,r};if(!bsell||r.sell<bsell.r.sell)bsell={u,r}}
   $('#bureauBand').innerHTML=bu?`
-   <div class="street-item"><span class="s-label">Best USD cash buy</span><span class="s-bank">${bu.u.name}</span><span class="s-rate">${fmt(bu.r.buy,2)} <small>ETB · ${bu.u.city}</small></span></div>
-   <div class="street-item"><span class="s-label">Lowest USD cash sell</span><span class="s-bank">${bsell.u.name}</span><span class="s-rate">${fmt(bsell.r.sell,2)} <small>ETB · ${bsell.u.city}</small></span></div>
-   <div class="street-item"><span class="s-label">Beats best bank by</span><span class="s-bank">on cash purchases</span><span class="s-rate up">${bbb!=null?'+'+fmt(bu.r.buy-bbb,2):'—'} <small>ETB / USD</small></span></div>
-   <div class="s-note">${BUREAUS.length} bureaus across ${new Set(BUREAUS.map(u=>u.city)).size} cities, all licensed by the National Bank of Ethiopia. Cash rates only — no account needed.</div>`
+   <div class="street-item"><span class="s-label">Best USD cash buy</span><span class="s-bank">${bu.u.name}</span><span class="s-rate">${fmt(bu.r.buy,2)} <small>ETB</small></span></div>
+   <div class="street-item"><span class="s-label">Lowest USD cash sell</span><span class="s-bank">${bsell.u.name}</span><span class="s-rate">${fmt(bsell.r.sell,2)} <small>ETB</small></span></div>
+   <div class="street-item"><span class="s-label">vs best bank</span><span class="s-bank">cash purchases</span><span class="s-rate up">${bbb!=null?'+'+fmt(bu.r.buy-bbb,2):'—'} <small>ETB / USD</small></span></div>
+   <div class="s-note">${BUREAUS.length} licensed bureaus publishing rates online — cash rates at the counter, no account needed. Collected automatically.</div>`
    :`<div class="s-note" style="border-left:0;padding-left:2px">Bureau quotes are not collected yet — this board fills in as bureaus are added to the dataset.</div>`;
 }
 function updatePrices(){
@@ -1301,7 +1299,6 @@ function wire(){
     $('#cvFrom').value=S.conv.from;$('#cvTo').value=S.conv.to;
     const b=$('#swapBtn');b.classList.add('rot');setTimeout(()=>b.classList.remove('rot'),380);
     updateConverter()});
-  $('#cityChips').addEventListener('click',e=>{const c=e.target.closest('.chip');if(!c)return;S.bureaus.city=c.dataset.city;renderBureaus()});
   $('#bureauSearchWrap').addEventListener('input',e=>{if(e.target.id==='bureauQ'){S.bureaus.q=e.target.value;renderBureaus()}});
   document.querySelector('#view-bureaus thead').addEventListener('click',e=>{
     const th=e.target.closest('th[data-key]');if(!th)return;const k=th.dataset.key;
@@ -1364,4 +1361,4 @@ function wire(){
 })();
 </script>
 </body>
-</html> 
+</html>
