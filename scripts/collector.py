@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-# Birrwatch robot collector v10.1 — 32 banks + FX bureaus + parallel USDT/ETB.
+# Birrwatch robot collector v10.2 — 32 banks + FX bureaus + parallel USDT/ETB.
 #
 # TO FIX A FAILING SOURCE: open its rate page in your browser (numbers visible
 # immediately, no clicking), copy the address, paste it as the FIRST url in
 # that source's list. Commit, then Actions -> Run workflow.
-# v10.1: progress heartbeat in the log (no more silent runs), network-capture
-# removed (hang risk), 20-min budget with hard 40-min workflow cap.
+# v10.2: WATCHDOGS — every source runs under a hard 180s timeout; a source
+# whose browser call freezes is abandoned (thread left behind) and the run
+# continues. Data file is written BEFORE browser cleanup. The process ends
+# with os._exit() so no hung call can block the step. Budget 15 min.
 
 import csv
 import io
@@ -13,6 +15,7 @@ import json
 import os
 import re
 import sys
+import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -32,7 +35,9 @@ RATES = ROOT / "data" / "rates.json"
 WANT = ("USD", "EUR", "AED", "SAR", "GBP", "CNY")
 MAX_JUMP = 0.15
 MIN_SPREAD = 0.0008
-TIME_BUDGET = 20 * 60
+TIME_BUDGET = 15 * 60          # total collection budget (seconds)
+PER_SOURCE = 180               # hard cap per source (watchdog)
+P2P_TIMEOUT = 120              # hard cap for the parallel fetch
 
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 HEADERS = {"User-Agent": UA}
@@ -193,6 +198,28 @@ NUM = re.compile(r"\d[\d,]*(?:\.\d+)?")
 BUY_W = ("BUY", "BUYING", "BID", "PURCHAS")
 SELL_W = ("SELL", "SELLING", "OFFER", "ASK", "SOLD")
 CASH_W = ("CASH", "NOTE", "BANKNOTE")
+
+
+def run_with_timeout(fn, args=(), timeout=180, label=""):
+    """Run fn(*args) in a daemon thread. If it doesn't finish within timeout,
+    abandon it and return a stall marker. A hung thread is left in the
+    background; the process-level os._exit() at the end kills it."""
+    box = {}
+
+    def worker():
+        try:
+            box["result"] = fn(*args)
+        except BaseException as e:
+            box["error"] = f"{type(e).__name__}: {e}"
+
+    t = threading.Thread(target=worker, daemon=True)
+    t.start()
+    t.join(timeout)
+    if t.is_alive():
+        return None, f"⏳ stalled >{timeout}s ({label})"
+    if "error" in box:
+        return None, box["error"]
+    return box.get("result"), None
 
 
 def norm(s):
@@ -531,6 +558,12 @@ def get_browser():
     return _BROWSER
 
 
+def reset_browser():
+    global _PW, _BROWSER
+    _PW = None
+    _BROWSER = None
+
+
 def attempt_dynamic(url):
     try:
         browser = get_browser()
@@ -543,12 +576,11 @@ def attempt_dynamic(url):
                                   ignore_https_errors=True)
         page = ctx.new_page()
         try:
-            page.set_default_timeout(20000)
-            page.set_default_navigation_timeout(30000)
+            page.set_default_timeout(15000)
         except Exception:
             pass
         try:
-            page.goto(url, wait_until="domcontentloaded", timeout=30000)
+            page.goto(url, wait_until="domcontentloaded", timeout=25000)
             page.wait_for_timeout(4000)
             try:
                 page.mouse.wheel(0, 1200)
@@ -604,13 +636,16 @@ def attempt_dynamic(url):
 
 
 def cleanup():
-    try:
-        if _BROWSER:
-            _BROWSER.close()
-        if _PW:
-            _PW.stop()
-    except Exception:
-        pass
+    """Browser shutdown under its own watchdog — can never block the run."""
+    def _impl():
+        try:
+            if _BROWSER:
+                _BROWSER.close()
+            if _PW:
+                _PW.stop()
+        except Exception:
+            pass
+    run_with_timeout(_impl, timeout=15, label="cleanup")
 
 
 def fetch_ebr(notes, budget):
@@ -824,13 +859,15 @@ def apply_quote(quotes, rates, sid, cur, buy, sell):
 
 def main():
     if not RATES.exists():
-        print("data/rates.json not found — nothing to update.")
-        cleanup()
+        print("data/rates.json not found — nothing to update.", flush=True)
         return 1
     t0 = time.monotonic()
 
     def budget_left():
         return (time.monotonic() - t0) < TIME_BUDGET
+
+    print(f"[birrwatch-collector] v10.2 starting · {len(SOURCES)} sources · "
+          f"budget {TIME_BUDGET // 60} min · per-source cap {PER_SOURCE}s", flush=True)
 
     doc = json.loads(RATES.read_text(encoding="utf-8"))
     sources = doc.setdefault("sources", {})
@@ -847,70 +884,88 @@ def main():
     summary = []
     applied_any = False
     skipped = []
+    stalled = []
 
-    try:
-        for sid, cfg in SOURCES.items():
-            if not budget_left():
-                skipped.append(sid)
-                continue
-            print(f"[collect] {sid} …", flush=True)
-            got, via, notes = collect_source(cfg)
-            if not got:
-                detail = "; ".join(notes) if notes else "unknown"
-                summary.append(f"| {sid} | ✗ {detail} — kept previous values |")
-                print(f"[collect] {sid} ✗", flush=True)
-                continue
-            kept, warned = [], False
-            for cur in WANT:
-                if cur not in got:
-                    continue
-                buy, sell = got[cur]
-                res = apply_quote(quotes, rates, sid, cur, buy, sell)
-                if res.startswith("⚠"):
-                    summary.append(f"| {sid} | {res} |")
-                    warned = True
-                else:
-                    kept.append(res[2:])
-            if kept:
-                applied_any = True
-                s = sources.setdefault(sid, {"name": cfg["name"], "type": cfg["type"]})
-                s["name"], s["type"] = cfg["name"], cfg["type"]
-                s["fetched_at"] = now
-                summary.append(f"| {sid} | ✓ {', '.join(kept)} ({via}) |")
-                print(f"[collect] {sid} ✓ {len(kept)}", flush=True)
-            elif not warned:
-                summary.append(f"| {sid} | ⚠ nothing usable — kept previous values |")
-                print(f"[collect] {sid} ⚠", flush=True)
-            time.sleep(2)
-
-        if budget_left():
-            print("[collect] P2P (parallel) …", flush=True)
-            buy, sell, src = fetch_parallel(budget_left)
-            if buy and sell:
-                res = apply_quote(quotes, rates, "P2P", "USDT", round(buy, 2), round(sell, 2))
-                if res.startswith("⚠"):
-                    summary.append(f"| P2P | {res} |")
-                else:
-                    applied_any = True
-                    sources["P2P"] = {"name": f"USDT/ETB — parallel market ({src}; indicative)",
-                                      "type": "market", "fetched_at": now}
-                    summary.append(f"| P2P | ✓ USDT {buy:.2f}/{sell:.2f} ({src}) |")
+    for sid, cfg in SOURCES.items():
+        if not budget_left():
+            skipped.append(sid)
+            continue
+        print(f"[collect] {sid} …", flush=True)
+        result, err = run_with_timeout(collect_source, (cfg,), timeout=PER_SOURCE, label=sid)
+        if result is None:
+            if err and err.startswith("⏳"):
+                stalled.append(sid)
+                summary.append(f"| {sid} | ⏳ {err} — kept previous values |")
+                print(f"[collect] {sid} STALLED — abandoned", flush=True)
+                reset_browser()          # fresh browser for the next source
             else:
-                summary.append("| P2P | ✗ ebr + fallbacks failed — kept previous values |")
-        elif skipped:
-            summary.append("| P2P | ⏳ skipped — time budget reached |")
-    finally:
-        cleanup()
+                summary.append(f"| {sid} | ✗ {err} — kept previous values |")
+                print(f"[collect] {sid} error", flush=True)
+            continue
+        got, via, notes = result
+        if not got:
+            detail = "; ".join(notes) if notes else "unknown"
+            summary.append(f"| {sid} | ✗ {detail} — kept previous values |")
+            print(f"[collect] {sid} ✗", flush=True)
+            continue
+        kept, warned = [], False
+        for cur in WANT:
+            if cur not in got:
+                continue
+            buy, sell = got[cur]
+            res = apply_quote(quotes, rates, sid, cur, buy, sell)
+            if res.startswith("⚠"):
+                summary.append(f"| {sid} | {res} |")
+                warned = True
+            else:
+                kept.append(res[2:])
+        if kept:
+            applied_any = True
+            s = sources.setdefault(sid, {"name": cfg["name"], "type": cfg["type"]})
+            s["name"], s["type"] = cfg["name"], cfg["type"]
+            s["fetched_at"] = now
+            summary.append(f"| {sid} | ✓ {', '.join(kept)} ({via}) |")
+            print(f"[collect] {sid} ✓ {len(kept)}", flush=True)
+        elif not warned:
+            summary.append(f"| {sid} | ⚠ nothing usable — kept previous values |")
+            print(f"[collect] {sid} ⚠", flush=True)
+        time.sleep(2)
+
+    if budget_left():
+        print("[collect] P2P (parallel) …", flush=True)
+        result, err = run_with_timeout(fetch_parallel, (budget_left,), timeout=P2P_TIMEOUT, label="P2P")
+        if result and result[0] and result[1]:
+            buy, sell, src = result
+            res = apply_quote(quotes, rates, "P2P", "USDT", round(buy, 2), round(sell, 2))
+            if res.startswith("⚠"):
+                summary.append(f"| P2P | {res} |")
+            else:
+                applied_any = True
+                sources["P2P"] = {"name": f"USDT/ETB — parallel market ({src}; indicative)",
+                                  "type": "market", "fetched_at": now}
+                summary.append(f"| P2P | ✓ USDT {buy:.2f}/{sell:.2f} ({src}) |")
+                print("[collect] P2P ✓", flush=True)
+        elif err and err.startswith("⏳"):
+            summary.append(f"| P2P | ⏳ {err} — kept previous values |")
+            print("[collect] P2P STALLED", flush=True)
+            reset_browser()
+        else:
+            summary.append("| P2P | ✗ ebr + fallbacks failed — kept previous values |")
+            print("[collect] P2P ✗", flush=True)
+    elif skipped:
+        summary.append("| P2P | ⏳ skipped — time budget reached |")
 
     if skipped:
         summary.append(f"| ⏳ | {len(skipped)} source(s) skipped — time budget reached: {', '.join(skipped)} |")
 
+    # ---- write results FIRST, then best-effort cleanup, then hard exit ----
     if not applied_any:
         text = ("## Robot collection — FAILED\n\nNo source could be read. rates.json was not changed.\n\n"
                 "| Source | Result |\n|---|---|\n" + "\n".join(summary))
-        print(text)
+        print(text, flush=True)
         write_summary(text)
-        return 1
+        cleanup()
+        os._exit(1)
 
     doc.setdefault("meta", {})["generated_at"] = now
     RATES.write_text(json.dumps(doc, indent=1) + "\n", encoding="utf-8")
@@ -918,10 +973,12 @@ def main():
     ok = sum(1 for line in summary if line.startswith("| ") and "✓" in line)
     text = (f"## Robot collection — {ok} sources updated\n\n"
             "| Source | Result |\n|---|---|\n" + "\n".join(summary))
-    print(text)
+    print(text, flush=True)
     write_summary(text)
-    return 0
+    cleanup()
+    sys.stdout.flush()
+    os._exit(0)      # hard exit — no hung thread can block the step
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()
