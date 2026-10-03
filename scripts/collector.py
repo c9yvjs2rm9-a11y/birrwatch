@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-# Birrwatch robot collector v11 — banks + FX bureaus + parallel USDT/ETB.
-# v11: real URLs for 20 banks (verified by operator), Rooha added, Robust
-# removed, JSON-API sources supported (Addis International), P2P hardened
-# (candidate clustering + Binance cross-check rejects ebr outliers).
+# Birrwatch robot collector v12 — banks + FX bureaus + parallel USDT/ETB.
+# v12: ORB browser-first (its CDN serves robots stale HTML), network capture
+# restored for ebr.exchange (per-source private browser makes it safe),
+# P2P diagnostics now shown in the summary, DBH & ETH removed (no data).
 
 import csv
 import io
@@ -32,7 +32,7 @@ MAX_JUMP = 0.15
 MIN_SPREAD = 0.0008
 TIME_BUDGET = 15 * 60
 PER_SOURCE = 180
-P2P_TIMEOUT = 120
+P2P_TIMEOUT = 180
 
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 HEADERS = {"User-Agent": UA}
@@ -60,8 +60,7 @@ SOURCES = {
         "https://coopbankoromia.com.et/",
         "https://coopbankoromia.com.et/exchange-rate/",
     ]},
-    "ORB": {"name": "Oromia Bank", "type": "bank", "urls": [
-        "https://oromiabank.com/exchange-rate/",
+    "ORB": {"name": "Oromia Bank", "type": "bank", "browser_first": True, "urls": [
         "https://oromiabank.com/",
     ]},
     "ABY": {"name": "Abay Bank", "type": "bank", "urls": [
@@ -74,7 +73,6 @@ SOURCES = {
     ]},
     "WGB": {"name": "Wegagen Bank", "type": "bank", "urls": [
         "https://www.wegagen.com/",
-        "https://www.wegagen.com/exchange-rate/",
     ]},
     "ZEM": {"name": "Zemen Bank", "type": "bank", "urls": [
         "https://zemenbank.com/exchange-rate/",
@@ -94,7 +92,6 @@ SOURCES = {
     ]},
     "ENB": {"name": "Enat Bank", "type": "bank", "urls": [
         "https://www.enatbanksc.com/",
-        "https://www.enatbanksc.com/exchange-rate/",
     ]},
     "ZZB": {"name": "ZamZam Bank", "type": "bank", "urls": [
         "https://zamzambank.com/exchange-rates/",
@@ -120,7 +117,6 @@ SOURCES = {
     ]},
     "GDB": {"name": "Gadaa Bank", "type": "bank", "urls": [
         "https://gadaabank.com.et/",
-        "https://gadaabank.com.et/exchange-rate/",
     ]},
     "GLB": {"name": "Global Bank Ethiopia", "type": "bank", "urls": [
         "https://globalbankethiopia.com/exchange-rate/",
@@ -132,11 +128,9 @@ SOURCES = {
     ]},
     "HJB": {"name": "Hijra Bank", "type": "bank", "urls": [
         "https://hijra-bank.com/",
-        "https://hijra-bank.com/exchange-rate/",
     ]},
     "OMO": {"name": "Omo Bank", "type": "bank", "urls": [
         "https://omobanksc.com/",
-        "https://omobanksc.com/exchange-rate/",
     ]},
     "RMB": {"name": "Rammis Bank", "type": "bank", "urls": [
         "https://kehulum.com/exchange-rate/rammis-bank-sc-135",
@@ -157,7 +151,6 @@ SOURCES = {
     ]},
     "TSB": {"name": "Tsedey Bank", "type": "bank", "urls": [
         "https://www.tsedeybank.com.et/",
-        "https://www.tsedeybank.com.et/exchange-rate/",
     ]},
     "THB": {"name": "Tsehay Bank", "type": "bank", "urls": [
         "https://tsehaybank.com.et/exchange-rate/",
@@ -177,15 +170,9 @@ SOURCES = {
     ]},
     "ROO": {"name": "Rooha Forex Bureau", "type": "bureau", "urls": [
         "https://www.roohaforex.net/",
-        "https://www.roohaforex.net/exchange-rate/",
     ]},
-    "DBH": {"name": "DBH Forex Bureau", "type": "bureau", "urls": [
-        "https://dbhforex.com/",
-    ]},
-    "ETH": {"name": "Ethio Forex Bureau", "type": "bureau", "urls": [
-        "https://www.ethioforextrading.com/exchange-rates",
-        "https://www.ethioforextrading.com/",
-    ]},
+    # DBH removed: site freezes browser calls, never yielded data.
+    # ETH removed: no public rate page (rates behind their app/login).
 }
 
 NUM = re.compile(r"\d[\d,]*(?:\.\d+)?")
@@ -270,8 +257,6 @@ def plausible(b, s):
 
 
 def cluster_median(cands, tol=0.06, min_n=3):
-    """Biggest cluster of mutually-agreeing candidates (within tol); needs
-    min_n members — a lone weird number can never win."""
     cands = sorted(c for c in cands if c)
     best = []
     for base in cands:
@@ -282,7 +267,6 @@ def cluster_median(cands, tol=0.06, min_n=3):
 
 
 def parse_json_rates(node, out=None, depth=0):
-    """Extract {currency: (buy, sell)} from a JSON API body (Addis Intl)."""
     if out is None:
         out = {}
     if depth > 6:
@@ -583,8 +567,11 @@ def attempt_static(url):
     return None, last
 
 
-def attempt_dynamic(url):
+def attempt_dynamic(url, capture=False):
+    """Self-contained per-source browser. capture=True also records the page's
+    own JSON responses (safe now: private browser + watchdog containment)."""
     info = []
+    caps = []
     pw = None
     browser = None
     ctx = None
@@ -599,6 +586,20 @@ def attempt_dynamic(url):
             page.set_default_timeout(15000)
         except Exception:
             pass
+        if capture:
+            def _on_response(resp):
+                try:
+                    ct = (resp.headers or {}).get("content-type", "") or ""
+                    if "json" in ct.lower() and resp.status == 200 and len(caps) < 20:
+                        body = resp.text()
+                        if body and len(body) <= 200000:
+                            caps.append((resp.url or "", body))
+                except Exception:
+                    pass
+            try:
+                page.on("response", _on_response)
+            except Exception:
+                pass
         try:
             page.goto(url, wait_until="domcontentloaded", timeout=25000)
             page.wait_for_timeout(4000)
@@ -638,8 +639,8 @@ def attempt_dynamic(url):
             except Exception:
                 pass
             if html and len(html) > 500:
-                return html, None, info
-            return None, "empty render", info
+                return html, None, info, caps
+            return None, "empty render", info, caps
         finally:
             try:
                 page.close()
@@ -651,7 +652,7 @@ def attempt_dynamic(url):
             except Exception:
                 pass
     except Exception as e:
-        return None, type(e).__name__, info
+        return None, type(e).__name__, info, caps
     finally:
         try:
             if browser:
@@ -684,14 +685,19 @@ def fetch_ebr(notes, budget):
     else:
         notes.append(f"ebr static: {err}")
     if budget() and browser_worth_it(err):
-        bhtml, berr, binfo = attempt_dynamic(EBR_URL)
+        bhtml, berr, binfo, caps = attempt_dynamic(EBR_URL, capture=True)
         if bhtml:
+            for _u, body in caps:
+                try:
+                    walk_prices(json.loads(body), all_prices)
+                except Exception:
+                    continue
             all_prices.extend(text_candidates(bhtml))
             for cur, (b, s) in (parse_any(bhtml) or {}).items():
                 if cur in ("USD", "USDT"):
                     buys.append(b)
                     sells.append(s)
-            notes.append(f"ebr browser: {len(all_prices)} candidates")
+            notes.append(f"ebr browser: {len(caps)} json · {len(all_prices)} candidates")
         else:
             notes.append(f"ebr browser: {berr} (" + "; ".join(binfo) + ")")
     r = decide_from_candidates(buys, sells, all_prices, "ebr.exchange")
@@ -804,25 +810,34 @@ def fetch_parallel(budget):
         ref = p2p_binance(notes)
     except Exception:
         ref = None
+    result = None
     if ebr and ref:
         ebm = (ebr[0] + ebr[1]) / 2
         rm = (ref[0] + ref[1]) / 2
         if abs(ebm / rm - 1) <= 0.30:
-            return ebr
-        notes.append(f"ebr rejected — {ebm:.0f} vs binance {rm:.0f} (>30% off)")
-        return ref
-    if ebr:
-        return ebr
-    if ref:
-        return ref
-    for fn in (p2p_kucoin, p2p_bybit):
-        try:
-            got = fn(notes)
-        except Exception:
-            got = None
-        if got:
-            return got
-    return None, None, None
+            result = ebr
+        else:
+            notes.append(f"ebr rejected — {ebm:.0f} vs binance {rm:.0f} (>30% off)")
+            result = ref
+    elif ebr:
+        result = ebr
+    elif ref:
+        result = ref
+    if not result:
+        for fn in (p2p_kucoin, p2p_bybit):
+            try:
+                got = fn(notes)
+            except Exception:
+                got = None
+            if got:
+                result = got
+                break
+    if result:
+        buy, sell, src = result
+        if buy > sell:
+            buy, sell = sell, buy      # normalize crossed books (ebr style)
+        return buy, sell, src, notes
+    return None, None, None, notes
 
 
 def write_summary(text):
@@ -849,10 +864,20 @@ def collect_source(cfg):
                 notes.append(f"csv: {type(e).__name__}")
         return {}, "", notes
     got, via, notes = {}, "", []
+    if cfg.get("browser_first"):
+        for url in cfg["urls"]:
+            dhtml, derr, dinfo, _caps = attempt_dynamic(url)
+            if dhtml:
+                got = parse_any(dhtml)
+                if got:
+                    return got, "browser", notes
+                notes.append(f"browser-first {short(url)}: parsed 0 (" + "; ".join(dinfo) + ")")
+            else:
+                notes.append(f"browser-first {short(url)}: {derr} (" + "; ".join(dinfo) + ")")
     for url in cfg["urls"]:
         html, err = attempt_static(url)
         if html:
-            if html.lstrip()[:1] in "{[":          # JSON API response
+            if html.lstrip()[:1] in "{[":
                 try:
                     jgot = parse_json_rates(json.loads(html))
                 except Exception:
@@ -870,7 +895,7 @@ def collect_source(cfg):
             notes.append(f"{short(url)}: {err}")
         if not browser_worth_it(err):
             continue
-        dhtml, derr, dinfo = attempt_dynamic(url)
+        dhtml, derr, dinfo, _caps = attempt_dynamic(url)
         if dhtml:
             if dhtml.lstrip()[:1] in "{[":
                 try:
@@ -915,7 +940,7 @@ def main():
     def budget_left():
         return (time.monotonic() - t0) < TIME_BUDGET
 
-    print(f"[birrwatch-collector] v11 starting · {len(SOURCES)} sources · "
+    print(f"[birrwatch-collector] v12 starting · {len(SOURCES)} sources · "
           f"budget {TIME_BUDGET // 60} min · per-source cap {PER_SOURCE}s", flush=True)
 
     doc = json.loads(RATES.read_text(encoding="utf-8"))
@@ -981,10 +1006,10 @@ def main():
         print("[collect] P2P (parallel) …", flush=True)
         result, err = run_with_timeout(fetch_parallel, (budget_left,), timeout=P2P_TIMEOUT, label="P2P")
         if result and result[0] and result[1]:
-            buy, sell, src = result
+            buy, sell, src, pnotes = result
             res = apply_quote(quotes, rates, "P2P", "USDT", round(buy, 2), round(sell, 2))
             if res.startswith("⚠"):
-                summary.append(f"| P2P | {res} |")
+                summary.append(f"| P2P | {res} · [{'; '.join(pnotes)}] |")
             else:
                 applied_any = True
                 sources["P2P"] = {"name": f"USDT/ETB — parallel market ({src}; indicative)",
@@ -995,7 +1020,8 @@ def main():
             summary.append(f"| P2P | ⏳ {err} — kept previous values |")
             print("[collect] P2P STALLED", flush=True)
         else:
-            summary.append("| P2P | ✗ all parallel sources failed — kept previous values |")
+            diag = "; ".join(result[3]) if result and len(result) > 3 else "no diagnostics"
+            summary.append(f"| P2P | ✗ all parallel sources failed [{diag}] — kept previous values |")
             print("[collect] P2P ✗", flush=True)
     else:
         summary.append("| P2P | ⏳ skipped — time budget reached |")
