@@ -614,4 +614,344 @@ def attempt_dynamic(url):
             except Exception:
                 pass
     except Exception as e:
-        return None,
+        return None, type(e).__name__, info
+    finally:
+        try:
+            if browser:
+                browser.close()
+        except Exception:
+            pass
+        try:
+            if pw:
+                pw.stop()
+        except Exception:
+            pass
+
+
+def fetch_ebr(notes, budget):
+    all_prices, buys, sells = [], [], []
+    html, err = attempt_static(EBR_URL)
+    if html:
+        soup = BeautifulSoup(html, "html.parser")
+        nd = soup.find("script", id="__NEXT_DATA__")
+        if nd:
+            try:
+                walk_prices(json.loads(nd.get_text() or ""), all_prices)
+            except Exception:
+                pass
+        all_prices.extend(text_candidates(html))
+        for cur, (b, s) in (parse_any(html) or {}).items():
+            if cur in ("USD", "USDT"):
+                buys.append(b)
+                sells.append(s)
+        notes.append(f"ebr static: {len(all_prices)} candidates")
+    else:
+        notes.append(f"ebr static: {err}")
+    if budget() and browser_worth_it(err):
+        bhtml, berr, binfo = attempt_dynamic(EBR_URL)
+        if bhtml:
+            all_prices.extend(text_candidates(bhtml))
+            for cur, (b, s) in (parse_any(bhtml) or {}).items():
+                if cur in ("USD", "USDT"):
+                    buys.append(b)
+                    sells.append(s)
+            notes.append(f"ebr browser: {len(all_prices)} candidates")
+        else:
+            notes.append(f"ebr browser: {berr} (" + "; ".join(binfo) + ")")
+    r = decide_from_candidates(buys, sells, all_prices, "ebr.exchange")
+    if r:
+        return r[0], r[1], r[2]
+    return None
+
+
+def fetch_json(url, payload=None):
+    try:
+        h = {**HEADERS, "Accept": "application/json"}
+        if payload is None:
+            r = requests.get(url, headers=h, timeout=20)
+        else:
+            h["Content-Type"] = "application/json"
+            r = requests.post(url, headers=h, data=json.dumps(payload), timeout=20)
+        if r.status_code == 200:
+            return r.json(), None
+        return None, f"HTTP {r.status_code}"
+    except Exception as e:
+        return None, type(e).__name__
+
+
+def p2p_prices(doc, price_path):
+    out = []
+    for item in (doc.get("data") or [])[:10]:
+        try:
+            node = item
+            for k in price_path:
+                node = node[k]
+            p = float(str(node).replace(",", ""))
+            if 20 < p < 5000:
+                out.append(p)
+        except (KeyError, TypeError, ValueError, IndexError):
+            continue
+    return out
+
+
+def p2p_binance(notes):
+    sides = {}
+    for side in ("BUY", "SELL"):
+        doc, err = fetch_json(
+            "https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search",
+            {"page": 1, "rows": 10, "asset": "USDT", "fiat": "ETB",
+             "tradeType": side, "payTypes": [], "publisherType": None})
+        if doc is None:
+            notes.append(f"binance {side}: {err}")
+            return None
+        prices = p2p_prices(doc, ["adv", "price"])
+        if len(prices) < 3:
+            notes.append(f"binance {side}: thin book")
+            return None
+        sides[side] = median(prices)
+    return sides["BUY"], sides["SELL"], "binance p2p"
+
+
+def p2p_kucoin(notes):
+    sides = {}
+    for side in ("BUY", "SELL"):
+        doc, err = fetch_json(
+            f"https://www.kucoin.com/_api/otc/ad/list?currency=USDT&legalCurrency=ETB&page=1&pageSize=10&side={side}&status=PUTUP")
+        if doc is None:
+            notes.append(f"kucoin {side}: {err}")
+            return None
+        prices = []
+        for item in (((doc.get("data") or {}).get("list")) or [])[:10]:
+            try:
+                p = float(str(item.get("price")).replace(",", ""))
+                if 20 < p < 5000:
+                    prices.append(p)
+            except (TypeError, ValueError):
+                continue
+        if len(prices) < 3:
+            notes.append(f"kucoin {side}: thin book")
+            return None
+        sides[side] = median(prices)
+    return sides["BUY"], sides["SELL"], "kucoin p2p"
+
+
+def p2p_bybit(notes):
+    doc, err = fetch_json(
+        "https://api2.bybit.com/fiat/otc/item/online",
+        {"tokenId": "USDT", "currency": "ETB", "side": "1", "page": "", "size": "10"})
+    if doc is None:
+        notes.append(f"bybit: {err}")
+        return None
+    prices = []
+    for item in (((doc.get("result") or {}).get("item")) or [])[:10]:
+        try:
+            p = float(str(item.get("price")).replace(",", ""))
+            if 20 < p < 5000:
+                prices.append(p)
+        except (TypeError, ValueError):
+            continue
+    if len(prices) < 3:
+        notes.append("bybit: thin book")
+        return None
+    m = median(prices)
+    return m * 0.997, m * 1.003, "bybit (indicative spread)"
+
+
+def fetch_parallel(budget):
+    notes = []
+    for fn in (fetch_ebr, p2p_binance, p2p_kucoin, p2p_bybit):
+        try:
+            got = fn(notes, budget) if fn is fetch_ebr else fn(notes)
+        except TypeError:
+            got = fn(notes)
+        if got:
+            buy, sell, src = got
+            if buy > sell:
+                buy, sell = sell, buy
+            return buy, sell, src
+    return None, None, None
+
+
+def write_summary(text):
+    p = os.environ.get("GITHUB_STEP_SUMMARY")
+    if p:
+        with open(p, "a", encoding="utf-8") as f:
+            f.write(text + "\n")
+
+
+def collect_source(cfg):
+    if cfg.get("method") == "csv":
+        notes = []
+        for url in cfg["urls"]:
+            try:
+                r = requests.get(url, headers=HEADERS, timeout=25)
+                if r.status_code != 200:
+                    notes.append(f"csv: HTTP {r.status_code}")
+                    continue
+                got = parse_csv_rates(r.text)
+                if got:
+                    return got, "csv", notes
+                notes.append("csv: no usable rows")
+            except Exception as e:
+                notes.append(f"csv: {type(e).__name__}")
+        return {}, "", notes
+    got, via, notes = {}, "", []
+    for url in cfg["urls"]:
+        html, err = attempt_static(url)
+        if html:
+            got = parse_any(html)
+            if got:
+                return got, "static", notes
+            n, kw = diagnose(html)
+            notes.append(f"{short(url)}: HTTP 200 · {n} tables · {'rate words found' if kw else 'no rate words'}")
+        else:
+            notes.append(f"{short(url)}: {err}")
+        if not browser_worth_it(err):
+            continue
+        dhtml, derr, dinfo = attempt_dynamic(url)
+        if dhtml:
+            got = parse_any(dhtml)
+            if got:
+                return got, "browser", notes
+            notes.append("browser: parsed 0 (" + "; ".join(dinfo) + ")")
+        else:
+            notes.append(f"browser: {derr} (" + "; ".join(dinfo) + ")")
+    return got, via, notes
+
+
+def apply_quote(quotes, rates, sid, cur, buy, sell):
+    prev = quotes.get((sid, cur))
+    if prev and prev.get("buy"):
+        try:
+            if abs(buy / float(prev["buy"]) - 1) > MAX_JUMP:
+                return f"⚠ {cur} skipped — fetched {buy:g} vs stored {prev['buy']} (>15% jump)"
+        except (TypeError, ZeroDivisionError):
+            pass
+    q = quotes.get((sid, cur))
+    if q:
+        q["buy"], q["sell"] = buy, sell
+    else:
+        row = {"source": sid, "currency": cur, "buy": buy, "sell": sell}
+        rates.append(row)
+        quotes[(sid, cur)] = row
+    return f"✓ {cur} {buy:g}/{sell:g}"
+
+
+def main():
+    if not RATES.exists():
+        print("data/rates.json not found — nothing to update.", flush=True)
+        os._exit(1)
+    t0 = time.monotonic()
+
+    def budget_left():
+        return (time.monotonic() - t0) < TIME_BUDGET
+
+    print(f"[birrwatch-collector] v10.3 starting · {len(SOURCES)} sources · "
+          f"budget {TIME_BUDGET // 60} min · per-source cap {PER_SOURCE}s", flush=True)
+
+    doc = json.loads(RATES.read_text(encoding="utf-8"))
+    sources = doc.setdefault("sources", {})
+    rates = doc.setdefault("rates", [])
+    old_gen = (doc.get("meta") or {}).get("generated_at", "")
+    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+    for s in sources.values():
+        if not s.get("fetched_at"):
+            s["fetched_at"] = old_gen or now
+
+    quotes = {(r.get("source"), r.get("currency")): r for r in rates}
+
+    summary = []
+    applied_any = False
+    skipped = []
+
+    for sid, cfg in SOURCES.items():
+        if not budget_left():
+            skipped.append(sid)
+            continue
+        print(f"[collect] {sid} …", flush=True)
+        result, err = run_with_timeout(collect_source, (cfg,), timeout=PER_SOURCE, label=sid)
+        if result is None:
+            if err and err.startswith("⏳"):
+                summary.append(f"| {sid} | ⏳ {err} — kept previous values |")
+                print(f"[collect] {sid} STALLED — abandoned", flush=True)
+            else:
+                summary.append(f"| {sid} | ✗ {err} — kept previous values |")
+                print(f"[collect] {sid} error", flush=True)
+            continue
+        got, via, notes = result
+        if not got:
+            detail = "; ".join(notes) if notes else "unknown"
+            summary.append(f"| {sid} | ✗ {detail} — kept previous values |")
+            print(f"[collect] {sid} ✗", flush=True)
+            continue
+        kept, warned = [], False
+        for cur in WANT:
+            if cur not in got:
+                continue
+            buy, sell = got[cur]
+            res = apply_quote(quotes, rates, sid, cur, buy, sell)
+            if res.startswith("⚠"):
+                summary.append(f"| {sid} | {res} |")
+                warned = True
+            else:
+                kept.append(res[2:])
+        if kept:
+            applied_any = True
+            s = sources.setdefault(sid, {"name": cfg["name"], "type": cfg["type"]})
+            s["name"], s["type"] = cfg["name"], cfg["type"]
+            s["fetched_at"] = now
+            summary.append(f"| {sid} | ✓ {', '.join(kept)} ({via}) |")
+            print(f"[collect] {sid} ✓ {len(kept)}", flush=True)
+        elif not warned:
+            summary.append(f"| {sid} | ⚠ nothing usable — kept previous values |")
+            print(f"[collect] {sid} ⚠", flush=True)
+        time.sleep(2)
+
+    if budget_left():
+        print("[collect] P2P (parallel) …", flush=True)
+        result, err = run_with_timeout(fetch_parallel, (budget_left,), timeout=P2P_TIMEOUT, label="P2P")
+        if result and result[0] and result[1]:
+            buy, sell, src = result
+            res = apply_quote(quotes, rates, "P2P", "USDT", round(buy, 2), round(sell, 2))
+            if res.startswith("⚠"):
+                summary.append(f"| P2P | {res} |")
+            else:
+                applied_any = True
+                sources["P2P"] = {"name": f"USDT/ETB — parallel market ({src}; indicative)",
+                                  "type": "market", "fetched_at": now}
+                summary.append(f"| P2P | ✓ USDT {buy:.2f}/{sell:.2f} ({src}) |")
+                print("[collect] P2P ✓", flush=True)
+        elif err and err.startswith("⏳"):
+            summary.append(f"| P2P | ⏳ {err} — kept previous values |")
+            print("[collect] P2P STALLED", flush=True)
+        else:
+            summary.append("| P2P | ✗ ebr + fallbacks failed — kept previous values |")
+            print("[collect] P2P ✗", flush=True)
+    else:
+        summary.append("| P2P | ⏳ skipped — time budget reached |")
+
+    if skipped:
+        summary.append(f"| ⏳ | {len(skipped)} source(s) skipped — time budget reached: {', '.join(skipped)} |")
+
+    if not applied_any:
+        text = ("## Robot collection — FAILED\n\nNo source could be read. rates.json was not changed.\n\n"
+                "| Source | Result |\n|---|---|\n" + "\n".join(summary))
+        print(text, flush=True)
+        write_summary(text)
+        os._exit(1)
+
+    doc.setdefault("meta", {})["generated_at"] = now
+    RATES.write_text(json.dumps(doc, indent=1) + "\n", encoding="utf-8")
+
+    ok = sum(1 for line in summary if line.startswith("| ") and "✓" in line)
+    text = (f"## Robot collection — {ok} sources updated\n\n"
+            "| Source | Result |\n|---|---|\n" + "\n".join(summary))
+    print(text, flush=True)
+    write_summary(text)
+    sys.stdout.flush()
+    os._exit(0)
+
+
+if __name__ == "__main__":
+    main()
