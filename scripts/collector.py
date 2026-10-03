@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
-# Birrwatch robot collector v9 — 32 banks + FX bureaus + parallel USDT/ETB.
+# Birrwatch robot collector v10 — 32 banks + FX bureaus + parallel USDT/ETB.
 #
 # TO FIX A FAILING SOURCE: open its rate page in your browser (numbers visible
 # immediately, no clicking), copy the address, paste it as the FIRST url in
 # that source's list. Commit, then Actions -> Run workflow.
-# NOTE: URLs marked "# guess" are best-effort starting points — failures are
-# normal and self-reported in the run summary.
-# v9 adds: 27 new banks, 6 FX bureaus (incl. Google-Sheets CSV for Taypay),
-# keeping: ebr.exchange parallel source, P2P fallbacks, browser w/ network
-# capture, SSL tolerance, retries, average-table guard, jump guard.
+# v10: TIME BUDGET — the run always finishes and commits, even if sources hang.
+#      Browser fallback only for pages that exist (200/SSL/403) — never for
+#      dead domains or 404s. Keeps all v9 sources and parsers.
 
 import csv
 import io
@@ -32,9 +30,11 @@ except Exception:
 ROOT = Path(__file__).resolve().parents[1]
 RATES = ROOT / "data" / "rates.json"
 
-WANT = ("USD", "EUR", "AED", "SAR", "GBP", "CNY")   # currencies collected
+WANT = ("USD", "EUR", "AED", "SAR", "GBP", "CNY")
 MAX_JUMP = 0.15
 MIN_SPREAD = 0.0008
+TIME_BUDGET = 30 * 60          # seconds — after this, remaining sources are skipped
+                               # and everything collected so far is committed.
 
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 HEADERS = {"User-Agent": UA}
@@ -42,7 +42,6 @@ HEADERS = {"User-Agent": UA}
 EBR_URL = "https://ebr.exchange/"
 
 SOURCES = {
-    # ---------- proven banks ----------
     "CBE": {"name": "Commercial Bank of Ethiopia", "type": "bank", "urls": [
         "https://combanketh.et/exchange-rates?srcPage=home",
         "https://combanketh.et/",
@@ -63,7 +62,6 @@ SOURCES = {
         "https://coopbankoromia.com.et/",
         "https://coopbankoromia.com.et/exchange-rate/",
     ]},
-    # ---------- new banks (urls are best guesses — verify via failures) ----------
     "ORB": {"name": "Oromia Bank", "type": "bank", "urls": [
         "https://oromiabank.com/exchange-rate/",
         "https://oromiabank.com/",
@@ -105,72 +103,72 @@ SOURCES = {
         "https://zamzambank.com.et/",
     ]},
     "AIB": {"name": "Addis International Bank", "type": "bank", "urls": [
-        "https://addisinternationalbank.com/exchange-rate/",   # guess
-        "https://addisinternationalbank.com/",                  # guess
+        "https://addisinternationalbank.com/exchange-rate/",
+        "https://addisinternationalbank.com/",
     ]},
     "AHB": {"name": "Ahadu Bank", "type": "bank", "urls": [
-        "https://ahadubank.com/exchange-rate/",                 # guess
-        "https://ahadubank.com/",                               # guess
+        "https://ahadubank.com/exchange-rate/",
+        "https://ahadubank.com/",
     ]},
     "AMB": {"name": "Amhara Bank", "type": "bank", "urls": [
-        "https://amharabank.com/exchange-rate/",                # guess
-        "https://amharabank.com/",                              # guess
+        "https://amharabank.com/exchange-rate/",
+        "https://amharabank.com/",
     ]},
     "ANB": {"name": "Anbesa Bank", "type": "bank", "urls": [
-        "https://anbesabank.com/exchange-rate/",                # guess
-        "https://anbesabank.com/",                              # guess
+        "https://anbesabank.com/exchange-rate/",
+        "https://anbesabank.com/",
     ]},
     "DBE": {"name": "Development Bank of Ethiopia", "type": "bank", "urls": [
-        "https://dbe.com.et/exchange-rate/",                    # guess
-        "https://dbe.com.et/",                                  # guess
+        "https://dbe.com.et/exchange-rate/",
+        "https://dbe.com.et/",
     ]},
     "GDB": {"name": "Gadaa Bank", "type": "bank", "urls": [
-        "https://gadaabank.com/exchange-rate/",                 # guess
-        "https://gadaabank.com/",                               # guess
+        "https://gadaabank.com/exchange-rate/",
+        "https://gadaabank.com/",
     ]},
     "GLB": {"name": "Global Bank Ethiopia", "type": "bank", "urls": [
-        "https://globalbankethiopia.com/exchange-rate/",        # guess
-        "https://globalbankethiopia.com/",                      # guess
+        "https://globalbankethiopia.com/exchange-rate/",
+        "https://globalbankethiopia.com/",
     ]},
     "GOH": {"name": "Goh Betoch Bank", "type": "bank", "urls": [
-        "https://gohbetochbank.com/exchange-rate/",             # guess
-        "https://gohbetochbank.com/",                           # guess
+        "https://gohbetochbank.com/exchange-rate/",
+        "https://gohbetochbank.com/",
     ]},
     "HJB": {"name": "Hijra Bank", "type": "bank", "urls": [
-        "https://hijrabank.com/exchange-rate/",                 # guess
-        "https://hijrabank.com/",                               # guess
+        "https://hijrabank.com/exchange-rate/",
+        "https://hijrabank.com/",
     ]},
     "OMO": {"name": "Omo Bank", "type": "bank", "urls": [
-        "https://omobank.com/exchange-rate/",                   # guess
-        "https://omobank.com/",                                 # guess
+        "https://omobank.com/exchange-rate/",
+        "https://omobank.com/",
     ]},
     "RMB": {"name": "Rammis Bank", "type": "bank", "urls": [
-        "https://rammisbank.com/exchange-rate/",                # guess
-        "https://rammisbank.com/",                              # guess
+        "https://rammisbank.com/exchange-rate/",
+        "https://rammisbank.com/",
     ]},
     "SHB": {"name": "Shabelle Bank", "type": "bank", "urls": [
-        "https://shabellebank.com.et/exchange-rate/",           # guess
-        "https://shabellebank.com.et/",                         # guess
+        "https://shabellebank.com.et/exchange-rate/",
+        "https://shabellebank.com.et/",
     ]},
     "SDB": {"name": "Sidama Bank", "type": "bank", "urls": [
-        "https://sidamabank.com/exchange-rate/",                # guess
-        "https://sidamabank.com/",                              # guess
+        "https://sidamabank.com/exchange-rate/",
+        "https://sidamabank.com/",
     ]},
     "SQB": {"name": "Siinqee Bank", "type": "bank", "urls": [
-        "https://siinqeebank.com/exchange-rate/",               # guess
-        "https://siinqeebank.com/",                             # guess
+        "https://siinqeebank.com/exchange-rate/",
+        "https://siinqeebank.com/",
     ]},
     "SKB": {"name": "Siket Bank", "type": "bank", "urls": [
-        "https://siketbank.com/exchange-rate/",                 # guess
-        "https://siketbank.com/",                               # guess
+        "https://siketbank.com/exchange-rate/",
+        "https://siketbank.com/",
     ]},
     "TSB": {"name": "Tsedey Bank", "type": "bank", "urls": [
-        "https://tsedeybank.com/exchange-rate/",                # guess
-        "https://tsedeybank.com/",                              # guess
+        "https://tsedeybank.com/exchange-rate/",
+        "https://tsedeybank.com/",
     ]},
     "THB": {"name": "Tsehay Bank", "type": "bank", "urls": [
-        "https://tsehaybank.com/exchange-rate/",                # guess
-        "https://tsehaybank.com/",                              # guess
+        "https://tsehaybank.com/exchange-rate/",
+        "https://tsehaybank.com/",
     ]},
     # ---------- FX bureaus ----------
     "AMM": {"name": "Ammann Forex Bureau", "type": "bureau", "urls": [
@@ -192,11 +190,10 @@ SOURCES = {
         "https://www.ethioforextrading.com/exchange-rates",
         "https://www.ethioforextrading.com/",
     ]},
-    # Rooha (ROO) and Robust (ROB): add entries here once you send their URLs, e.g.
-    # "ROO": {"name": "Rooha Forex Bureau", "type": "bureau", "urls": ["https://..."]},
+    # Rooha (ROO) and Robust (ROB): add entries here once URLs arrive.
 }
 
-# ---------- parsing (banks & bureaus) ----------
+# ---------- parsing ----------
 NUM = re.compile(r"\d[\d,]*(?:\.\d+)?")
 BUY_W = ("BUY", "BUYING", "BID", "PURCHAS")
 SELL_W = ("SELL", "SELLING", "OFFER", "ASK", "SOLD")
@@ -260,8 +257,6 @@ def plausible(b, s):
 
 
 def parse_csv_rates(text):
-    """Google-Sheets-published CSV (Taypay): any row with a currency token and
-    two plausible numbers -> buy/sell (ordered)."""
     out = {}
     for row in csv.reader(io.StringIO(text)):
         cells = [(c or "").strip() for c in row]
@@ -425,7 +420,22 @@ def short(url):
     return re.sub(r"^https?://(www\.)?", "", url).rstrip("/")[:34]
 
 
-# ---------- parallel (USDT/ETB) helpers ----------
+def browser_worth_it(err):
+    """Browser fallback helps for JS-rendered pages, SSL problems, 403 blocks.
+    It can never help for 404s, timeouts or unreachable domains."""
+    if err is None:
+        return True                      # page fetched but parsed 0 — JS likely
+    e = err.lower()
+    if "http 404" in e or "http 410" in e:
+        return False
+    if "timeout" in e or "connection" in e or "nameresolution" in e or "connect" in e:
+        return False
+    if "http 403" in e or "ssl" in e or "http 200" in e:
+        return True
+    return False
+
+
+# ---------- parallel helpers ----------
 def _num_ok(v):
     try:
         f = float(str(v).replace(",", ""))
@@ -494,15 +504,15 @@ def attempt_static(url):
     last = "failed"
     for attempt in range(2):
         try:
-            r = requests.get(url, headers=HEADERS, timeout=25)
+            r = requests.get(url, headers=HEADERS, timeout=15)
             if r.status_code == 200 and len(r.text) > 500:
                 return r.text, None
             last = f"HTTP {r.status_code}"
-            if r.status_code == 404:
+            if r.status_code in (404, 410):
                 return None, last
         except requests.exceptions.SSLError:
             try:
-                r = requests.get(url, headers=HEADERS, timeout=25, verify=False)
+                r = requests.get(url, headers=HEADERS, timeout=15, verify=False)
                 if r.status_code == 200 and len(r.text) > 500:
                     return r.text, None
                 last = f"HTTP {r.status_code} (ssl-relaxed)"
@@ -510,10 +520,12 @@ def attempt_static(url):
                 last = f"SSL ({type(e).__name__})"
         except requests.exceptions.Timeout:
             last = "timeout"
+            break                            # second attempt won't be faster
         except Exception as e:
             last = type(e).__name__
+            break                            # connection-level: fail fast
         if attempt < 1:
-            time.sleep(3)
+            time.sleep(2)
     return None, last
 
 
@@ -546,9 +558,9 @@ def attempt_dynamic(url):
         def _on_response(resp):
             try:
                 ct = (resp.headers or {}).get("content-type", "") or ""
-                if "json" in ct.lower() and resp.status == 200 and len(caps) < 30:
+                if "json" in ct.lower() and resp.status == 200 and len(caps) < 20:
                     body = resp.text()
-                    if body and len(body) <= 300000:
+                    if body and len(body) <= 200000:
                         caps.append((resp.url or "", body))
             except Exception:
                 pass
@@ -558,13 +570,13 @@ def attempt_dynamic(url):
         except Exception:
             pass
         try:
-            page.goto(url, wait_until="domcontentloaded", timeout=40000)
-            page.wait_for_timeout(5000)
+            page.goto(url, wait_until="domcontentloaded", timeout=30000)
+            page.wait_for_timeout(4000)
             try:
-                page.mouse.wheel(0, 1500)
-                page.wait_for_timeout(1200)
-                page.mouse.wheel(0, -1500)
-                page.wait_for_timeout(600)
+                page.mouse.wheel(0, 1200)
+                page.wait_for_timeout(1000)
+                page.mouse.wheel(0, -1200)
+                page.wait_for_timeout(500)
             except Exception:
                 pass
             try:
@@ -572,8 +584,8 @@ def attempt_dynamic(url):
                                    "button:has-text('Search'), a:has-text('Search'), "
                                    "button:has-text('Go')").first
                 if btn.count() > 0:
-                    btn.click(timeout=3000)
-                    page.wait_for_timeout(3000)
+                    btn.click(timeout=2000)
+                    page.wait_for_timeout(2500)
                     info.append("clicked search")
             except Exception:
                 pass
@@ -599,7 +611,10 @@ def attempt_dynamic(url):
                 return html, None, info, caps
             return None, "empty render", info, caps
         finally:
-            page.close()
+            try:
+                page.close()
+            except Exception:
+                pass
     except Exception as e:
         return None, type(e).__name__, info, caps
     finally:
@@ -621,9 +636,8 @@ def cleanup():
 
 
 # ---------- parallel sources ----------
-def fetch_ebr(notes):
+def fetch_ebr(notes, budget):
     all_prices, buys, sells = [], [], []
-    caps = []
     html, err = attempt_static(EBR_URL)
     if html:
         soup = BeautifulSoup(html, "html.parser")
@@ -641,276 +655,16 @@ def fetch_ebr(notes):
         notes.append(f"ebr static: {len(all_prices)} candidates")
     else:
         notes.append(f"ebr static: {err}")
-    bhtml, berr, binfo, caps = attempt_dynamic(EBR_URL)
-    if bhtml:
-        for _u, body in caps:
-            try:
-                walk_prices(json.loads(body), all_prices)
-            except Exception:
-                continue
-        all_prices.extend(text_candidates(bhtml))
-        for cur, (b, s) in (parse_any(bhtml) or {}).items():
-            if cur in ("USD", "USDT"):
-                buys.append(b)
-                sells.append(s)
-        notes.append(f"ebr browser: {len(caps)} json endpoints · {len(all_prices)} candidates")
-    else:
-        notes.append(f"ebr browser: {berr} (" + "; ".join(binfo) + ")")
-    r = decide_from_candidates(buys, sells, all_prices, "ebr.exchange")
-    if r:
-        return r[0], r[1], r[2]
-    return None
-
-
-def fetch_json(url, payload=None):
-    try:
-        h = {**HEADERS, "Accept": "application/json"}
-        if payload is None:
-            r = requests.get(url, headers=h, timeout=25)
-        else:
-            h["Content-Type"] = "application/json"
-            r = requests.post(url, headers=h, data=json.dumps(payload), timeout=25)
-        if r.status_code == 200:
-            return r.json(), None
-        return None, f"HTTP {r.status_code}"
-    except Exception as e:
-        return None, type(e).__name__
-
-
-def p2p_prices(doc, price_path):
-    out = []
-    for item in (doc.get("data") or [])[:10]:
-        try:
-            node = item
-            for k in price_path:
-                node = node[k]
-            p = float(str(node).replace(",", ""))
-            if 20 < p < 5000:
-                out.append(p)
-        except (KeyError, TypeError, ValueError, IndexError):
-            continue
-    return out
-
-
-def p2p_binance(notes):
-    sides = {}
-    for side in ("BUY", "SELL"):
-        doc, err = fetch_json(
-            "https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search",
-            {"page": 1, "rows": 10, "asset": "USDT", "fiat": "ETB",
-             "tradeType": side, "payTypes": [], "publisherType": None})
-        if doc is None:
-            notes.append(f"binance {side}: {err}")
-            return None
-        prices = p2p_prices(doc, ["adv", "price"])
-        if len(prices) < 3:
-            notes.append(f"binance {side}: thin book")
-            return None
-        sides[side] = median(prices)
-    return sides["BUY"], sides["SELL"], "binance p2p"
-
-
-def p2p_kucoin(notes):
-    sides = {}
-    for side in ("BUY", "SELL"):
-        doc, err = fetch_json(
-            f"https://www.kucoin.com/_api/otc/ad/list?currency=USDT&legalCurrency=ETB&page=1&pageSize=10&side={side}&status=PUTUP")
-        if doc is None:
-            notes.append(f"kucoin {side}: {err}")
-            return None
-        prices = []
-        for item in (((doc.get("data") or {}).get("list")) or [])[:10]:
-            try:
-                p = float(str(item.get("price")).replace(",", ""))
-                if 20 < p < 5000:
-                    prices.append(p)
-            except (TypeError, ValueError):
-                continue
-        if len(prices) < 3:
-            notes.append(f"kucoin {side}: thin book")
-            return None
-        sides[side] = median(prices)
-    return sides["BUY"], sides["SELL"], "kucoin p2p"
-
-
-def p2p_bybit(notes):
-    doc, err = fetch_json(
-        "https://api2.bybit.com/fiat/otc/item/online",
-        {"tokenId": "USDT", "currency": "ETB", "side": "1", "page": "", "size": "10"})
-    if doc is None:
-        notes.append(f"bybit: {err}")
-        return None
-    prices = []
-    for item in (((doc.get("result") or {}).get("item")) or [])[:10]:
-        try:
-            p = float(str(item.get("price")).replace(",", ""))
-            if 20 < p < 5000:
-                prices.append(p)
-        except (TypeError, ValueError):
-            continue
-    if len(prices) < 3:
-        notes.append("bybit: thin book")
-        return None
-    m = median(prices)
-    return m * 0.997, m * 1.003, "bybit (indicative spread)"
-
-
-def fetch_parallel():
-    notes = []
-    for fn in (fetch_ebr, p2p_binance, p2p_kucoin, p2p_bybit):
-        got = fn(notes)
-        if got:
-            buy, sell, src = got
-            if buy > sell:
-                buy, sell = sell, buy
-            return buy, sell, src
-    return None, None, None
-
-
-# ---------- main ----------
-def write_summary(text):
-    p = os.environ.get("GITHUB_STEP_SUMMARY")
-    if p:
-        with open(p, "a", encoding="utf-8") as f:
-            f.write(text + "\n")
-
-
-def collect_source(cfg):
-    if cfg.get("method") == "csv":
-        notes = []
-        for url in cfg["urls"]:
-            try:
-                r = requests.get(url, headers=HEADERS, timeout=30)
-                if r.status_code != 200:
-                    notes.append(f"csv: HTTP {r.status_code}")
+    if budget() and browser_worth_it(err):
+        bhtml, berr, binfo, caps = attempt_dynamic(EBR_URL)
+        if bhtml:
+            for _u, body in caps:
+                try:
+                    walk_prices(json.loads(body), all_prices)
+                except Exception:
                     continue
-                got = parse_csv_rates(r.text)
-                if got:
-                    return got, "csv", notes
-                notes.append("csv: no usable rows")
-            except Exception as e:
-                notes.append(f"csv: {type(e).__name__}")
-        return {}, "", notes
-    got, via, notes = {}, "", []
-    for url in cfg["urls"]:
-        html, err = attempt_static(url)
-        if html:
-            got = parse_any(html)
-            if got:
-                return got, "static", notes
-            n, kw = diagnose(html)
-            notes.append(f"{short(url)}: HTTP 200 · {n} tables · {'rate words found' if kw else 'no rate words'}")
-        else:
-            notes.append(f"{short(url)}: {err}")
-        dhtml, derr, dinfo, _caps = attempt_dynamic(url)
-        if dhtml:
-            got = parse_any(dhtml)
-            if got:
-                return got, "browser", notes
-            notes.append("browser: parsed 0 (" + "; ".join(dinfo) + ")")
-        else:
-            notes.append(f"browser: {derr} (" + "; ".join(dinfo) + ")")
-    return got, via, notes
-
-
-def apply_quote(quotes, rates, sid, cur, buy, sell):
-    prev = quotes.get((sid, cur))
-    if prev and prev.get("buy"):
-        try:
-            if abs(buy / float(prev["buy"]) - 1) > MAX_JUMP:
-                return f"⚠ {cur} skipped — fetched {buy:g} vs stored {prev['buy']} (>15% jump)"
-        except (TypeError, ZeroDivisionError):
-            pass
-    q = quotes.get((sid, cur))
-    if q:
-        q["buy"], q["sell"] = buy, sell
-    else:
-        row = {"source": sid, "currency": cur, "buy": buy, "sell": sell}
-        rates.append(row)
-        quotes[(sid, cur)] = row
-    return f"✓ {cur} {buy:g}/{sell:g}"
-
-
-def main():
-    if not RATES.exists():
-        print("data/rates.json not found — nothing to update.")
-        cleanup()
-        return 1
-    doc = json.loads(RATES.read_text(encoding="utf-8"))
-    sources = doc.setdefault("sources", {})
-    rates = doc.setdefault("rates", [])
-    old_gen = (doc.get("meta") or {}).get("generated_at", "")
-    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
-
-    for s in sources.values():
-        if not s.get("fetched_at"):
-            s["fetched_at"] = old_gen or now
-
-    quotes = {(r.get("source"), r.get("currency")): r for r in rates}
-
-    summary = []
-    applied_any = False
-
-    try:
-        for sid, cfg in SOURCES.items():
-            got, via, notes = collect_source(cfg)
-            if not got:
-                detail = "; ".join(notes) if notes else "unknown"
-                summary.append(f"| {sid} | ✗ {detail} — kept previous values |")
-                continue
-            kept, warned = [], False
-            for cur in WANT:
-                if cur not in got:
-                    continue
-                buy, sell = got[cur]
-                res = apply_quote(quotes, rates, sid, cur, buy, sell)
-                if res.startswith("⚠"):
-                    summary.append(f"| {sid} | {res} |")
-                    warned = True
-                else:
-                    kept.append(res[2:])
-            if kept:
-                applied_any = True
-                s = sources.setdefault(sid, {"name": cfg["name"], "type": cfg["type"]})
-                s["name"], s["type"] = cfg["name"], cfg["type"]
-                s["fetched_at"] = now
-                summary.append(f"| {sid} | ✓ {', '.join(kept)} ({via}) |")
-            elif not warned:
-                summary.append(f"| {sid} | ⚠ nothing usable — kept previous values |")
-            time.sleep(3)
-
-        buy, sell, src = fetch_parallel()
-        if buy and sell:
-            res = apply_quote(quotes, rates, "P2P", "USDT", round(buy, 2), round(sell, 2))
-            if res.startswith("⚠"):
-                summary.append(f"| P2P | {res} |")
-            else:
-                applied_any = True
-                sources["P2P"] = {"name": f"USDT/ETB — parallel market ({src}; indicative)",
-                                  "type": "market", "fetched_at": now}
-                summary.append(f"| P2P | ✓ USDT {buy:.2f}/{sell:.2f} ({src}) |")
-        else:
-            summary.append("| P2P | ✗ ebr + fallbacks failed — kept previous values |")
-    finally:
-        cleanup()
-
-    if not applied_any:
-        text = ("## Robot collection — FAILED\n\nNo source could be read. rates.json was not changed.\n\n"
-                "| Source | Result |\n|---|---|\n" + "\n".join(summary))
-        print(text)
-        write_summary(text)
-        return 1
-
-    doc.setdefault("meta", {})["generated_at"] = now
-    RATES.write_text(json.dumps(doc, indent=1) + "\n", encoding="utf-8")
-
-    ok = sum(1 for line in summary if line.startswith("| ") and "✓" in line)
-    text = (f"## Robot collection — {ok} sources updated\n\n"
-            "| Source | Result |\n|---|---|\n" + "\n".join(summary))
-    print(text)
-    write_summary(text)
-    return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())
+            all_prices.extend(text_candidates(bhtml))
+            for cur, (b, s) in (parse_any(bhtml) or {}).items():
+                if cur in ("USD", "USDT"):
+                    buys.append(b)
+                    sells
