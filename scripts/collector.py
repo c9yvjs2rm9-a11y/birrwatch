@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-# Birrwatch robot collector v10 — 32 banks + FX bureaus + parallel USDT/ETB.
+# Birrwatch robot collector v10.1 — 32 banks + FX bureaus + parallel USDT/ETB.
 #
 # TO FIX A FAILING SOURCE: open its rate page in your browser (numbers visible
 # immediately, no clicking), copy the address, paste it as the FIRST url in
 # that source's list. Commit, then Actions -> Run workflow.
-# v10: TIME BUDGET — the run always finishes and commits, even if sources hang.
-#      Browser fallback only for pages that exist (200/SSL/403) — never for
-#      dead domains or 404s. Keeps all v9 sources and parsers.
+# v10.1: progress heartbeat in the log (no more silent runs), network-capture
+# removed (hang risk), 20-min budget with hard 40-min workflow cap.
 
 import csv
 import io
@@ -33,8 +32,7 @@ RATES = ROOT / "data" / "rates.json"
 WANT = ("USD", "EUR", "AED", "SAR", "GBP", "CNY")
 MAX_JUMP = 0.15
 MIN_SPREAD = 0.0008
-TIME_BUDGET = 30 * 60          # seconds — after this, remaining sources are skipped
-                               # and everything collected so far is committed.
+TIME_BUDGET = 20 * 60
 
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 HEADERS = {"User-Agent": UA}
@@ -170,7 +168,6 @@ SOURCES = {
         "https://tsehaybank.com/exchange-rate/",
         "https://tsehaybank.com/",
     ]},
-    # ---------- FX bureaus ----------
     "AMM": {"name": "Ammann Forex Bureau", "type": "bureau", "urls": [
         "https://ammannforexbureau.com/",
     ]},
@@ -190,10 +187,8 @@ SOURCES = {
         "https://www.ethioforextrading.com/exchange-rates",
         "https://www.ethioforextrading.com/",
     ]},
-    # Rooha (ROO) and Robust (ROB): add entries here once URLs arrive.
 }
 
-# ---------- parsing ----------
 NUM = re.compile(r"\d[\d,]*(?:\.\d+)?")
 BUY_W = ("BUY", "BUYING", "BID", "PURCHAS")
 SELL_W = ("SELL", "SELLING", "OFFER", "ASK", "SOLD")
@@ -421,10 +416,8 @@ def short(url):
 
 
 def browser_worth_it(err):
-    """Browser fallback helps for JS-rendered pages, SSL problems, 403 blocks.
-    It can never help for 404s, timeouts or unreachable domains."""
     if err is None:
-        return True                      # page fetched but parsed 0 — JS likely
+        return True
     e = err.lower()
     if "http 404" in e or "http 410" in e:
         return False
@@ -435,7 +428,6 @@ def browser_worth_it(err):
     return False
 
 
-# ---------- parallel helpers ----------
 def _num_ok(v):
     try:
         f = float(str(v).replace(",", ""))
@@ -499,7 +491,6 @@ def decide_from_candidates(buys, sells, prices, label):
     return None
 
 
-# ---------- fetching ----------
 def attempt_static(url):
     last = "failed"
     for attempt in range(2):
@@ -519,11 +510,9 @@ def attempt_static(url):
             except Exception as e:
                 last = f"SSL ({type(e).__name__})"
         except requests.exceptions.Timeout:
-            last = "timeout"
-            break                            # second attempt won't be faster
+            return None, "timeout"
         except Exception as e:
-            last = type(e).__name__
-            break                            # connection-level: fail fast
+            return None, type(e).__name__
         if attempt < 1:
             time.sleep(2)
     return None, last
@@ -546,27 +535,16 @@ def attempt_dynamic(url):
     try:
         browser = get_browser()
     except Exception:
-        return None, "browser unavailable", [], []
+        return None, "browser unavailable", []
     ctx = None
     info = []
-    caps = []
     try:
         ctx = browser.new_context(user_agent=UA, viewport={"width": 1280, "height": 900},
                                   ignore_https_errors=True)
         page = ctx.new_page()
-
-        def _on_response(resp):
-            try:
-                ct = (resp.headers or {}).get("content-type", "") or ""
-                if "json" in ct.lower() and resp.status == 200 and len(caps) < 20:
-                    body = resp.text()
-                    if body and len(body) <= 200000:
-                        caps.append((resp.url or "", body))
-            except Exception:
-                pass
-
         try:
-            page.on("response", _on_response)
+            page.set_default_timeout(20000)
+            page.set_default_navigation_timeout(30000)
         except Exception:
             pass
         try:
@@ -608,15 +586,15 @@ def attempt_dynamic(url):
             except Exception:
                 pass
             if html and len(html) > 500:
-                return html, None, info, caps
-            return None, "empty render", info, caps
+                return html, None, info
+            return None, "empty render", info
         finally:
             try:
                 page.close()
             except Exception:
                 pass
     except Exception as e:
-        return None, type(e).__name__, info, caps
+        return None, type(e).__name__, info
     finally:
         try:
             if ctx:
@@ -635,7 +613,6 @@ def cleanup():
         pass
 
 
-# ---------- parallel sources ----------
 def fetch_ebr(notes, budget):
     all_prices, buys, sells = [], [], []
     html, err = attempt_static(EBR_URL)
@@ -656,19 +633,14 @@ def fetch_ebr(notes, budget):
     else:
         notes.append(f"ebr static: {err}")
     if budget() and browser_worth_it(err):
-        bhtml, berr, binfo, caps = attempt_dynamic(EBR_URL)
+        bhtml, berr, binfo = attempt_dynamic(EBR_URL)
         if bhtml:
-            for _u, body in caps:
-                try:
-                    walk_prices(json.loads(body), all_prices)
-                except Exception:
-                    continue
             all_prices.extend(text_candidates(bhtml))
             for cur, (b, s) in (parse_any(bhtml) or {}).items():
                 if cur in ("USD", "USDT"):
                     buys.append(b)
                     sells.append(s)
-            notes.append(f"ebr browser: {len(caps)} json endpoints · {len(all_prices)} candidates")
+            notes.append(f"ebr browser: {len(all_prices)} candidates")
         else:
             notes.append(f"ebr browser: {berr} (" + "; ".join(binfo) + ")")
     r = decide_from_candidates(buys, sells, all_prices, "ebr.exchange")
@@ -785,7 +757,6 @@ def fetch_parallel(budget):
     return None, None, None
 
 
-# ---------- main ----------
 def write_summary(text):
     p = os.environ.get("GITHUB_STEP_SUMMARY")
     if p:
@@ -821,8 +792,8 @@ def collect_source(cfg):
         else:
             notes.append(f"{short(url)}: {err}")
         if not browser_worth_it(err):
-            continue                         # dead domain / 404 — browser can't help
-        dhtml, derr, dinfo, _caps = attempt_dynamic(url)
+            continue
+        dhtml, derr, dinfo = attempt_dynamic(url)
         if dhtml:
             got = parse_any(dhtml)
             if got:
@@ -857,6 +828,7 @@ def main():
         cleanup()
         return 1
     t0 = time.monotonic()
+
     def budget_left():
         return (time.monotonic() - t0) < TIME_BUDGET
 
@@ -881,10 +853,12 @@ def main():
             if not budget_left():
                 skipped.append(sid)
                 continue
+            print(f"[collect] {sid} …", flush=True)
             got, via, notes = collect_source(cfg)
             if not got:
                 detail = "; ".join(notes) if notes else "unknown"
                 summary.append(f"| {sid} | ✗ {detail} — kept previous values |")
+                print(f"[collect] {sid} ✗", flush=True)
                 continue
             kept, warned = [], False
             for cur in WANT:
@@ -903,11 +877,14 @@ def main():
                 s["name"], s["type"] = cfg["name"], cfg["type"]
                 s["fetched_at"] = now
                 summary.append(f"| {sid} | ✓ {', '.join(kept)} ({via}) |")
+                print(f"[collect] {sid} ✓ {len(kept)}", flush=True)
             elif not warned:
                 summary.append(f"| {sid} | ⚠ nothing usable — kept previous values |")
+                print(f"[collect] {sid} ⚠", flush=True)
             time.sleep(2)
 
         if budget_left():
+            print("[collect] P2P (parallel) …", flush=True)
             buy, sell, src = fetch_parallel(budget_left)
             if buy and sell:
                 res = apply_quote(quotes, rates, "P2P", "USDT", round(buy, 2), round(sell, 2))
@@ -947,4 +924,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main()) 
+    sys.exit(main())
