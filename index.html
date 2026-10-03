@@ -574,7 +574,22 @@ footer{background:var(--ink);color:var(--paper);padding:64px 0 36px;margin-top:2
     <input class="input" id="mEmail" type="email" placeholder="you@company.et" autocomplete="email">
     <p class="f-err" id="mErr" hidden>Please enter a valid email address.</p>
     <button class="btn btn-primary" id="mGo">Continue</button>
-    <p class="f-note-c">Pay with Telebirr, Chapa, or card · Cancel anytime</p>
+    <p class="f-note-c">    <div id="alertFields" hidden>
+      <p class="modal-sub" style="margin-bottom:12px" id="alertSub">Pair: <b style="color:var(--ink)">USD / ETB</b> · current <b style="color:var(--ink)" id="alertNow">—</b></p>
+      <label for="alDir">Alert me when the rate goes</label>
+      <div class="seg" style="margin-bottom:12px">
+        <button type="button" id="alDir" data-d="above" class="on">Above</button>
+        <button type="button" data-d="below">Below</button>
+      </div>
+      <input type="hidden" id="alCode">
+      <label for="alTarget">Target rate (ETB)</label>
+      <input class="input" id="alTarget" inputmode="decimal" placeholder="e.g. 165.00" style="margin-bottom:12px">
+      <label for="alMail">Your email</label>
+      <input class="input" id="alMail" type="email" placeholder="you@example.com" style="margin-bottom:4px">
+      <p class="f-err" id="alErr" hidden>Please check the target rate and email.</p>
+      <button class="btn btn-primary" id="alGo" style="margin-top:16px;width:100%">Create alert</button>
+      <p class="f-note-c">We'll send one confirmation email, then only when your alert triggers. No marketing, ever.</p>
+    </div></p>
   </div>
 </div>
 
@@ -1227,7 +1242,28 @@ function startClock(){
     $$('.c-upd').forEach(el=>{if(el.dataset.b)el.textContent=ago(sourceUpdated(el.dataset.b))});
   },1000);
 }
-
+/* ================= price alerts ================= */
+function openAlertForm(code){
+  const ov=$('#overlay');
+  $('#mPlan').parentElement.style.display='none';
+  $('#mGo').style.display='none';
+  $('#mErr').hidden=true;
+  $('.modal h3').textContent='Set a price alert';
+  $('#alertFields').hidden=false;
+  $('#alCode').value=code;
+  $('#alDir').value='above';
+  $('#alTarget').value='';
+  $('#alMail').value='';
+  $('#overlay').hidden=false;
+  requestAnimationFrame(()=>ov.classList.add('in'));
+}
+function closeAlertForm(){
+  $('#alertFields').hidden=true;
+  $('#mPlan').parentElement.style.display='';
+  $('#mGo').style.display='';
+  $('.modal h3').textContent='Start watching the birr';
+  closeModal();
+}
 /* ================= toast & modal ================= */
 function toast(msg){
   const t=document.createElement('div');t.className='toast';t.textContent=msg;
@@ -1274,11 +1310,16 @@ function wire(){
   $('#bankDetail').addEventListener('click',e=>{const c=e.target.closest('.chip[data-cur]');if(!c)return;
     if(!hasData(c.dataset.cur)){toast(c.dataset.cur+' rates are not collected yet.');return}
     S.banks.cur=c.dataset.cur;renderBankDetail()});
-  $('#pairsBody').addEventListener('click',e=>{
+    $('#pairsBody').addEventListener('click',e=>{
     const bell=e.target.closest('.bell');
-    if(bell){const code=e.target.closest('tr').dataset.code,trigger=live.mid[code]*1.005;
-      bell.classList.add('on');
-      toast(`Alert set — we'll email you when ${code}/ETB crosses ${fmt(trigger,decOf(code))}.`);return}});
+    if(bell){
+      const code=e.target.closest('tr').dataset.code;
+      openAlertForm(code);
+      return;
+    }
+    const tr=e.target.closest('tr[data-code]');
+    if(tr&&DATA.mode==='live'){S.trends.cur=tr.dataset.code;showView('trends')}
+  });
   const mx=$('#matrix');
   const hl=(r,c)=>{$$('#matrix .rc').forEach(x=>x.classList.remove('rc'));$$('#matrix .hx').forEach(x=>x.classList.remove('hx'));
     if(!r)return;
@@ -1316,6 +1357,31 @@ function wire(){
     const v=$('#mEmail').value.trim();
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)){$('#mErr').hidden=false;return}
     closeModal();toast(`You're in — confirmation sent to ${v}.`);
+  });
+    $$('#alertFields .seg button').forEach(b=>b.addEventListener('click',()=>{
+    $$('#alertFields .seg button').forEach(x=>x.classList.toggle('on',x===b));
+    $('#alDir').value=b.dataset.d;
+  }));
+  $('#alGo').addEventListener('click',()=>{
+    const code=$('#alCode').value,dir=$('#alDir').value;
+    const target=parseFloat($('#alTarget').value);
+    const mail=$('#alMail').value.trim();
+    const now=live.mid[code];
+    if(!target||!isFinite(target)||target<=0||!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(mail)){
+      $('#alErr').hidden=false;return;
+    }
+    $('#alErr').hidden=true;
+    const body=encodeURIComponent(
+      `PAIR: ${code}/ETB\n`+
+      `DIRECTION: ${dir}\n`+
+      `TARGET: ${target}\n`+
+      `EMAIL: ${mail}\n`+
+      `CURRENT_AT_REQUEST: ${now!=null?fmt(now,decOf(code)):'unknown'}\n`+
+      `REQUESTED_AT: ${new Date().toISOString()}\n`
+    );
+    location.href=`mailto:alerts@birrwatch.et?subject=${encodeURIComponent('Alert request: '+code+' '+dir+' '+target)}&body=${body}`;
+    closeAlertForm();
+    toast('Your email app is opening — send the pre-filled message to confirm.');
   });
   $('#mEmail').addEventListener('keydown',e=>{if(e.key==='Enter')$('#mGo').click()});
   $('#mClose').addEventListener('click',closeModal);
