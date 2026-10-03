@@ -609,15 +609,15 @@ const I={
 const CURRENCIES=[
  {code:'USD',name:'US Dollar',per:1,anchor:157.24,vol:.0038,drift:.00060,seed:11},
  {code:'EUR',name:'Euro',per:1,anchor:181.35,vol:.0042,drift:.00052,seed:23},
- {code:'GBP',name:'British Pound',per:1,anchor:210.62,vol:.0042,drift:.00042,seed:37},
- {code:'CHF',name:'Swiss Franc',per:1,anchor:190.88,vol:.0045,drift:-.00018,seed:41},
- {code:'CAD',name:'Canadian Dollar',per:1,anchor:115.47,vol:.0040,drift:.00048,seed:53},
  {code:'AED',name:'UAE Dirham',per:1,anchor:42.81,vol:.0012,drift:.00058,seed:67,peg:.27230},
  {code:'SAR',name:'Saudi Riyal',per:1,anchor:41.92,vol:.0013,drift:.00058,seed:71,peg:.26662},
+ {code:'GBP',name:'British Pound',per:1,anchor:210.62,vol:.0042,drift:.00042,seed:37},
  {code:'CNY',name:'Chinese Yuan',per:1,anchor:21.79,vol:.0016,drift:.00030,seed:83,peg:.13858},
+ {code:'USDT',name:'Tether — P2P parallel reference',per:1,anchor:171.50,vol:.0050,drift:.00090,seed:113},
+ {code:'CHF',name:'Swiss Franc',per:1,anchor:190.88,vol:.0045,drift:-.00018,seed:41},
+ {code:'CAD',name:'Canadian Dollar',per:1,anchor:115.47,vol:.0040,drift:.00048,seed:53},
  {code:'JPY',name:'Japanese Yen (per 100)',per:100,anchor:106.42,vol:.0046,drift:.00078,seed:97},
  {code:'KES',name:'Kenyan Shilling',per:1,anchor:1.2186,vol:.0030,drift:.00022,seed:103},
- {code:'USDT',name:'Tether — P2P parallel reference',per:1,anchor:171.50,vol:.0050,drift:.00090,seed:113},
 ];
 const CUR=Object.fromEntries(CURRENCIES.map(c=>[c.code,c]));
 const decOf=c=>c==='KES'?4:2;
@@ -678,7 +678,7 @@ const live={mid:{},off:{}};
 
 const srcKey=(b,c)=>b+'|'+c;
 const histReal=()=>DATA.mode!=='live'||DATA.histReal;
-const hasData=c=>DATA.mode!=='live'||BANKS.some(b=>bankRates(b,c))||!!DATA.quotes['P2P|'+c];
+const hasData=c=>c==='ETB'||DATA.mode!=='live'||BANKS.some(b=>bankRates(b,c))||!!DATA.quotes['P2P|'+c];
 function storeQuote(id,code){return DATA.quotes[srcKey(id,code)]||null}
 function per(code){return CUR[code]?CUR[code].per:1}
 function etbPerUnit(code){return code==='ETB'?1:live.mid[code]/per(code)}
@@ -1024,7 +1024,7 @@ function renderTrends(){
     `<div class="stat"><span class="s-label">Change</span><b class="${cls(chg)}">${fmtPct(chg)}</b><i>${n<=7?'week':n<=90?'quarter':'period'}</i></div>`+
     stat('Volatility',(sd*100).toFixed(2)+'%','per day');
   const key=S.trends.sort;
-  const list=CURRENCIES.slice().sort((a,b)=>key==='name'?a.code.localeCompare(b.code):curChg(b.code,key==='d1'?1:30)-curChg(a.code,key==='d1'?1:30));
+    const list=CURRENCIES.filter(c=>hasData(c.code)).sort((a,b)=>key==='name'?a.code.localeCompare(b.code):curChg(b.code,key==='d1'?1:30)-curChg(a.code,key==='d1'?1:30));
   $('#trendBody').innerHTML=list.map(c=>{
     const d1=curChg(c.code,1),d30=curChg(c.code,30);
     return `<tr data-code="${c.code}" class="${c.code===S.trends.cur?'sel':''}">
@@ -1087,7 +1087,7 @@ function renderBankDetail(){
 }
 function renderBanks(){safe(renderBankList,'bank list');safe(renderBankDetail,'bank detail')}
 function renderMatrix(){
-  const codes=[...CURRENCIES.map(c=>c.code),'ETB'];
+    const codes=[...CURRENCIES.map(c=>c.code).filter(hasData),'ETB'];
   let html='<thead><tr><th class="mx-corner">from&nbsp;/&nbsp;to</th>'+codes.map(c=>`<th class="num" data-code="${c}">${c}</th>`).join('')+'</tr></thead><tbody>';
   for(const r of codes){
     html+=`<tr data-r="${r}"><th>${r}</th>`;
@@ -1105,7 +1105,7 @@ function renderMatrix(){
 }
 function renderPairs(){
   renderMatrix();
-  $('#pairsBody').innerHTML=CURRENCIES.map(c=>{
+    $('#pairsBody').innerHTML=CURRENCIES.filter(c=>hasData(c.code)).map(c=>{
     const bb=bestBuy(c.code),bs=bestSell(c.code),d30=curChg(c.code,30),d=decOf(c.code);
     return `<tr data-code="${c.code}">
       <td><span class="p-pair">${c.code} / ETB</span><i class="sub">${c.code==='USDT'?'P2P parallel market — not quoted by banks':c.name}</i></td>
