@@ -22,6 +22,7 @@ jobs:
       - name: Evaluate alerts
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          ALERT_FROM: ${{ secrets.ALERT_FROM }}
         run: python3 scripts/alerter.py
       - name: Commit alert state
         run: |
