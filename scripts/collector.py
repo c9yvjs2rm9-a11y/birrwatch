@@ -949,7 +949,7 @@ def collect_source(cfg):
                     if h:
                         return h, "headline", notes
                 if html.lstrip()[:1] in "{[":
-                try:
+                    try:
                     jgot = parse_json_rates(json.loads(html))
                 except Exception:
                     jgot = {}
