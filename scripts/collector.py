@@ -42,7 +42,7 @@ HEADERS = {"User-Agent": UA}
 EBR_URL = "https://ebr.exchange/"
 
 SOURCES = {
-    "NBE": {"name": "National Bank of Ethiopia", "type": "official", "urls": [
+        "NBE": {"name": "National Bank of Ethiopia", "type": "official", "headline": True, "urls": [
         "https://nbe.gov.et/daily-exchange-rate/",
         "https://nbe.gov.et/",
     ]},
@@ -71,7 +71,7 @@ SOURCES = {
         "https://coopbankoromia.com.et/",
         "https://coopbankoromia.com.et/exchange-rate/",
     ]},
-    "ORB": {"name": "Oromia Bank", "type": "bank", "browser_first": True, "urls": [
+    "ORB": {"name": "Oromia Bank", "type": "bank", "browser_first": True, "bust": True, "urls": [
         "https://oromiabank.com/",
     ]},
     "ABY": {"name": "Abay Bank", "type": "bank", "urls": [
@@ -408,7 +408,23 @@ def parse_page(html):
             best = out
     return best
 
-
+def parse_nbe_headline(html):
+    """NBE homepage headline: 'INDICATIVE DAILY EXCHANGE RATE ... 160.9329'."""
+    try:
+        soup = BeautifulSoup(html, "html.parser")
+        txt = re.sub(r"\s+", " ", soup.get_text(" ", strip=True)).upper()
+    except Exception:
+        return {}
+    m = re.search(r"INDICATIVE DAILY EXCHANGE RATE.{0,150}?(\d{2,4}\.\d{2,6})", txt)
+    if not m:
+        return {}
+    try:
+        v = float(m.group(1).replace(",", ""))
+    except ValueError:
+        return {}
+    if 20 < v < 5000:
+        return {"USD": (v, v)}
+    return {}
 def parse_rate_tables(html):
     """Single-value official/customs tables: a header row mentioning RATE/VALUE
     with no buy/sell words, then rows of currency + one number -> buy=sell=value."""
@@ -923,9 +939,15 @@ def collect_source(cfg):
                 notes.append(f"browser-first {short(url)}: parsed 0 (" + "; ".join(dinfo) + ")")
             else:
                 notes.append(f"browser-first {short(url)}: {derr} (" + "; ".join(dinfo) + ")")
-    for url in cfg["urls"]:
+        for url in cfg["urls"]:
+        if cfg.get("bust"):
+            url = url + ("&" if "?" in url else "?") + "t=" + str(int(time.time()))
         html, err = attempt_static(url)
         if html:
+            if cfg.get("headline"):
+                h = parse_nbe_headline(html)
+                if h:
+                    return h, "headline", notes
             if html.lstrip()[:1] in "{[":
                 try:
                     jgot = parse_json_rates(json.loads(html))
