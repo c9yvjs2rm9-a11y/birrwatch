@@ -940,15 +940,15 @@ def collect_source(cfg):
             else:
                 notes.append(f"browser-first {short(url)}: {derr} (" + "; ".join(dinfo) + ")")
         for url in cfg["urls"]:
-        if cfg.get("bust"):
-            url = url + ("&" if "?" in url else "?") + "t=" + str(int(time.time()))
-        html, err = attempt_static(url)
-        if html:
-            if cfg.get("headline"):
-                h = parse_nbe_headline(html)
-                if h:
-                    return h, "headline", notes
-            if html.lstrip()[:1] in "{[":
+            if cfg.get("bust"):
+                url = url + ("&" if "?" in url else "?") + "t=" + str(int(time.time()))
+            html, err = attempt_static(url)
+            if html:
+                if cfg.get("headline"):
+                    h = parse_nbe_headline(html)
+                    if h:
+                        return h, "headline", notes
+                if html.lstrip()[:1] in "{[":
                 try:
                     jgot = parse_json_rates(json.loads(html))
                 except Exception:
