@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-# Birrwatch robot collector v12 — banks + FX bureaus + parallel USDT/ETB.
-# v12: ORB browser-first (its CDN serves robots stale HTML), network capture
-# restored for ebr.exchange (per-source private browser makes it safe),
-# P2P diagnostics now shown in the summary, DBH & ETH removed (no data).
+# Birrwatch robot collector v13 — banks + NBE + ERCA customs + bureaus + parallel USDT/ETB.
+# v13: NBE automated (official), ERCA customs rate added (USD, single-value tables),
+# FLEET CROSS-CHECK: bank quotes whose buy deviates >2.5% from the fleet median are
+# rejected (stale-cache protection), per-source currency filter ("only").
 
 import csv
 import io
@@ -33,6 +33,8 @@ MIN_SPREAD = 0.0008
 TIME_BUDGET = 15 * 60
 PER_SOURCE = 180
 P2P_TIMEOUT = 180
+FLEET_TOL = 0.025      # reject bank quotes >2.5% off fleet median (stale caches)
+MIN_FLEET = 8          # need this many bank quotes before the guard applies
 
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 HEADERS = {"User-Agent": UA}
@@ -40,6 +42,15 @@ HEADERS = {"User-Agent": UA}
 EBR_URL = "https://ebr.exchange/"
 
 SOURCES = {
+    "NBE": {"name": "National Bank of Ethiopia", "type": "official", "urls": [
+        "https://nbe.gov.et/daily-exchange-rate/",
+        "https://nbe.gov.et/",
+    ]},
+    "ERCA": {"name": "Customs valuation rate — ERCA", "type": "customs",
+             "only": ["USD"], "urls": [
+        "https://customs.erca.gov.et/trade/?lang=en",
+        "https://customs.erca.gov.et/",
+    ]},
     "CBE": {"name": "Commercial Bank of Ethiopia", "type": "bank", "urls": [
         "https://combanketh.et/exchange-rates?srcPage=home",
         "https://combanketh.et/",
@@ -171,8 +182,6 @@ SOURCES = {
     "ROO": {"name": "Rooha Forex Bureau", "type": "bureau", "urls": [
         "https://www.roohaforex.net/",
     ]},
-    # DBH removed: site freezes browser calls, never yielded data.
-    # ETH removed: no public rate page (rates behind their app/login).
 }
 
 NUM = re.compile(r"\d[\d,]*(?:\.\d+)?")
@@ -400,6 +409,43 @@ def parse_page(html):
     return best
 
 
+def parse_rate_tables(html):
+    """Single-value official/customs tables: a header row mentioning RATE/VALUE
+    with no buy/sell words, then rows of currency + one number -> buy=sell=value."""
+    soup = BeautifulSoup(html, "html.parser")
+    out = {}
+    for table in soup.find_all("table"):
+        rows = table_rows(table)
+        for i, row in enumerate(rows):
+            joined = norm(" ".join(row))
+            if not any(w in joined for w in ("RATE", "VALUE")):
+                continue
+            if role(joined):
+                continue
+            width = len(row)
+            best_col, best_n = None, 0
+            for j in range(width):
+                n = 0
+                for r in rows[i + 1:]:
+                    v = number(r[j]) if j < len(r) else None
+                    if v and 0.5 < v < 5000:
+                        n += 1
+                if n > best_n:
+                    best_col, best_n = j, n
+            if best_col is None or best_n < 3:
+                continue
+            for r in rows[i + 1:]:
+                if len(r) <= best_col:
+                    continue
+                cur = match_currency(r[0]) or match_currency(" ".join(r[:2]))
+                if not cur or cur in out:
+                    continue
+                v = number(r[best_col])
+                if v and 0.5 < v < 5000:
+                    out[cur] = (v, v)
+    return out
+
+
 def parse_cards(html):
     soup = BeautifulSoup(html, "html.parser")
     page_text = norm(soup.get_text(" ", strip=True))
@@ -447,6 +493,11 @@ def parse_any(html):
     if not got:
         try:
             got = parse_cards(html)
+        except Exception:
+            got = {}
+    if not got:
+        try:
+            got = parse_rate_tables(html)
         except Exception:
             got = {}
     return got
@@ -568,8 +619,6 @@ def attempt_static(url):
 
 
 def attempt_dynamic(url, capture=False):
-    """Self-contained per-source browser. capture=True also records the page's
-    own JSON responses (safe now: private browser + watchdog containment)."""
     info = []
     caps = []
     pw = None
@@ -835,7 +884,7 @@ def fetch_parallel(budget):
     if result:
         buy, sell, src = result
         if buy > sell:
-            buy, sell = sell, buy      # normalize crossed books (ebr style)
+            buy, sell = sell, buy
         return buy, sell, src, notes
     return None, None, None, notes
 
@@ -940,7 +989,7 @@ def main():
     def budget_left():
         return (time.monotonic() - t0) < TIME_BUDGET
 
-    print(f"[birrwatch-collector] v12 starting · {len(SOURCES)} sources · "
+    print(f"[birrwatch-collector] v13 starting · {len(SOURCES)} sources · "
           f"budget {TIME_BUDGET // 60} min · per-source cap {PER_SOURCE}s", flush=True)
 
     doc = json.loads(RATES.read_text(encoding="utf-8"))
@@ -980,7 +1029,7 @@ def main():
             print(f"[collect] {sid} ✗", flush=True)
             continue
         kept, warned = [], False
-        for cur in WANT:
+        for cur in (cfg.get("only") or WANT):
             if cur not in got:
                 continue
             buy, sell = got[cur]
@@ -1001,6 +1050,37 @@ def main():
             summary.append(f"| {sid} | ⚠ nothing usable — kept previous values |")
             print(f"[collect] {sid} ⚠", flush=True)
         time.sleep(2)
+
+    # ---- fleet cross-check: reject bank quotes far off the fleet median ----
+    by_cur = {}
+    for r in list(rates):
+        s = sources.get(r.get("source"), {})
+        if s.get("type") != "bank":
+            continue
+        try:
+            mid = (float(r["buy"]) + float(r["sell"])) / 2
+            buy = float(r["buy"])
+        except (TypeError, ValueError):
+            continue
+        by_cur.setdefault(r.get("currency"), []).append((r["source"], buy, r))
+    rejected = []
+    for cur, entries in by_cur.items():
+        if not cur or len(entries) < MIN_FLEET:
+            continue
+        vals = sorted(b for _, b, _ in entries)
+        n = len(vals)
+        med = vals[n // 2] if n % 2 else (vals[n // 2 - 1] + vals[n // 2]) / 2
+        if not med:
+            continue
+        for src, buy, row in entries:
+            if abs(buy / med - 1) > FLEET_TOL:
+                if row in rates:
+                    rates.remove(row)
+                rejected.append(f"{src} {cur} {buy:.2f} vs {med:.2f}")
+    if rejected:
+        summary.append("| ⚠ fleet check | rejected outlier quote(s) — likely stale cache: "
+                       + ", ".join(rejected[:8]) + " |")
+        print(f"[fleet] rejected: {rejected}", flush=True)
 
     if budget_left():
         print("[collect] P2P (parallel) …", flush=True)
