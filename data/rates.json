@@ -10,6 +10,11 @@
    "type": "official",
    "fetched_at": "2026-09-25T21:19:00+00:00"
   },
+  "ERCA": { 
+    "name": "Customs valuation rate — ERCA", 
+    "type": "customs", 
+    "fetched_at": "2026-10-04T18:00:00+00:00" 
+  },
   "CBE": {
    "name": "Commercial Bank of Ethiopia",
    "type": "bank",
@@ -187,6 +192,12 @@
    "currency": "USD",
    "buy": 160.79,
    "sell": 160.79
+  },
+  { 
+   "source": "ERCA", 
+   "currency": "USD", 
+   "buy": 162.54, 
+   "sell": 162.54
   },
   {
    "source": "CBE",
