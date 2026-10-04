@@ -30,7 +30,7 @@ def send(to, subject, body):
         headers={"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"},
         json={"from": FROM, "to": [to], "subject": subject,
               "text": body}, timeout=30)
-        if r.status_code not in (200, 202):
+    if r.status_code not in (200, 202):
         print(f"[send] FAILED {r.status_code}: {r.text[:300]}", flush=True)
         return r.status_code in (200, 202)
 
