@@ -51,7 +51,7 @@ def main():
             continue
         hit = (a["dir"] == "above" and mid >= a["target"]) or \
               (a["dir"] == "below" and mid <= a["target"])
-                if not hit:
+        if not hit:
             continue
         addr = clean_email(a.get("email"))
         if not re.fullmatch(r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}", addr):
