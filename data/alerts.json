@@ -1,6 +1,3 @@
 [
-  { "id": "a1", "pair": "USD", "dir": "above", "target": 165, "email": "user@example.com", "status": "armed" }
-]
-[
   { "id": "test1", "pair": "USD", "dir": "above", "target": 100, "email": "c9yvjs2rm9@privaterelay.appleid.com", "status": "armed" }
 ]
