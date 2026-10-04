@@ -1,0 +1,2 @@
+/api/rates /data/rates.json 200
+/api/trends /data/trends.json 200
