@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Birrwatch alerter — evaluates armed alerts against rates.json, emails via
 # Resend, marks triggered alerts done. Runs after the collector.
-import json, os, sys
+import json, os, re, sys
 from pathlib import Path
 import requests
 
@@ -21,7 +21,10 @@ def mids(doc):
         except (KeyError, TypeError, ValueError):
             continue
     return m
-
+def clean_email(e):
+    """Strip whitespace and any non-ASCII characters (invisible copy-paste
+    artifacts from phone keyboards), then keep only plain printable ASCII."""
+    return "".join(ch for ch in str(e or "") if 32 <= ord(ch) < 127).strip()
 def send(to, subject, body):
     if not API_KEY:
         print(f"[dry-run] would email {to}: {subject}")
@@ -48,9 +51,15 @@ def main():
             continue
         hit = (a["dir"] == "above" and mid >= a["target"]) or \
               (a["dir"] == "below" and mid <= a["target"])
-        if not hit:
+                if not hit:
             continue
-        ok = send(a["email"],
+        addr = clean_email(a.get("email"))
+        if not re.fullmatch(r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}", addr):
+            a["status"] = "invalid"
+            changed = True
+            print(f"[alert] {a['id']} skipped — email invalid after cleaning", flush=True)
+            continue
+        ok = send(addr,
             f"Birrwatch alert: {cur}/ETB is {mid:.2f}",
             f"Your alert triggered.\n\n{cur}/ETB is now {mid:.2f} ETB "
             f"(you asked for {'≥' if a['dir']=='above' else '≤'} {a['target']}).\n\n"
