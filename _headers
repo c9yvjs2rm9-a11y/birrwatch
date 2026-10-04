@@ -1,0 +1,4 @@
+/data/*
+  Access-Control-Allow-Origin: *
+/api/*
+  Access-Control-Allow-Origin: *
