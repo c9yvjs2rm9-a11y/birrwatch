@@ -1,3 +1,10 @@
 [
-  { "id": "test1", "pair": "USD", "dir": "above", "target": 100, "email": "YOUR-RESEND-ACCOUNT-EMAIL@…", "status": "armed" }
+ {
+  "id": "test1",
+  "pair": "USD",
+  "dir": "above",
+  "target": 100,
+  "email": "YOUR-RESEND-ACCOUNT-EMAIL@\u2026",
+  "status": "invalid"
+ }
 ]
