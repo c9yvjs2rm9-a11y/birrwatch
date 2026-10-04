@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-# Birrwatch robot collector v13 — banks + NBE + ERCA customs + bureaus + parallel USDT/ETB.
-# v13: NBE automated (official), ERCA customs rate added (USD, single-value tables),
-# FLEET CROSS-CHECK: bank quotes whose buy deviates >2.5% from the fleet median are
-# rejected (stale-cache protection), per-source currency filter ("only").
+# Birrwatch robot collector v13.1 — banks + NBE + ERCA customs + bureaus + parallel USDT/ETB.
+# v13.1: complete file — NBE headline parser, cache-busting, ORB browser-first+bust,
+# ERCA customs (USD), fleet cross-check (reject bank quotes >2.5% off median),
+# watchdogs, per-source private browsers, P2P with Binance cross-check.
 
 import csv
 import io
@@ -33,8 +33,8 @@ MIN_SPREAD = 0.0008
 TIME_BUDGET = 15 * 60
 PER_SOURCE = 180
 P2P_TIMEOUT = 180
-FLEET_TOL = 0.025      # reject bank quotes >2.5% off fleet median (stale caches)
-MIN_FLEET = 8          # need this many bank quotes before the guard applies
+FLEET_TOL = 0.025
+MIN_FLEET = 8
 
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 HEADERS = {"User-Agent": UA}
@@ -42,9 +42,9 @@ HEADERS = {"User-Agent": UA}
 EBR_URL = "https://ebr.exchange/"
 
 SOURCES = {
-        "NBE": {"name": "National Bank of Ethiopia", "type": "official", "headline": True, "urls": [
-        "https://nbe.gov.et/daily-exchange-rate/",
+    "NBE": {"name": "National Bank of Ethiopia", "type": "official", "headline": True, "urls": [
         "https://nbe.gov.et/",
+        "https://nbe.gov.et/daily-exchange-rate/",
     ]},
     "ERCA": {"name": "Customs valuation rate — ERCA", "type": "customs",
              "only": ["USD"], "urls": [
@@ -408,6 +408,7 @@ def parse_page(html):
             best = out
     return best
 
+
 def parse_nbe_headline(html):
     """NBE homepage headline: 'INDICATIVE DAILY EXCHANGE RATE ... 160.9329'."""
     try:
@@ -425,6 +426,8 @@ def parse_nbe_headline(html):
     if 20 < v < 5000:
         return {"USD": (v, v)}
     return {}
+
+
 def parse_rate_tables(html):
     """Single-value official/customs tables: a header row mentioning RATE/VALUE
     with no buy/sell words, then rows of currency + one number -> buy=sell=value."""
@@ -939,17 +942,17 @@ def collect_source(cfg):
                 notes.append(f"browser-first {short(url)}: parsed 0 (" + "; ".join(dinfo) + ")")
             else:
                 notes.append(f"browser-first {short(url)}: {derr} (" + "; ".join(dinfo) + ")")
-        for url in cfg["urls"]:
-            if cfg.get("bust"):
-                url = url + ("&" if "?" in url else "?") + "t=" + str(int(time.time()))
-            html, err = attempt_static(url)
-            if html:
-                if cfg.get("headline"):
-                    h = parse_nbe_headline(html)
-                    if h:
-                        return h, "headline", notes
-                if html.lstrip()[:1] in "{[":
-                    try:
+    for url in cfg["urls"]:
+        if cfg.get("bust"):
+            url = url + ("&" if "?" in url else "?") + "t=" + str(int(time.time()))
+        html, err = attempt_static(url)
+        if html:
+            if cfg.get("headline"):
+                h = parse_nbe_headline(html)
+                if h:
+                    return h, "headline", notes
+            if html.lstrip()[:1] in "{[":
+                try:
                     jgot = parse_json_rates(json.loads(html))
                 except Exception:
                     jgot = {}
@@ -1011,7 +1014,7 @@ def main():
     def budget_left():
         return (time.monotonic() - t0) < TIME_BUDGET
 
-    print(f"[birrwatch-collector] v13 starting · {len(SOURCES)} sources · "
+    print(f"[birrwatch-collector] v13.1 starting · {len(SOURCES)} sources · "
           f"budget {TIME_BUDGET // 60} min · per-source cap {PER_SOURCE}s", flush=True)
 
     doc = json.loads(RATES.read_text(encoding="utf-8"))
@@ -1073,14 +1076,12 @@ def main():
             print(f"[collect] {sid} ⚠", flush=True)
         time.sleep(2)
 
-    # ---- fleet cross-check: reject bank quotes far off the fleet median ----
     by_cur = {}
     for r in list(rates):
         s = sources.get(r.get("source"), {})
         if s.get("type") != "bank":
             continue
         try:
-            mid = (float(r["buy"]) + float(r["sell"])) / 2
             buy = float(r["buy"])
         except (TypeError, ValueError):
             continue
