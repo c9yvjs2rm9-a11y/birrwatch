@@ -43,7 +43,6 @@ EBR_URL = "https://ebr.exchange/"
 
 SOURCES = {
     "NBE": {"name": "National Bank of Ethiopia", "type": "official", "headline": True, "urls": [
-        "https://nbe.gov.et/",
         "https://nbe.gov.et/daily-exchange-rate/",
     ]},
     "ERCA": {"name": "Customs valuation rate — ERCA", "type": "customs",
