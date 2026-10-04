@@ -1,3 +1,11 @@
 [
-  { "id": "test1", "pair": "USD", "dir": "above", "target": 100, "email": "onboarding@resend.dev", "status": "armed" }
+ {
+  "id": "test1",
+  "pair": "USD",
+  "dir": "above",
+  "target": 100,
+  "email": "onboarding@resend.dev",
+  "status": "done",
+  "triggered_at": "2026-10-04T11:04:51+00:00"
+ }
 ]
