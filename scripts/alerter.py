@@ -17,13 +17,24 @@ FROM = os.environ.get("ALERT_FROM", "Birrwatch Alerts <alerts@birrwatch.et>")
 
 
 def mids(doc):
-    m = {}
+    """Alert mids match the website's convention: USD/EUR/... = average across
+    BANK sources only (bureaus are cash, a different market); USDT = the P2P
+    parallel source."""
+    sums = {}
     for r in doc.get("rates", []):
         try:
-            m[str(r["currency"]).upper()] = (float(r["buy"]) + float(r["sell"])) / 2
+            cur = str(r["currency"]).upper()
+            src = doc.get("sources", {}).get(r.get("source"), {})
+            stype = src.get("type", "bank")
+            mid = (float(r["buy"]) + float(r["sell"])) / 2
         except (KeyError, TypeError, ValueError):
             continue
-    return m
+        if cur == "USDT":
+            if stype == "market":
+                sums.setdefault(cur, []).append(mid)
+        elif stype == "bank":
+            sums.setdefault(cur, []).append(mid)
+    return {cur: sum(v) / len(v) for cur, v in sums.items() if v}
 
 
 def clean_email(e):
