@@ -43,9 +43,10 @@ EBR_URL = "https://ebr.exchange/"
 EBR_API = "https://api.ebr.exchange/api/dashboard/market-stats"
 
 SOURCES = {
-    "NBE": {"name": "National Bank of Ethiopia", "type": "official", "headline": True, "urls": [
+    "NBE": {"name": "National Bank of Ethiopia", "type": "official",
+            "browser_first": True, "bust": True, "official_json": True, "urls": [
+        "https://nbe.gov.et/exchange/indicatives-rates/",
         "https://api.nbe.gov.et/api/filter-exchange-rates",
-        "https://nbe.gov.et/",
     ]},
     "ERCA": {"name": "Customs valuation rate — ERCA", "type": "customs",
              "only": ["USD"], "urls": [
@@ -771,11 +772,14 @@ def attempt_dynamic(url, capture=False):
                 pass
             try:
                 btn = page.locator("input[type=submit], button[type=submit], "
-                                    "button:has-text('Search'), a:has-text('Search'), "
-                                    "button:has-text('Go'), button:has-text('View')").first
+                                   "input[type=button], "
+                                   "button:has-text('Search'), a:has-text('Search'), "
+                                   "button:has-text('Go'), a:has-text('Go'), "
+                                   "button:has-text('View'), a:has-text('View'), "
+                                   "button:has-text('Show'), a:has-text('Show')").first
                 if btn.count() > 0:
                     btn.click(timeout=2000)
-                    page.wait_for_timeout(2500)
+                    page.wait_for_timeout(4000)
                     info.append("clicked search")
             except Exception:
                 pass
@@ -1076,7 +1080,7 @@ def collect_source(cfg):
                     jgot = parse_json_rates(json.loads(html))
                 except Exception:
                     jgot = {}
-                if not jgot and cfg.get("headline"):
+                if not jgot and (cfg.get("headline") or cfg.get("official_json")):
                     try:
                         jgot = parse_json_official(json.loads(html))
                     except Exception:
@@ -1107,7 +1111,7 @@ def collect_source(cfg):
                     jgot = parse_json_rates(json.loads(dhtml))
                 except Exception:
                     jgot = {}
-                if not jgot and cfg.get("headline"):
+                if not jgot and (cfg.get("headline") or cfg.get("official_json")):
                     try:
                         jgot = parse_json_official(json.loads(dhtml))
                     except Exception:
