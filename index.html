@@ -910,7 +910,8 @@ function renderHero(){
     ?deltaHtml(curChg('USD',1),'today')+deltaHtml(curChg('USD',30),'30d')
     :'<span class="delta" style="color:var(--muted);border-color:var(--line2);background:var(--paper2)">history building — daily change appears soon</span>';
   $('#nbeRate').textContent=fmt(live.off.USD,2)+' ETB';
-    $('#customsRate').textContent=(live.customs&&live.customs.USD!=null)?fmt(live.customs.USD,2)+' ETB':'—';
+  $('#avgRate').textContent=fmt(avgMid('USD'),2)+' ETB';
+  $('#customsRate').textContent=(live.customs&&live.customs.USD!=null)?fmt(live.customs.USD,2)+' ETB':'—';
   $('#heroUpdated').textContent='updated '+ago(DATA.genTs)+
     (DATA.mode==='live'?` · ${okCount()}/${Object.keys(DATA.sources).length} sources ok`:'');
 }
