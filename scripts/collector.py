@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-# Birrwatch robot collector v13.1 — banks + NBE + ERCA customs + bureaus + parallel USDT/ETB.
-# v13.1: complete file — NBE headline parser, cache-busting, ORB browser-first+bust,
-# ERCA customs (USD), fleet cross-check (reject bank quotes >2.5% off median),
-# watchdogs, per-source private browsers, P2P with Binance cross-check.
+# Birrwatch robot collector v14 — banks + NBE + ERCA customs + bureaus + parallel USDT/ETB.
+# v14: NBE via official API (api.nbe.gov.et), EBR via market-stats API,
+# table-content previews in failure notes (to crack BRH/GOH/SDB/SKB),
+# per-currency fleet tolerance (USD strict 2.5%, others 4%).
 
 import csv
 import io
@@ -40,11 +40,12 @@ UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML,
 HEADERS = {"User-Agent": UA}
 
 EBR_URL = "https://ebr.exchange/"
+EBR_API = "https://api.ebr.exchange/api/dashboard/market-stats"
 
 SOURCES = {
     "NBE": {"name": "National Bank of Ethiopia", "type": "official", "headline": True, "urls": [
+        "https://api.nbe.gov.et/api/filter-exchange-rates",
         "https://nbe.gov.et/",
-
     ]},
     "ERCA": {"name": "Customs valuation rate — ERCA", "type": "customs",
              "only": ["USD"], "urls": [
@@ -275,6 +276,14 @@ def cluster_median(cands, tol=0.06, min_n=3):
     return median(best) if len(best) >= min_n else None
 
 
+def _num_ok(v):
+    try:
+        f = float(str(v).replace(",", ""))
+    except (TypeError, ValueError):
+        return None
+    return f if 20.0 < f < 5000.0 else None
+
+
 def parse_json_rates(node, out=None, depth=0):
     if out is None:
         out = {}
@@ -306,6 +315,47 @@ def parse_json_rates(node, out=None, depth=0):
     elif isinstance(node, dict):
         for v in node.values():
             parse_json_rates(v, out, depth + 1)
+    return out
+
+
+def parse_json_official(node, out=None, depth=0):
+    """Official/customs APIs: a currency token plus either explicit buy/sell
+    or a single rate-like number anywhere in the JSON tree."""
+    if out is None:
+        out = {}
+    if depth > 8 or len(out) > 60:
+        return out
+    if isinstance(node, list):
+        for item in node:
+            parse_json_official(item, out, depth + 1)
+    elif isinstance(node, dict):
+        cur = None
+        for v in node.values():
+            if isinstance(v, str):
+                m = match_currency(v)
+                if m:
+                    cur = m
+                    break
+        if cur and cur not in out:
+            b = s = single = None
+            for k, v in node.items():
+                kl = str(k).lower()
+                f = _num_ok(v)
+                if f is None:
+                    continue
+                if any(w in kl for w in ("buy", "bid", "purchas")):
+                    b = f
+                elif any(w in kl for w in ("sell", "ask", "offer")):
+                    s = f
+                elif any(w in kl for w in ("rate", "mid", "value", "indicative", "price")):
+                    single = f
+            if b and s:
+                out[cur] = (min(b, s), max(b, s))
+            elif single:
+                out[cur] = (single, single)
+        for v in node.values():
+            if isinstance(v, (dict, list)):
+                parse_json_official(v, out, depth + 1)
     return out
 
 
@@ -410,7 +460,6 @@ def parse_page(html):
 
 
 def parse_nbe_headline(html):
-    """NBE homepage headline: 'INDICATIVE DAILY EXCHANGE RATE ... 160.9329'."""
     try:
         soup = BeautifulSoup(html, "html.parser")
         txt = re.sub(r"\s+", " ", soup.get_text(" ", strip=True)).upper()
@@ -429,8 +478,6 @@ def parse_nbe_headline(html):
 
 
 def parse_rate_tables(html):
-    """Single-value official/customs tables: a header row mentioning RATE/VALUE
-    with no buy/sell words, then rows of currency + one number -> buy=sell=value."""
     soup = BeautifulSoup(html, "html.parser")
     out = {}
     for table in soup.find_all("table"):
@@ -530,6 +577,19 @@ def diagnose(html):
     return n, kw
 
 
+def table_preview(html, limit=2):
+    """First rows of the first tables — shows us WHY parsing failed."""
+    try:
+        soup = BeautifulSoup(html, "html.parser")
+        out = []
+        for t in soup.find_all("table")[:limit]:
+            for r in table_rows(t)[:3]:
+                out.append("row: " + " | ".join(c[:14] for c in r[:6]))
+        return out
+    except Exception:
+        return []
+
+
 def short(url):
     return re.sub(r"^https?://(www\.)?", "", url).rstrip("/")[:34]
 
@@ -545,14 +605,6 @@ def browser_worth_it(err):
     if "http 403" in e or "ssl" in e or "http 200" in e:
         return True
     return False
-
-
-def _num_ok(v):
-    try:
-        f = float(str(v).replace(",", ""))
-    except (TypeError, ValueError):
-        return None
-    return f if 20.0 < f < 5000.0 else None
 
 
 PRICE_KEYS = ("price", "rate", "buy", "sell", "bid", "ask", "etb")
@@ -573,6 +625,27 @@ def walk_prices(node, out, depth=0):
     elif isinstance(node, list):
         for v in node[:60]:
             walk_prices(v, out, depth + 1)
+
+
+def walk_sides(node, buys, sells, mids, depth=0):
+    if depth > 9 or (len(buys) + len(sells) + len(mids)) > 300:
+        return
+    if isinstance(node, dict):
+        for k, v in node.items():
+            kl = str(k).lower()
+            f = _num_ok(v)
+            if f is not None:
+                if any(w in kl for w in ("buy", "bid")):
+                    buys.append(f)
+                elif any(w in kl for w in ("sell", "ask")):
+                    sells.append(f)
+                elif any(w in kl for w in ("price", "rate", "mid")):
+                    mids.append(f)
+                continue
+            walk_sides(v, buys, sells, mids, depth + 1)
+    elif isinstance(node, list):
+        for v in node[:80]:
+            walk_sides(v, buys, sells, mids, depth + 1)
 
 
 def text_candidates(html):
@@ -734,6 +807,26 @@ def attempt_dynamic(url, capture=False):
             pass
 
 
+def fetch_ebr_api(notes):
+    doc, err = fetch_json(EBR_API)
+    if doc is None:
+        notes.append(f"ebr api: {err}")
+        return None
+    buys, sells, mids = [], [], []
+    walk_sides(doc, buys, sells, mids)
+    notes.append(f"ebr api: {len(buys)}b/{len(sells)}s/{len(mids)}m")
+    if buys and sells:
+        b, s = median(buys), median(sells)
+        if b > s:
+            b, s = s, b
+        if plausible(b, s):
+            return b, s, "ebr.exchange api"
+    m = cluster_median(mids, min_n=2)
+    if m:
+        return m * 0.997, m * 1.003, "ebr.exchange api (indicative spread)"
+    return None
+
+
 def fetch_ebr(notes, budget):
     all_prices, buys, sells = [], [], []
     html, err = attempt_static(EBR_URL)
@@ -871,9 +964,14 @@ def fetch_parallel(budget):
     notes = []
     ebr = ref = None
     try:
-        ebr = fetch_ebr(notes, budget)
+        ebr = fetch_ebr_api(notes)
     except Exception:
         ebr = None
+    if not ebr:
+        try:
+            ebr = fetch_ebr(notes, budget)
+        except Exception:
+            ebr = None
     try:
         ref = p2p_binance(notes)
     except Exception:
@@ -960,6 +1058,11 @@ def collect_source(cfg):
                     jgot = parse_json_rates(json.loads(html))
                 except Exception:
                     jgot = {}
+                if not jgot and cfg.get("headline"):
+                    try:
+                        jgot = parse_json_official(json.loads(html))
+                    except Exception:
+                        jgot = {}
                 if jgot:
                     return jgot, "api", notes
                 notes.append(f"{short(url)}: json but no rates found")
@@ -969,6 +1072,8 @@ def collect_source(cfg):
                 return got, "static", notes
             n, kw = diagnose(html)
             notes.append(f"{short(url)}: HTTP 200 · {n} tables · {'rate words found' if kw else 'no rate words'}")
+            if n:
+                notes.extend(table_preview(html))
         else:
             notes.append(f"{short(url)}: {err}")
         if not browser_worth_it(err):
@@ -984,12 +1089,20 @@ def collect_source(cfg):
                     jgot = parse_json_rates(json.loads(dhtml))
                 except Exception:
                     jgot = {}
+                if not jgot and cfg.get("headline"):
+                    try:
+                        jgot = parse_json_official(json.loads(dhtml))
+                    except Exception:
+                        jgot = {}
                 if jgot:
                     return jgot, "api", notes
             got = parse_any(dhtml)
             if got:
                 return got, "browser", notes
             notes.append("browser: parsed 0 (" + "; ".join(dinfo) + ")")
+            n, _kw = diagnose(dhtml)
+            if n:
+                notes.extend(table_preview(dhtml))
         else:
             notes.append(f"browser: {derr} (" + "; ".join(dinfo) + ")")
     return got, via, notes
@@ -1022,7 +1135,7 @@ def main():
     def budget_left():
         return (time.monotonic() - t0) < TIME_BUDGET
 
-    print(f"[birrwatch-collector] v13.1 starting · {len(SOURCES)} sources · "
+    print(f"[birrwatch-collector] v14 starting · {len(SOURCES)} sources · "
           f"budget {TIME_BUDGET // 60} min · per-source cap {PER_SOURCE}s", flush=True)
 
     doc = json.loads(RATES.read_text(encoding="utf-8"))
@@ -1057,7 +1170,7 @@ def main():
             continue
         got, via, notes = result
         if not got:
-            detail = "; ".join(notes) if notes else "unknown"
+            detail = "; ".join(notes[:14]) if notes else "unknown"
             summary.append(f"| {sid} | ✗ {detail} — kept previous values |")
             print(f"[collect] {sid} ✗", flush=True)
             continue
@@ -1103,13 +1216,14 @@ def main():
         med = vals[n // 2] if n % 2 else (vals[n // 2 - 1] + vals[n // 2]) / 2
         if not med:
             continue
+        tol = FLEET_TOL if cur == "USD" else 0.04
         for src, buy, row in entries:
-            if abs(buy / med - 1) > (FLEET_TOL if cur == "USD" else 0.04):
+            if abs(buy / med - 1) > tol:
                 if row in rates:
                     rates.remove(row)
                 rejected.append(f"{src} {cur} {buy:.2f} vs {med:.2f}")
     if rejected:
-        summary.append("| ⚠ fleet check | rejected outlier quote(s) — likely stale cache: "
+        summary.append("| ⚠ fleet check | rejected outlier quote(s): "
                        + ", ".join(rejected[:8]) + " |")
         print(f"[fleet] rejected: {rejected}", flush=True)
 
