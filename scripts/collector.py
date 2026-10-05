@@ -262,7 +262,7 @@ def number(cell):
 
 
 def plausible(b, s):
-    return bool(b and s and 0.5 < b < 5000 and 0.5 < s < 5000
+    return bool(b and s and 5 < b < 5000 and 5 < s < 5000
                 and b <= s < b * 1.25
                 and ((s - b) / b >= MIN_SPREAD or s == b))
 
@@ -537,7 +537,7 @@ def parse_cards(html):
     cands = []
     for el in soup.find_all(["div", "section", "article", "li", "span", "p"]):
         t = el.get_text(" ", strip=True)
-        if not t or len(t) > 160:
+        if not t or len(t) > 600:
             continue
         u = norm(t)
         cur = match_currency(u)
@@ -771,8 +771,8 @@ def attempt_dynamic(url, capture=False):
                 pass
             try:
                 btn = page.locator("input[type=submit], button[type=submit], "
-                                   "button:has-text('Search'), a:has-text('Search'), "
-                                   "button:has-text('Go')").first
+                                    "button:has-text('Search'), a:has-text('Search'), "
+                                    "button:has-text('Go'), button:has-text('View')").first
                 if btn.count() > 0:
                     btn.click(timeout=2000)
                     page.wait_for_timeout(2500)
