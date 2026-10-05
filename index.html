@@ -10,6 +10,12 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Archivo:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&family=Noto+Sans+Ethiopic:wght@600&display=swap" rel="stylesheet">
 <style>
 #overlay[hidden]{display:none!important}
+.pill{display:inline-block;font:700 8.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:2px 8px;vertical-align:middle}
+.pill.cur{color:var(--green);border:1px solid rgba(11,123,61,.35);background:rgba(11,123,61,.07)}
+.pill.stale{color:var(--red);border:1px solid rgba(185,58,27,.35);background:rgba(185,58,27,.07)}
+#p2pCard .bd-figures{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px}
+#p2pCard .bd-figures>div{border-left:0!important;padding:0!important}
+@media(min-width:700px){#p2pCard .bd-figures{grid-template-columns:repeat(4,1fr)}}
 :root{
   --paper:#F6F4EE; --paper2:#EFECE1; --panel:#FBFAF6;
   --ink:#191713; --ink2:#3F3B2F; --muted:#75705F;
@@ -469,12 +475,13 @@ footer{background:var(--ink);color:var(--paper);padding:64px 0 36px;margin-top:2
     <div><span class="kicker">06 — Licensed FX bureaus</span><h2>Licensed FX bureaus</h2></div>
     <div class="search" id="bureauSearchWrap"></div>
   </div>
+  <div class="chip-row" id="bureauCurChips" style="margin-bottom:6px"></div>
   <div class="street-band" id="bureauBand"></div>
   <div class="table-scroll" style="margin-top:26px">
     <table>
       <thead><tr>
         <th data-key="name">Bureau</th>
-        <th data-key="buy" class="num">USD buy</th><th data-key="sell" class="num">USD sell</th>
+        <th data-key="buy" class="num" id="bBuyH">USD buy</th><th data-key="sell" class="num" id="bSellH">USD sell</th>
         <th data-key="spread" class="num">Spread</th><th data-key="vs" class="num">vs best bank</th>
       </tr></thead>
       <tbody id="bureauBody"></tbody>
@@ -604,6 +611,8 @@ const fmtPct=(v,d=2)=>(v==null||!isFinite(v))?'—':(v>=0?'+':'−')+Math.abs(v*
 const cls=v=>v>=0?'up':'down';
 function ago(ts){if(!ts)return'—';const s=Math.max(0,(Date.now()-ts)/1e3);if(s<50)return'just now';const m=s/60;if(m<60)return Math.floor(m)+' min ago';return Math.floor(m/60)+' h '+(Math.floor(m)%60)+' m ago'}
 function dlabel(d,full){return full?d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}):d.getDate()+' '+d.toLocaleString('en',{month:'short'})}
+function fmtDay(ts){if(!ts)return'—';return new Date(ts).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}
+function fmtDayTime(ts){if(!ts)return'—';const d=new Date(ts);return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+' at '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}
 function copyText(t){try{navigator.clipboard.writeText(t)}catch(e){const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove()}}
 const cmp=(a,b,dir)=>{if(a==null&&b==null)return 0;if(a==null)return 1;if(b==null)return -1;return(a<b?-1:a>b?1:0)*dir};
 
@@ -889,7 +898,7 @@ const S={
   banks:{sel:'CBE',cur:'USD',q:''},
   pairs:{},
   conv:{from:'USD',to:'ETB',mode:'best'},
-  bureaus:{q:'',sort:{key:'buy',dir:-1}},
+  bureaus:{q:'',cur:'USD',sort:{key:'buy',dir:-1}},
   price:{annual:false},
 };
 
@@ -919,8 +928,8 @@ function renderBestBand(){
   const bb=bestBuy('USD'),bs=bestSell('USD'),t=tightest('USD');
   const nb=BANKS.filter(b=>bankRates(b,'USD')).length;
   $('#bestBand').innerHTML=`
-   <div class="street-item"><span class="s-label">Best USD buy — you get</span><span class="s-bank">${bb?bb.b.name:'—'}</span><span class="s-rate">${bb?fmt(bb.r.buy,2):'—'} <small>ETB</small></span></div>
-   <div class="street-item"><span class="s-label">Lowest USD sell — you pay</span><span class="s-bank">${bs?bs.b.name:'—'}</span><span class="s-rate">${bs?fmt(bs.r.sell,2):'—'} <small>ETB</small></span></div>
+   <div class="street-item"><span class="s-label">Best USD buy — you sell</span><span class="s-bank">${bb?bb.b.name:'—'}</span><span class="s-rate">${bb?fmt(bb.r.buy,2):'—'} <small>ETB</small></span></div>
+   <div class="street-item"><span class="s-label">Lowest USD sell — you buy</span><span class="s-bank">${bs?bs.b.name:'—'}</span><span class="s-rate">${bs?fmt(bs.r.sell,2):'—'} <small>ETB</small></span></div>
    <div class="street-item"><span class="s-label">Tightest spread</span><span class="s-bank">${t?t.b.name:'—'}</span><span class="s-rate">${t?fmt(t.r.spread,2):'—'} <small>ETB</small></span></div>
    <div class="s-note">Cash & electronic rates from the published sheets of ${nb} bank${nb===1?'':'s'} — collected automatically as they publish.</div>`;
 }
@@ -941,7 +950,7 @@ function renderP2P(){
      <div><span class="s-label">Mid</span><span class="big-num">${fmt(mid,2)}</span><span class="mini">ETB per 1 USDT</span></div>
      <div><span class="s-label">Buy / Sell</span><span class="big-num" style="font-size:19px;padding-top:6px">${fmt(q.buy,2)} / ${fmt(q.sell,2)}</span><span class="mini">public parallel-market source</span></div>
      <div><span class="s-label">vs bank USD</span><span class="big-num ${prem!=null&&prem>=0?'up':'down'}" style="font-size:19px;padding-top:6px">${prem!=null?(prem>=0?'+':'−')+Math.abs(prem*100).toFixed(1)+'%':'—'}</span><span class="mini">parallel premium</span></div>
-     <div><span class="s-label">Updated</span><span class="big-num" style="font-size:17px;padding-top:8px">${ago(ts)}</span><span class="mini">public parallel-market sources</span></div>
+     <div><span class="s-label">Updated</span><span class="big-num" style="font-size:13px;padding-top:10px">${fmtDayTime(ts)}</span><span class="mini">public parallel-market sources</span></div>
    </div>
    <p class="mini" style="margin-top:10px">Aggregated from public parallel-market sources and shown for reference only — not a bank or NBE rate, not an offer to trade, and no guarantee any counterparty is available at this price.</p>`;
 }
@@ -987,7 +996,7 @@ function renderTodayTable(){
   $('#rateBody').innerHTML=rows.map((b,i)=>{
     const r=bankRates(b,cur),ch=bankChg(b,cur);
     const hlB=S.today.dir==='buy'&&r?' hl':'',hlS=S.today.dir==='sell'&&r?' hl':'';
-    const st=isStale(b.c)?' <span class="down">·stale</span>':'';
+    const st=isStale(b.c)?'<span class="pill stale">stale</span>':'<span class="pill cur">current</span>';
     return `<tr data-b="${b.c}">
       <td class="c-idx">${String(i+1).padStart(2,'0')}</td>
       <td><span class="c-bank"><span class="mono-badge">${b.c.slice(0,2)}</span><span class="b-txt"><b>${b.name}</b><i>${b.type}${b.est?' · est. '+b.est:''}</i></span></span></td>
@@ -996,7 +1005,7 @@ function renderTodayTable(){
       <td class="num c-spread">${r?fmt(r.spread,d):'—'}</td>
       <td class="num c-chg${histReal()?' '+cls(ch):''}">${histReal()?fmtPct(ch):'—'}</td>
       <td class="c-spark"><canvas class="sparkcv" data-b="${b.c}"></canvas></td>
-      <td class="c-upd" data-b="${b.c}">${ago(sourceUpdated(b.c))}${st}</td></tr>`}).join('');
+      <td class="c-upd" data-b="${b.c}">${fmtDay(sourceUpdated(b.c))}${st}</td></tr>`}).join('');
   $$('#rateBody .sparkcv').forEach(cv=>{
     const id=cv.dataset.b;
     drawSpark(cv,id==='__P2P__'?(H.USDT||[]).slice(-60):bankSeries(BANK[id],cur,60));
@@ -1086,7 +1095,7 @@ function renderBankDetail(){
       <div><span class="s-label">Bank buys ${cur} at</span><span class="big-num">${r?fmt(r.buy,d):'—'}</span><span class="mini">you receive ETB</span></div>
       <div><span class="s-label">Bank sells ${cur} at</span><span class="big-num">${r?fmt(r.sell,d):'—'}</span><span class="mini">you pay ETB</span></div>
       <div><span class="s-label">Spread</span><span class="big-num">${r?fmt(r.spread,d):'—'}</span><span class="mini">${r?((r.spread/r.buy)*100).toFixed(2)+'% of mid':'no quote'}</span></div>
-      <div><span class="s-label">Updated</span><span class="big-num" style="font-size:17px;padding-top:8px">${ago(sourceUpdated(b.c))}</span><span class="mini">${isStale(b.c)?'<span class="down">stale — verify with bank</span>':'published sheet'}</span></div>
+      <div><span class="s-label">Updated</span><span class="big-num" style="font-size:17px;padding-top:8px">${fmtDay(sourceUpdated(b.c))}</span><span class="mini">${isStale(b.c)?'<span class="pill stale">stale — verify with bank</span>':'<span class="pill cur">current</span>'}</span></div>
     </div>
     <div class="panel">
       <div class="chart-head"><span class="kicker">${cur} mid · last 90 days</span></div>
@@ -1172,20 +1181,29 @@ function buildConverter(){
 }
 function renderBureaus(){
   const q=S.bureaus.q.trim().toLowerCase();
+  const cur=S.bureaus.cur||'USD',d=decOf(cur);
+  const avail=new Set(['USD']);
+  for(const u of BUREAUS)for(const c of CURRENCIES)if(c.code!=='USDT'&&bureauRates(u,c.code))avail.add(c.code);
+  const chips=[...avail].sort((a,b)=>a==='USD'?-1:b==='USD'?1:a.localeCompare(b));
+  const ch=$('#bureauCurChips');
+  if(ch)ch.innerHTML=chips.map(c=>`<button class="chip ${c===cur?'on':''}" data-cur="${c}">${c}</button>`).join('');
+  const bh=$('#bBuyH'),sh=$('#bSellH');
+  if(bh)bh.textContent=cur+' buy';
+  if(sh)sh.textContent=cur+' sell';
   let rows=BUREAUS.filter(u=>!q||u.name.toLowerCase().includes(q));
   const {key,dir}=S.bureaus.sort;
-  const bb=bestBuy('USD'),bbb=bb?bb.r.buy:null;
-  const val={name:u=>u.name,buy:u=>{const r=bureauRates(u);return r?r.buy:null},sell:u=>{const r=bureauRates(u);return r?r.sell:null},spread:u=>{const r=bureauRates(u);return r?r.sell-r.buy:null},vs:u=>{const r=bureauRates(u);return r&&bbb!=null?r.buy-bbb:null}};
-  rows.sort((a,b)=>cmp(val[key](a),val[key](b),key==='name'?dir:dir));
+  const bb=bestBuy(cur),bbb=bb?bb.r.buy:null;
+  const val={name:u=>u.name,buy:u=>{const r=bureauRates(u,cur);return r?r.buy:null},sell:u=>{const r=bureauRates(u,cur);return r?r.sell:null},spread:u=>{const r=bureauRates(u,cur);return r?r.sell-r.buy:null},vs:u=>{const r=bureauRates(u,cur);return r&&bbb!=null?r.buy-bbb:null}};
+  rows.sort((a,b)=>cmp(val[key](a),val[key](b),dir));
   $('#bureauBody').innerHTML=rows.map(u=>{
-    const r=bureauRates(u),vs=r&&bbb!=null?r.buy-bbb:null;
-    const st=isStale(u.id)?' <span class="down">·stale</span>':'';
+    const r=bureauRates(u,cur),vs=r&&bbb!=null?r.buy-bbb:null;
+    const st=isStale(u.id)?'<span class="pill stale">stale</span>':'<span class="pill cur">current</span>';
     return `<tr class="b-row" data-n="${u.name}">
-      <td><span class="b-txt"><b>${u.name}</b><i>licensed FX bureau${st}</i></span></td>
-      <td class="num">${r?fmt(r.buy,2):'—'}</td>
-      <td class="num">${r?fmt(r.sell,2):'—'}</td>
-      <td class="num">${r?fmt(r.sell-r.buy,2):'—'}</td>
-      <td class="num ${vs!=null?cls(vs):''}">${vs!=null?(vs>=0?'+':'−')+fmt(Math.abs(vs),2):'—'}</td></tr>
+      <td><span class="b-txt"><b>${u.name}</b><i>licensed FX bureau</i></span></td>
+      <td class="num">${r?fmt(r.buy,d):'—'}</td>
+      <td class="num">${r?fmt(r.sell,d):'—'}</td>
+      <td class="num">${r?fmt(r.sell-r.buy,d):'—'}</td>
+      <td class="num ${vs!=null?cls(vs):''}">${vs!=null?(vs>=0?'+':'−')+fmt(Math.abs(vs),d):'—'}</td></tr>
     <tr class="b-more" data-n="${u.name}" hidden><td colspan="5"><div class="b-more-in">
       ${CURRENCIES.filter(c=>c.code!=='USDT').map(cc=>{const rr=bureauRates(u,cc.code);
         return rr?`<div><span class="s-label">${cc.code} cash</span><span class="val">${fmt(rr.buy,2)} / ${fmt(rr.sell,2)}</span></div>`:''}).join('')||'<div style="color:var(--muted);font-size:12px">No quotes collected yet.</div>'}
@@ -1193,14 +1211,14 @@ function renderBureaus(){
   document.querySelectorAll('#view-bureaus thead th[data-key]').forEach(th=>{
     const on=th.dataset.key===key;th.classList.toggle('sorted',on);th.classList.toggle('asc',on&&dir===1)});
   let bu=null,bsell=null;
-  for(const u of BUREAUS){const r=bureauRates(u);if(!r)continue;
+  for(const u of BUREAUS){const r=bureauRates(u,cur);if(!r)continue;
     if(!bu||r.buy>bu.r.buy)bu={u,r};if(!bsell||r.sell<bsell.r.sell)bsell={u,r}}
   $('#bureauBand').innerHTML=bu?`
-   <div class="street-item"><span class="s-label">Best USD cash buy</span><span class="s-bank">${bu.u.name}</span><span class="s-rate">${fmt(bu.r.buy,2)} <small>ETB</small></span></div>
-   <div class="street-item"><span class="s-label">Lowest USD cash sell</span><span class="s-bank">${bsell.u.name}</span><span class="s-rate">${fmt(bsell.r.sell,2)} <small>ETB</small></span></div>
-   <div class="street-item"><span class="s-label">vs best bank</span><span class="s-bank">cash purchases</span><span class="s-rate up">${bbb!=null?'+'+fmt(bu.r.buy-bbb,2):'—'} <small>ETB / USD</small></span></div>
-   <div class="s-note">${BUREAUS.length} licensed bureaus publishing rates online — cash rates at the counter, no account needed. Collected automatically.</div>`
-   :`<div class="s-note" style="border-left:0;padding-left:2px">Bureau quotes are not collected yet — this board fills in as bureaus are added to the dataset.</div>`;
+   <div class="street-item"><span class="s-label">Best ${cur} cash buy — you sell</span><span class="s-bank">${bu.u.name}</span><span class="s-rate">${fmt(bu.r.buy,d)} <small>ETB</small></span></div>
+   <div class="street-item"><span class="s-label">Lowest ${cur} cash sell — you buy</span><span class="s-bank">${bsell.u.name}</span><span class="s-rate">${fmt(bsell.r.sell,d)} <small>ETB</small></span></div>
+   <div class="street-item"><span class="s-label">vs best bank</span><span class="s-bank">cash purchases</span><span class="s-rate up">${bbb!=null?'+'+fmt(bu.r.buy-bbb,2):'—'} <small>ETB / ${cur}</small></span></div>
+   <div class="s-note">${BUREAUS.length} licensed bureaus publishing online — cash rates at the counter. Tap a row for all currencies.</div>`
+   :`<div class="s-note" style="border-left:0;padding-left:2px">Bureau quotes are not collected yet.</div>`;
 }
 function updatePrices(){
   const a=S.price.annual;
@@ -1344,6 +1362,7 @@ function wire(){
     const b=$('#swapBtn');b.classList.add('rot');setTimeout(()=>b.classList.remove('rot'),380);
     updateConverter()});
   $('#bureauSearchWrap').addEventListener('input',e=>{if(e.target.id==='bureauQ'){S.bureaus.q=e.target.value;renderBureaus()}});
+  $('#bureauCurChips').addEventListener('click',e=>{const c=e.target.closest('.chip');if(!c)return;S.bureaus.cur=c.dataset.cur;renderBureaus()});
   document.querySelector('#view-bureaus thead').addEventListener('click',e=>{
     const th=e.target.closest('th[data-key]');if(!th)return;const k=th.dataset.key;
     if(S.bureaus.sort.key===k)S.bureaus.sort.dir*=-1;else S.bureaus.sort={key:k,dir:k==='name'?1:-1};
