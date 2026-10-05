@@ -220,7 +220,7 @@ def match_currency(text):
     for code in ("USD", "EUR", "GBP", "AED", "SAR", "CNY", "USDT"):
         if code in toks:
             return code
-    if "UNITED STATES" in t or "US DOLLAR" in t:
+    if "UNITED STATES" in t or "US DOLLAR" in t or "US" in toks:
         return "USD"
     if "EURO" in t and "BOND" not in t:
         return "EUR"
@@ -263,7 +263,8 @@ def number(cell):
 
 def plausible(b, s):
     return bool(b and s and 0.5 < b < 5000 and 0.5 < s < 5000
-                and b <= s < b * 1.25 and (s - b) / b >= MIN_SPREAD)
+                and b <= s < b * 1.25
+                and ((s - b) / b >= MIN_SPREAD or s == b))
 
 
 def cluster_median(cands, tol=0.06, min_n=3):
@@ -410,6 +411,15 @@ def table_rows(table):
     return rows
 
 
+def _qual(w):
+    lw = w.lower()
+    if "cash" in lw or "note" in lw:
+        return "cash"
+    if "weighted" in lw or "average" in lw:
+        return "avg"
+    return None
+
+
 def detect_header(rows):
     for i, row in enumerate(rows):
         nxt = rows[i + 1] if i + 1 < len(rows) else []
@@ -419,12 +429,18 @@ def detect_header(rows):
             combo = (row[j] if j < len(row) else "") + " " + (nxt[j] if j < len(nxt) else "")
             r = role(combo)
             if r == "buy":
-                buys.append((j, is_cash(combo)))
+                buys.append((j, _qual(combo)))
             elif r == "sell":
-                sells.append((j, is_cash(combo)))
+                sells.append((j, _qual(combo)))
         if buys and sells:
-            b = next((j for j, cash in buys if cash), buys[0][0])
-            s = next((j for j, cash in sells if cash), sells[0][0])
+            def pick(lst):
+                for want in ("cash", None):
+                    for j, q in lst:
+                        if q == want:
+                            return j
+                return lst[0][0]
+            b = pick(buys)
+            s = pick(sells)
             if b != s:
                 return i, b, s
     return None
@@ -439,8 +455,10 @@ def parse_page(html):
         if not head:
             continue
         hi, bcol, scol = head
-        header_txt = norm(" ".join(rows[hi]) + " " + (" ".join(rows[hi + 1]) if hi + 1 < len(rows) else ""))
-        if "AVERAGE" in header_txt:
+        bt = rows[hi][bcol] if bcol < len(rows[hi]) else ""
+        st = rows[hi + 1][scol] if hi + 1 < len(rows) and scol < len(rows[hi + 1]) else ""
+        bu_, su_ = norm(bt), norm(st)
+        if ("WEIGHTED" in bu_ or "AVERAGE" in bu_) and ("WEIGHTED" in su_ or "AVERAGE" in su_):
             continue
         out = {}
         for r in rows[hi + 1:]:
@@ -1065,7 +1083,7 @@ def collect_source(cfg):
                         jgot = {}
                 if jgot:
                     return jgot, "api", notes
-                notes.append(f"{short(url)}: json but no rates found")
+                notes.append(f"{short(url)}: json body: {html[:200]}")
                 continue
             got = parse_any(html)
             if got:
