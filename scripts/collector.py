@@ -936,6 +936,10 @@ def collect_source(cfg):
         for url in cfg["urls"]:
             dhtml, derr, dinfo, _caps = attempt_dynamic(url)
             if dhtml:
+                if cfg.get("headline"):
+                    h = parse_nbe_headline(dhtml)
+                    if h:
+                        return h, "headline", notes
                 got = parse_any(dhtml)
                 if got:
                     return got, "browser", notes
@@ -971,6 +975,10 @@ def collect_source(cfg):
             continue
         dhtml, derr, dinfo, _caps = attempt_dynamic(url)
         if dhtml:
+            if cfg.get("headline"):
+                h = parse_nbe_headline(dhtml)
+                if h:
+                    return h, "headline", notes
             if dhtml.lstrip()[:1] in "{[":
                 try:
                     jgot = parse_json_rates(json.loads(dhtml))
@@ -1096,7 +1104,7 @@ def main():
         if not med:
             continue
         for src, buy, row in entries:
-            if abs(buy / med - 1) > FLEET_TOL:
+            if abs(buy / med - 1) > (FLEET_TOL if cur == "USD" else 0.04):
                 if row in rates:
                     rates.remove(row)
                 rejected.append(f"{src} {cur} {buy:.2f} vs {med:.2f}")
