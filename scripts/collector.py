@@ -12,7 +12,7 @@ import re
 import sys
 import threading
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import requests
@@ -44,7 +44,7 @@ EBR_API = "https://api.ebr.exchange/api/dashboard/market-stats"
 
 SOURCES = {
     "NBE": {"name": "National Bank of Ethiopia", "type": "official",
-            "cap": 90, "bust": True, "official_json": True, "urls": [
+            "method": "nbe", "cap": 90, "bust": True, "official_json": True, "urls": [
         "https://nbe.gov.et/exchange/indicatives-rates/",
         "https://api.nbe.gov.et/api/filter-exchange-rates",
     ]},
@@ -1042,6 +1042,37 @@ def write_summary(text):
         with open(p, "a", encoding="utf-8") as f:
             f.write(text + "\n")
 
+def fetch_nbe_api(notes):
+    """NBE official API: walk back up to 7 days for the most recent published
+    date (weekends/holidays return empty). Stores weighted_average = the
+    published 'Indicative Daily Exchange Rate' (buy = sell)."""
+    base = "https://api.nbe.gov.et/api/filter-exchange-rates"
+    now = datetime.now(timezone.utc)
+    for back in range(7):
+        ds = (now - timedelta(days=back)).strftime("%Y-%m-%d")
+        doc, err = fetch_json(base + "?date=" + ds)
+        if doc is None:
+            notes.append(f"nbe api {ds}: {err}")
+            continue
+        data = doc.get("data") or []
+        if not data:
+            notes.append(f"nbe api {ds}: empty")
+            continue
+        out = {}
+        for item in data:
+            try:
+                code = str((item.get("currency") or {}).get("code", "")).upper()
+                wa = _num_ok(item.get("weighted_average"))
+                if code and wa:
+                    out[code] = (wa, wa)
+            except Exception:
+                continue
+        if "USD" in out:
+            notes.append(f"nbe api: {ds} · {len(out)} currencies")
+            return out
+        notes.append(f"nbe api {ds}: no USD in {len(data)} rows")
+    return None
+
 
 def collect_source(cfg):
     if cfg.get("method") == "csv":
@@ -1060,6 +1091,11 @@ def collect_source(cfg):
                 notes.append(f"csv: {type(e).__name__}")
         return {}, "", notes
     got, via, notes = {}, "", []
+    if cfg.get("method") == "nbe":
+        result = fetch_nbe_api(notes)
+        if result:
+            return result, "nbe-api", notes
+        notes.append("nbe api failed — trying pages")
     if cfg.get("browser_first"):
         for url in cfg["urls"]:
             dhtml, derr, dinfo, _caps = attempt_dynamic(url)
