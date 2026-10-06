@@ -105,7 +105,7 @@ def main():
             f"Your alert triggered.\n\n{cur}/ETB is now {mid:.2f} ETB "
             f"(you asked for {'>=' if direction=='above' else '<='} {target:g}).\n\n"
             f"Source mid across collected banks. Indicative only — confirm with your bank.\n"
-            f"https://birrwatch.pages.dev/")
+            f"https://birrwatch.et/")
         if ok:
             a["status"] = "done"
             a["triggered_at"] = doc.get("meta", {}).get("generated_at", "")
