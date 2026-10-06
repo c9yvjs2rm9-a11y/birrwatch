@@ -95,7 +95,7 @@ SOURCES = {
         "https://www.hibretbank.com.et/about/exchange-rate/",
         "https://www.hibretbank.com.et/",
     ]},
-    "BRH": {"name": "Berhan Bank", "type": "bank", "urls": [
+    "BRH": {"name": "Berhan Bank", "type": "bank", "cap": 60, "urls": [
         "https://berhanbanksc.com/exchange-rates/",
         "https://berhanbanksc.com/",
     ]},
