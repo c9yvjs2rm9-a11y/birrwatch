@@ -4,12 +4,12 @@ Free public JSON API for ETB rates from Ethiopian banks, licensed FX bureaus,and
 
 Endpoints
 
-Current rates — GET https://birrwatch.pages.dev/api/rates
+Current rates — GET https://birrwatch.et/api/rates
 
 meta.generated_at — dataset build time (UTC)
 sources — each source's name, type (bank | bureau | official | market), fetched_at
 rates — one row per source × currency: buy, sell
-Daily history — GET https://birrwatch.pages.dev/api/trends
+Daily history — GET https://birrwatch.et/api/trends
 
 dates array + per-currency series.mid / series.official (aligned)
 Usage rules
