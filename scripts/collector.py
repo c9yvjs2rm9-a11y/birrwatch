@@ -44,7 +44,7 @@ EBR_API = "https://api.ebr.exchange/api/dashboard/market-stats"
 
 SOURCES = {
     "NBE": {"name": "National Bank of Ethiopia", "type": "official",
-            "browser_first": True, "bust": True, "official_json": True, "urls": [
+            "cap": 90, "bust": True, "official_json": True, "urls": [
         "https://nbe.gov.et/exchange/indicatives-rates/",
         "https://api.nbe.gov.et/api/filter-exchange-rates",
     ]},
@@ -783,6 +783,14 @@ def attempt_dynamic(url, capture=False):
                     info.append("clicked search")
             except Exception:
                 pass
+            try:                                   # Berhan-style "View" controls
+                vloc = page.get_by_text(re.compile(r"^\s*View\s*$", re.I)).first
+                if vloc.count() > 0:
+                    vloc.click(timeout=3000)
+                    page.wait_for_timeout(4000)
+                    info.append("clicked View")
+            except Exception:
+                pass
             html = page.content() or ""
             try:
                 ntab = len(BeautifulSoup(html, "html.parser").find_all("table"))
@@ -1181,7 +1189,7 @@ def main():
             skipped.append(sid)
             continue
         print(f"[collect] {sid} …", flush=True)
-        result, err = run_with_timeout(collect_source, (cfg,), timeout=PER_SOURCE, label=sid)
+        result, err = run_with_timeout(collect_source, (cfg,), timeout=cfg.get("cap") or PER_SOURCE, label=sid)
         if result is None:
             if err and err.startswith("⏳"):
                 summary.append(f"| {sid} | ⏳ {err} — kept previous values |")
