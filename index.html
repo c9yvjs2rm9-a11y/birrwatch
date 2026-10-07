@@ -10,13 +10,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Archivo:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&family=Noto+Sans+Ethiopic:wght@600&display=swap" rel="stylesheet">
 <style>
 #overlay[hidden]{display:none!important}
-.pill{display:inline-block;font:700 8.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:2px 8px;vertical-align:middle}
-.pill.cur{color:var(--green);border:1px solid rgba(11,123,61,.35);background:rgba(11,123,61,.07)}
-.pill.stale{color:var(--red);border:1px solid rgba(185,58,27,.35);background:rgba(185,58,27,.07)}
-#p2pCard .bd-figures{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px}
-.b-date{display:block;font:400 10px var(--mono);color:var(--muted);text-decoration:none;margin-top:1px}
-.bi-txt .b-date{font-size:9px}
-@media(min-width:700px){#p2pCard .bd-figures{grid-template-columns:repeat(4,1fr)}}
 :root{
   --paper:#F6F4EE; --paper2:#EFECE1; --panel:#FBFAF6;
   --ink:#191713; --ink2:#3F3B2F; --muted:#75705F;
@@ -79,6 +72,11 @@ h2{font-size:27px;margin-top:7px}
 .chip{border:1px solid var(--line2);background:var(--panel);border-radius:999px;padding:8px 16px;font:600 12px var(--mono);letter-spacing:.03em;color:var(--ink2);white-space:nowrap}
 .chip:hover{border-color:var(--ink)}
 .chip.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.pill{display:inline-block;font:700 8.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:2px 8px;vertical-align:middle;margin-left:6px}
+.pill.cur{color:var(--green);border:1px solid rgba(11,123,61,.35);background:rgba(11,123,61,.07)}
+.pill.stale{color:var(--red);border:1px solid rgba(185,58,27,.35);background:rgba(185,58,27,.07)}
+.b-date{display:block;font:400 10px var(--mono);color:var(--muted);margin-top:1px}
+.bi-txt .b-date{font-size:9px}
 .seg{display:inline-flex;border:1px solid var(--line2);border-radius:10px;background:var(--panel);padding:3px;gap:2px}
 .seg button{border:0;background:transparent;font:600 12px var(--ui);color:var(--muted);padding:8px 13px;border-radius:7px;white-space:nowrap}
 .seg button.on{background:var(--ink);color:var(--paper)}
@@ -106,7 +104,6 @@ h2{font-size:27px;margin-top:7px}
 .delta.down{color:var(--red);border-color:rgba(185,58,27,.3);background:rgba(185,58,27,.06)}
 .delta.down svg{transform:rotate(180deg)}
 .hero-sub{font-size:13px;color:var(--muted)}
-.hero-sub b{color:var(--ink2);font-family:var(--mono);font-weight:600;font-size:12.5px}
 .eth-date{margin-top:14px;font:600 13px "Noto Sans Ethiopic",var(--ui);color:var(--ink2)}
 .eth-date span{font:400 11px var(--mono);color:var(--muted);margin-left:8px}
 .panel{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:18px 18px 12px}
@@ -233,19 +230,14 @@ tbody tr[data-code]{cursor:pointer}
 .b-more-in .s-label{margin-bottom:4px}
 .b-more-in .val{font:600 13px var(--mono)}
 .bill-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:8px 0 26px}
-#billNote{font-size:12px;color:var(--muted)}
-.plan{display:grid;grid-template-columns:1.1fr 1.6fr .75fr auto;gap:30px;align-items:center;border:1px solid var(--line);border-radius:15px;background:var(--panel);padding:28px 26px;margin-bottom:14px}
+.plan{display:grid;grid-template-columns:1fr;gap:0;border:1px solid var(--line);border-radius:15px;background:var(--panel);padding:28px 26px;margin-bottom:14px}
 .plan.featured{border:1.5px solid var(--ink)}
 .p-tag{display:inline-block;font:700 9.5px var(--ui);letter-spacing:.12em;text-transform:uppercase;background:var(--gold);color:#241C04;padding:4px 10px;border-radius:999px;margin-bottom:9px}
 .p-name h3{font-size:21px}
-.p-name p{font-size:12.5px;color:var(--muted);margin-top:5px;max-width:250px}
+.p-name p{font-size:12.5px;color:var(--muted);margin-top:5px;max-width:none}
 .p-feats{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:7px 18px}
 .p-feats li{display:flex;gap:8px;font-size:12.5px;color:var(--ink2);align-items:flex-start}
 .p-feats svg{flex-shrink:0;margin-top:3px;color:var(--green)}
-.p-price{display:flex;flex-direction:column}
-.price-val{font:600 34px var(--mono);letter-spacing:-.03em}
-.p-cur{font:500 12px var(--mono);color:var(--muted)}
-.p-usd{font:400 11px var(--mono);color:var(--muted);margin-top:3px}
 .faq{border-top:1px solid var(--line);margin-top:18px}
 .faq-item{border-bottom:1px solid var(--line)}
 .faq-q{width:100%;display:flex;justify-content:space-between;align-items:center;gap:16px;background:none;border:0;text-align:left;padding:19px 2px;font:600 15px var(--ui);color:var(--ink)}
@@ -255,8 +247,7 @@ tbody tr[data-code]{cursor:pointer}
 .faq-item.open .faq-a{grid-template-rows:1fr}
 .faq-a > div{overflow:hidden}
 .faq-a p{font-size:13.5px;color:var(--muted);padding:0 2px 20px;max-width:680px}
-@media(max-width:960px){.plan{grid-template-columns:1fr 1fr}.p-feats{grid-column:1/-1}}
-@media(max-width:600px){.plan{grid-template-columns:1fr}.p-feats{grid-template-columns:1fr}}
+@media(max-width:600px){.p-feats{grid-template-columns:1fr}}
 footer{background:var(--ink);color:var(--paper);padding:64px 0 36px;margin-top:20px}
 .f-state{font:600 clamp(26px,4vw,38px)/1.2 var(--disp);letter-spacing:-.01em;max-width:560px}
 .f-grid{display:flex;gap:60px;flex-wrap:wrap;margin:36px 0 44px}
@@ -339,14 +330,14 @@ footer{background:var(--ink);color:var(--paper);padding:64px 0 36px;margin-top:2
         <button class="icon-btn" id="copyRate" title="Copy rate"></button>
       </div>
       <div class="hero-deltas" id="heroDeltas"></div>
-            <div class="panel" style="margin-top:4px">
-              <div class="bd-figures" style="border:0;padding:10px 0 0;margin:0">
-                <div><span class="s-label">NBE official</span><span class="big-num" style="font-size:20px" id="nbeRate">—</span><span class="mini">ETB · indicative</span></div>
-                <div><span class="s-label">Customs (ERCA)</span><span class="big-num" style="font-size:20px" id="customsRate">—</span><span class="mini">ETB · valuation</span></div>
-                <div><span class="s-label">Bank average</span><span class="big-num" style="font-size:20px" id="avgRate">—</span><span class="mini">ETB · mid of banks</span></div>
-                <div><span class="s-label">Data as of</span><span class="big-num" style="font-size:20px" id="dataDate">—</span><span class="mini" id="sourcesLine">—</span></div>
-              </div>
-            </div>
+      <div class="panel" style="margin-top:4px">
+        <div class="bd-figures" style="border:0;padding:10px 0 0;margin:0">
+          <div><span class="s-label">NBE official</span><span class="big-num" style="font-size:20px" id="nbeRate">—</span><span class="mini">ETB · indicative</span></div>
+          <div><span class="s-label">Customs (ERCA)</span><span class="big-num" style="font-size:20px" id="customsRate">—</span><span class="mini">ETB · valuation</span></div>
+          <div><span class="s-label">Bank average</span><span class="big-num" style="font-size:20px" id="avgRate">—</span><span class="mini">ETB · mid of banks</span></div>
+          <div><span class="s-label">Data as of</span><span class="big-num" style="font-size:20px" id="dataDate">—</span><span class="mini" id="sourcesLine">—</span></div>
+        </div>
+      </div>
       <div class="eth-date" id="ethDate"></div>
     </div>
     <div class="panel">
@@ -500,58 +491,39 @@ footer{background:var(--ink);color:var(--paper);padding:64px 0 36px;margin-top:2
 
 <section class="view" id="view-pricing">
   <div class="block-head" style="margin-top:8px">
-    <div><span class="kicker">07 — Pricing</span><h2>Priced like our rates: in the open.</h2></div>
+    <div><span class="kicker">07 — Pricing</span><h2>Free today. Priced in the open, soon.</h2></div>
   </div>
-  <p class="hint" style="margin:-8px 0 4px">Start free, upgrade when the birr starts mattering to your bottom line. Prices in Ethiopian birr, VAT included — dollar approximations use today's live rate.</p>
-  <div class="bill-row">
-    <div class="seg" id="billSeg">
-      <button data-b="m" class="on">Monthly</button>
-      <button data-b="a">Annual · save 20%</button>
+  <p class="hint" style="margin:-8px 0 4px">Everything on Birrwatch is currently free — all bank rates, the parallel-market reference, the public API, and email price alerts. Paid plans are coming for teams that need more; the free tier stays free.</p>
+
+  <div class="plan featured" style="display:block">
+    <div class="p-name" style="max-width:none">
+      <span class="p-tag">Now — free</span>
+      <h3>Everything, free</h3>
+      <p>Live rates from Ethiopia's banks and licensed bureaus, the parallel-market reference, daily history, the public JSON API, and email price alerts. No account needed.</p>
     </div>
-    <span id="billNote">Billed monthly. Switch to annual for two months free.</span>
+    <ul class="p-feats" style="margin-top:16px">
+      <li>All bank & bureau rates, 6 currencies</li><li>Parallel market (USDT/ETB) reference</li>
+      <li>NBE official & customs reference rates</li><li>Public JSON API — birrwatch.et/api/rates</li>
+      <li>Email price alerts</li><li>Web & mobile</li>
+    </ul>
   </div>
 
-  <div class="plan">
-    <div class="p-name"><h3>Observer</h3><p>For keeping an honest eye on the birr.</p></div>
-    <ul class="p-feats">
-      <li>End-of-day rates, all covered banks</li><li>Licensed FX bureaus</li>
-      <li>7-day rate history</li><li>1 price alert</li>
-      <li>Full converter</li><li>Web & mobile</li>
-    </ul>
-    <div class="p-price"><span class="price-val" data-m="0" data-a="0">0</span><span class="p-cur">ETB / forever</span><span class="p-usd" data-m="0" data-a="0">free</span></div>
-    <button class="btn btn-ghost btn-plan" data-plan="Observer">Start free</button>
-  </div>
-
-  <div class="plan featured">
-    <div class="p-name"><span class="p-tag">Most popular</span><h3>Professional</h3><p>For importers, freelancers and traders who move money weekly.</p></div>
-    <ul class="p-feats">
-      <li>Live rates as banks publish</li><li>365-day history + CSV export</li>
-      <li>20 price alerts</li><li>Custom-spread converter</li>
-      <li>Daily email digest</li><li>Everything in Observer</li>
-    </ul>
-    <div class="p-price"><span class="price-val" data-m="249" data-a="199">249</span><span class="p-cur">ETB /mo</span><span class="p-usd" data-m="249" data-a="199">—</span></div>
-    <button class="btn btn-primary btn-plan" data-plan="Professional">Start Professional</button>
-  </div>
-
-  <div class="plan">
-    <div class="p-name"><h3>Business & API</h3><p>For platforms, NGOs and finance teams wiring ETB into their systems.</p></div>
-    <ul class="p-feats">
-      <li>REST + WebSocket API</li><li>50k requests / month</li>
-      <li>5 team seats</li><li>Slack & Telegram webhooks</li>
-      <li>99.9% uptime SLA</li><li>Priority support</li>
-    </ul>
-    <div class="p-price"><span class="price-val" data-m="1999" data-a="1599">1,999</span><span class="p-cur">ETB /mo</span><span class="p-usd" data-m="1999" data-a="1599">—</span></div>
-    <button class="btn btn-primary btn-plan" data-plan="Business">Talk to us</button>
+  <div class="plan" style="display:block">
+    <div class="p-name" style="max-width:none">
+      <span class="p-tag">Coming soon</span>
+      <h3>For teams & developers</h3>
+      <p>Higher API limits, longer history exports, team seats, and priority support — for importers, NGOs and fintechs wiring ETB into their systems. In design now; pricing will be published here first, in birr.</p>
+      <p style="margin-top:10px"><a class="btn btn-primary" href="mailto:hello@birrwatch.et?subject=Notify%20me%20about%20Birrwatch%20paid%20plans">Notify me</a></p>
+    </div>
   </div>
 
   <h2 style="margin-top:56px">Questions, answered</h2>
   <div class="faq" id="faq">
-    <div class="faq-item"><button class="faq-q">Where does the rate data come from?<span class="f-chev"></span></button><div class="faq-a"><div><p>We automatically collect the published daily rate sheets of Ethiopia's commercial banks and licensed FX bureaus, and cross-check against the National Bank of Ethiopia's official reference rate.</p></div></div></div>
-    <div class="faq-item"><button class="faq-q">What is the USDT/ETB parallel reference?<span class="f-chev"></span></button><div class="faq-a"><div><p>An indicative midpoint aggregated from public parallel-market sources, where USDT (a dollar proxy) trades against birr. It reflects the parallel market, not bank or NBE pricing — it is shown for reference only, is not an offer to trade, and no guarantee exists that any counterparty is available at that price.</p></div></div></div>
-    <div class="faq-item"><button class="faq-q">Buy rate or sell rate — which one applies to me?<span class="f-chev"></span></button><div class="faq-a"><div><p>If you're handing dollars to a bank and receiving birr, look at the bank's <b>buy</b> rate — higher is better for you. If you're paying birr to receive dollars, look at the <b>sell</b> rate — lower is better. The comparison table's toggle flips the highlight to the column you care about.</p></div></div></div>
-    <div class="faq-item"><button class="faq-q">Why not just check my bank's app?<span class="f-chev"></span></button><div class="faq-a"><div><p>Because your bank quotes one rate and every other bank quotes a different one. Spreads between the best and worst bank can exceed 1 ETB per dollar — on a $10,000 transfer that's real money lost to the wrong counter.</p></div></div></div>
-    <div class="faq-item"><button class="faq-q">Can I pay in birr?<span class="f-chev"></span></button><div class="faq-a"><div><p>Yes — Telebirr, Chapa, and cards are all accepted. Prices are set in birr on purpose; we don't think an Ethiopian rate service should bill you in someone else's currency.</p></div></div></div>
-    <div class="faq-item"><button class="faq-q">Can I cancel anytime?<span class="f-chev"></span></button><div class="faq-a"><div><p>Anytime, from your account page, in two clicks. Annual plans are refunded pro-rata for unused months. No retention phone calls — we'd rather earn the renewal.</p></div></div></div>
+    <div class="faq-item"><button class="faq-q">Is everything really free?<span class="f-chev"></span></button><div class="faq-a"><div><p>Yes. The rates, the API, and alerts cost nothing and need no account. When paid plans arrive for heavier API use, the free tier stays free — we'd rather earn renewals than lock basics.</p></div></div></div>
+    <div class="faq-item"><button class="faq-q">Do you have an API?<span class="f-chev"></span></button><div class="faq-a"><div><p>Yes — a free public JSON API. Fetch <b>/api/rates</b> for every collected bank, bureau and parallel-market quote, and <b>/api/trends</b> for daily history. Cache for at least 15 minutes, attribute "Rates via Birrwatch", and never present the data as NBE-official.</p></div></div></div>
+    <div class="faq-item"><button class="faq-q">How do alerts work?<span class="f-chev"></span></button><div class="faq-a"><div><p>Tap the bell on any pair, choose a direction and target, and confirm by email. You'll hear from us only when your alert triggers — no marketing, ever. Alerts are checked each time we collect new rates.</p></div></div></div>
+    <div class="faq-item"><button class="faq-q">Where does the rate data come from?<span class="f-chev"></span></button><div class="faq-a"><div><p>We automatically collect the published daily rate sheets of Ethiopia's commercial banks and licensed FX bureaus, cross-checked against NBE's official reference and a parallel-market indicator.</p></div></div></div>
+    <div class="faq-item"><button class="faq-q">Can I pay in birr?<span class="f-chev"></span></button><div class="faq-a"><div><p>When paid plans arrive — yes, that's the point. Telebirr, Chapa, and cards. Birrwatch is Ethiopian; it bills in birr.</p></div></div></div>
   </div>
 </section>
 
@@ -580,31 +552,39 @@ footer{background:var(--ink);color:var(--paper);padding:64px 0 36px;margin-top:2
 <div id="toasts"></div>
 
 <div id="overlay" hidden>
-  <div class="modal" role="dialog" aria-modal="true" aria-label="Create account">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Dialog">
     <button class="icon-btn modal-x" id="mClose" title="Close"></button>
-    <span class="kicker">Create account</span>
-    <h3>Start watching the birr</h3>
-    <p class="modal-sub">Plan: <b id="mPlan" style="color:var(--ink)">Professional</b> · <span id="mPrice">249 ETB /mo</span></p>
-    <label for="mEmail">Email</label>
-    <input class="input" id="mEmail" type="email" placeholder="you@company.et" autocomplete="email">
-    <p class="f-err" id="mErr" hidden>Please enter a valid email address.</p>
-    <button class="btn btn-primary" id="mGo">Continue</button>
-    <p class="f-note-c">    <div id="alertFields" hidden>
-      <p class="modal-sub" style="margin-bottom:12px" id="alertSub">Pair: <b style="color:var(--ink)">USD / ETB</b> · current <b style="color:var(--ink)" id="alertNow">—</b></p>
-      <label for="alDir">Alert me when the rate goes</label>
+
+    <div id="signupFields">
+      <span class="kicker">Create account</span>
+      <h3>Start watching the birr</h3>
+      <p class="modal-sub">Plan: <b id="mPlan" style="color:var(--ink)">Professional</b> · <span id="mPrice">—</span></p>
+      <label for="mEmail">Email</label>
+      <input class="input" id="mEmail" type="email" placeholder="you@company.et" autocomplete="email">
+      <p class="f-err" id="mErr" hidden>Please enter a valid email address.</p>
+      <button class="btn btn-primary" id="mGo">Continue</button>
+      <p class="f-note-c">Pay with Telebirr, Chapa, or card · Cancel anytime</p>
+    </div>
+
+    <div id="alertFields" hidden>
+      <span class="kicker">Price alert</span>
+      <h3>Set a price alert</h3>
+      <p class="modal-sub">Pair: <b id="alPair" style="color:var(--ink)">USD / ETB</b> · current <b id="alertNow" style="color:var(--ink)">—</b></p>
+      <input type="hidden" id="alCode">
+      <label>Alert me when the rate goes</label>
       <div class="seg" style="margin-bottom:12px">
-        <button type="button" id="alDir" data-d="above" class="on">Above</button>
+        <button type="button" data-d="above" class="on">Above</button>
         <button type="button" data-d="below">Below</button>
       </div>
-      <input type="hidden" id="alCode">
       <label for="alTarget">Target rate (ETB)</label>
       <input class="input" id="alTarget" inputmode="decimal" placeholder="e.g. 165.00" style="margin-bottom:12px">
       <label for="alMail">Your email</label>
       <input class="input" id="alMail" type="email" placeholder="you@example.com" style="margin-bottom:4px">
       <p class="f-err" id="alErr" hidden>Please check the target rate and email.</p>
-      <button class="btn btn-primary" id="alGo" style="margin-top:16px;width:100%">Create alert</button>
-      <p class="f-note-c">We'll send one confirmation email, then only when your alert triggers. No marketing, ever.</p>
-    </div></p>
+      <button class="btn btn-primary" id="alGo" style="margin-top:16px">Create alert</button>
+      <p class="f-note-c">One confirmation email, then only when your alert triggers. No marketing, ever.</p>
+    </div>
+
   </div>
 </div>
 
@@ -621,20 +601,6 @@ function ago(ts){if(!ts)return'—';const s=Math.max(0,(Date.now()-ts)/1e3);if(s
 function dlabel(d,full){return full?d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}):d.getDate()+' '+d.toLocaleString('en',{month:'short'})}
 function fmtDay(ts){if(!ts)return'—';return new Date(ts).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}
 function fmtDayTime(ts){if(!ts)return'—';const d=new Date(ts);return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+' at '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}
-function pillFor(id,code){
-  if(DATA.mode!=='live')return'<span class="pill cur">current</span>';
-  const q=DATA.quotes[srcKey(id,code)];
-  if((q&&q.flag==='stale')||isStale(id))return'<span class="pill stale">stale</span>';
-  return'<span class="pill cur">current</span>';
-}
-function dateFor(id,code){
-  const q=DATA.quotes[srcKey(id,code)];
-  if(DATA.mode==='live'&&q&&q.flag==='stale'){
-    const d=DATA.staleSince[id+'|'+code];
-    return d?'stale since '+fmtDay(Date.parse(d)):'stale sheet';
-  }
-  return fmtDay(sourceUpdated(id));
-}
 function copyText(t){try{navigator.clipboard.writeText(t)}catch(e){const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove()}}
 const cmp=(a,b,dir)=>{if(a==null&&b==null)return 0;if(a==null)return 1;if(b==null)return -1;return(a<b?-1:a>b?1:0)*dir};
 
@@ -718,7 +684,7 @@ const CONFIG={
   TRENDS_URL:QS.get('trends')||'data/trends.json',
   POLL_MS:60000, STALE_MS:26*3600e3,
 };
-const DATA={mode:'demo',rates:[],sources:{},quotes:{},srcTs:{},genTs:Date.now(),genAt:'',histReal:false,fails:0,chipEl:null};
+const DATA={mode:'demo',rates:[],sources:{},quotes:{},srcTs:{},genTs:Date.now(),genAt:'',histReal:false,staleSince:{},fails:0,chipEl:null};
 let H={}, DATES=[];
 const live={mid:{},off:{},customs:{}};
 
@@ -744,9 +710,9 @@ function demoQuote(id,code){
 function bankRates(b,code){return DATA.mode==='live'?storeQuote(b.c,code):demoQuote(b.c,code)}
 function bureauRates(u,code='USD'){return DATA.mode==='live'?storeQuote(u.id,code):demoQuote(u.id,code)}
 
-function bestBuy(code){let o=null;for(const b of BANKS){const r=bankRates(b,code);if(r&&!r.flag&&(!o||r.buy>o.r.buy))o={b,r}}return o}
-function bestSell(code){let o=null;for(const b of BANKS){const r=bankRates(b,code);if(r&&!r.flag&&(!o||r.sell<o.r.sell))o={b,r}}return o}
-function tightest(code){let o=null;for(const b of BANKS){const r=bankRates(b,code);if(r&&!r.flag&&r.spread!=null&&(!o||r.spread<o.r.spread))o={b,r}}return o}
+function bestBuy(code){let o=null;for(const b of BANKS){const r=bankRates(b,code);if(r&&!(DATA.mode==='live'&&r.flag)&&(!o||r.buy>o.r.buy))o={b,r}}return o}
+function bestSell(code){let o=null;for(const b of BANKS){const r=bankRates(b,code);if(r&&!(DATA.mode==='live'&&r.flag)&&(!o||r.sell<o.r.sell))o={b,r}}return o}
+function tightest(code){let o=null;for(const b of BANKS){const r=bankRates(b,code);if(r&&!(DATA.mode==='live'&&r.flag)&&r.spread!=null&&(!o||r.spread<o.r.spread))o={b,r}}return o}
 
 function curChg(code,back){const s=H[code];if(!s||s.length<2)return 0;const L=s.length,p=s[Math.max(0,L-1-back)],m=live.mid[code]||s[L-1];return p?(m-p)/p:0}
 function bankChg(b,code){return curChg(code,1)}
@@ -774,6 +740,7 @@ function recomputeMids(){
   }
 }
 function applyRates(doc){
+  DATA.rates=doc.rates||[];DATA.sources=doc.sources||{};DATA.quotes={};DATA.srcTs={};
   DATA.staleSince=doc.stale_since||{};
   for(const id in DATA.sources)DATA.srcTs[id]=Date.parse(DATA.sources[id].fetched_at)||DATA.genTs;
   for(const r of DATA.rates)DATA.quotes[srcKey(r.source,r.currency)]={buy:+r.buy,sell:+r.sell,spread:+r.sell-+r.buy,flag:r.flag||null};
@@ -921,7 +888,6 @@ const S={
   pairs:{},
   conv:{from:'USD',to:'ETB',mode:'best'},
   bureaus:{q:'',cur:'USD',sort:{key:'buy',dir:-1}},
-  price:{annual:false},
 };
 
 /* ================= renderers ================= */
@@ -934,6 +900,20 @@ function renderTicker(){
   $('#th1').innerHTML=meta+items;$('#th2').innerHTML=meta+items;
 }
 function deltaHtml(v,label){return `<span class="delta ${cls(v)}">${I.tri}${fmtPct(v)} ${label}</span>`}
+function pillFor(id,code){
+  if(DATA.mode!=='live')return'<span class="pill cur">current</span>';
+  const q=DATA.quotes[srcKey(id,code)];
+  if((q&&q.flag==='stale')||isStale(id))return'<span class="pill stale">stale</span>';
+  return'<span class="pill cur">current</span>';
+}
+function dateFor(id,code){
+  const q=DATA.quotes[srcKey(id,code)];
+  if(DATA.mode==='live'&&q&&q.flag==='stale'){
+    const d=DATA.staleSince[id+'|'+code];
+    return d?'stale since '+fmtDay(Date.parse(d)):'stale sheet';
+  }
+  return fmtDay(sourceUpdated(id));
+}
 function renderHero(){
   const m=live.mid.USD;
   $('#heroRate').textContent=fmt(m,2);
@@ -948,12 +928,14 @@ function renderHero(){
 }
 function renderBestBand(){
   const bb=bestBuy('USD'),bs=bestSell('USD'),t=tightest('USD');
-  const nb=BANKS.filter(b=>bankRates(b,'USD')).length;
+  const nb=BANKS.filter(b=>{const r=bankRates(b,'USD');return r&&!(DATA.mode==='live'&&r.flag)}).length;
   $('#bestBand').innerHTML=`
-   <div class="street-item"><span class="s-label">Best USD buy — you sell</span><span class="s-bank">${bb?bb.b.name:'—'}</span><span class="s-rate">${bb?fmt(bb.r.buy,2):'—'} <small>ETB</small></span></div>
-   <div class="street-item"><span class="s-label">Lowest USD sell — you buy</span><span class="s-bank">${bs?bs.b.name:'—'}</span><span class="s-rate">${bs?fmt(bs.r.sell,2):'—'} <small>ETB</small></span></div>
-   <div class="street-item"><span class="s-label">Tightest spread</span><span class="s-bank">${t?t.b.name:'—'}</span><span class="s-rate">${t?fmt(t.r.spread,2):'—'} <small>ETB</small></span></div>
-   <div class="s-note">Cash & electronic rates from the published sheets of ${nb} bank${nb===1?'':'s'} — collected automatically as they publish.</div>`;
+   <div class="bd-figures" style="border:0;padding:8px 0 0;margin:0">
+     <div><span class="s-label">Best USD buy — you sell</span><span class="s-bank">${bb?bb.b.name:'—'}</span><span class="s-rate">${bb?fmt(bb.r.buy,2):'—'} <small>ETB</small></span></div>
+     <div><span class="s-label">Lowest USD sell — you buy</span><span class="s-bank">${bs?bs.b.name:'—'}</span><span class="s-rate">${bs?fmt(bs.r.sell,2):'—'} <small>ETB</small></span></div>
+     <div><span class="s-label">Tightest spread</span><span class="s-bank">${t?t.b.name:'—'}</span><span class="s-rate">${t?fmt(t.r.spread,2):'—'} <small>ETB</small></span></div>
+     <div><span class="s-label">Coverage</span><span class="s-bank">${nb} of ${BANKS.length} banks</span><span class="s-rate" style="font-size:18px;padding-top:4px">${DATA.mode==='live'?fmt(live.mid.USD,2):'—'} <small>mid</small></span></div>
+   </div>`;
 }
 function renderP2P(){
   const el=$('#p2pCard');if(!el)return;
@@ -1005,7 +987,7 @@ function renderTodayTable(){
       <td class="num">${fmt(qp.sell-qp.buy,d)}</td>
       <td class="num${ch!=null?' '+cls(ch):''}">${ch!=null?fmtPct(ch):'—'}</td>
       <td class="c-spark"><canvas class="sparkcv" data-b="__P2P__"></canvas></td>
-      <td class="c-upd">${ago(DATA.mode==='live'?sourceUpdated('P2P'):Date.now())}</td></tr>`
+      <td class="c-upd">${fmtDay(DATA.mode==='live'?sourceUpdated('P2P'):Date.now())}</td></tr>`
       :`<tr><td colspan="8" style="color:var(--muted);padding:18px">USDT/ETB not collected yet.</td></tr>`;
     $$('#rateBody .sparkcv').forEach(cv=>drawSpark(cv,(H.USDT||[]).slice(-60)));
     $$('#rateTable th[data-key]').forEach(th=>th.classList.remove('sorted','asc'));
@@ -1020,13 +1002,13 @@ function renderTodayTable(){
     const hlB=S.today.dir==='buy'&&r?' hl':'',hlS=S.today.dir==='sell'&&r?' hl':'';
     return `<tr data-b="${b.c}">
       <td class="c-idx">${String(i+1).padStart(2,'0')}</td>
-      <td><span class="c-bank"><span class="mono-badge">${b.c.slice(0,2)}</span><span class="b-txt"><b>${b.name}${r?' '+pillFor(b.c,cur):''}</b><u class="b-date">${r?dateFor(b.c,cur):'never collected'}</u>
+      <td><span class="c-bank"><span class="mono-badge">${b.c.slice(0,2)}</span><span class="b-txt"><b>${b.name}${r?' '+pillFor(b.c,cur):''}</b><u class="b-date">${r?dateFor(b.c,cur):'never collected'}</u></span></span></td>
       <td class="num c-buy${hlB}">${r?fmt(r.buy,d):'—'}</td>
       <td class="num c-sell${hlS}">${r?fmt(r.sell,d):'—'}</td>
       <td class="num c-spread">${r?fmt(r.spread,d):'—'}</td>
       <td class="num c-chg${histReal()?' '+cls(ch):''}">${histReal()?fmtPct(ch):'—'}</td>
       <td class="c-spark"><canvas class="sparkcv" data-b="${b.c}"></canvas></td>
-      <td class="c-upd" data-b="${b.c}">${r?dateFor(b.c,cur):'—'}</td>
+      <td class="c-upd" data-b="${b.c}">${r?dateFor(b.c,cur):'—'}</td></tr>`}).join('');
   $$('#rateBody .sparkcv').forEach(cv=>{
     const id=cv.dataset.b;
     drawSpark(cv,id==='__P2P__'?(H.USDT||[]).slice(-60):bankSeries(BANK[id],cur,60));
@@ -1072,7 +1054,7 @@ function renderTrends(){
     `<div class="stat"><span class="s-label">Change</span><b class="${cls(chg)}">${fmtPct(chg)}</b><i>${n<=7?'week':n<=90?'quarter':'period'}</i></div>`+
     stat('Volatility',(sd*100).toFixed(2)+'%','per day');
   const key=S.trends.sort;
-    const list=CURRENCIES.filter(c=>hasData(c.code)).sort((a,b)=>key==='name'?a.code.localeCompare(b.code):curChg(b.code,key==='d1'?1:30)-curChg(a.code,key==='d1'?1:30));
+  const list=CURRENCIES.filter(c=>hasData(c.code)).sort((a,b)=>key==='name'?a.code.localeCompare(b.code):curChg(b.code,key==='d1'?1:30)-curChg(a.code,key==='d1'?1:30));
   $('#trendBody').innerHTML=list.map(c=>{
     const d1=curChg(c.code,1),d30=curChg(c.code,30);
     return `<tr data-code="${c.code}" class="${c.code===S.trends.cur?'sel':''}">
@@ -1090,16 +1072,16 @@ function renderBankList(){
   const list=BANKS.filter(b=>!q||b.name.toLowerCase().includes(q)||b.c.toLowerCase().includes(q));
   $('#bankList').innerHTML=list.map(b=>{
     const r=bankRates(b,'USD');
-    return `<button class="bank-item ${<b>${b.name}${r?' '+pillFor(b.c,'USD'):''}</b><i>${b.type}</i><u class="b-date">${r?dateFor(b.c,'USD'):'never collected'}</u>
+    return `<button class="bank-item ${b.c===S.banks.sel?'on':''}" data-c="${b.c}">
       <span class="mono-badge">${b.c.slice(0,2)}</span>
-      <span class="bi-txt"><b>${b.name}</b><i>${b.type}</i></span>
-      <span class="bi-rate">${r?fmt(r.buy,2):'—'}<em>USD buy${st}</em></span>
+      <span class="bi-txt"><b>${b.name}${r?' '+pillFor(b.c,'USD'):''}</b><i>${b.type}</i><u class="b-date">${r?dateFor(b.c,'USD'):'never collected'}</u></span>
+      <span class="bi-rate">${r?fmt(r.buy,2):'—'}<em>USD buy</em></span>
     </button>`}).join('')||'<div style="padding:16px;font-size:13px;color:var(--muted)">No banks match.</div>';
 }
 function renderBankDetail(){
   const b=BANK[S.banks.sel],cur=S.banks.cur,d=decOf(cur),r=bankRates(b,cur);
   const tags=[];
-  if(r){
+  if(r&&!(DATA.mode==='live'&&r.flag)){
     const bb=bestBuy(cur),bs=bestSell(cur),t=tightest(cur);
     if(bb&&bb.b.c===b.c)tags.push(`Best ${cur} buy`);
     if(bs&&bs.b.c===b.c)tags.push(`Lowest ${cur} sell`);
@@ -1116,7 +1098,7 @@ function renderBankDetail(){
       <div><span class="s-label">Bank buys ${cur} at</span><span class="big-num">${r?fmt(r.buy,d):'—'}</span><span class="mini">you receive ETB</span></div>
       <div><span class="s-label">Bank sells ${cur} at</span><span class="big-num">${r?fmt(r.sell,d):'—'}</span><span class="mini">you pay ETB</span></div>
       <div><span class="s-label">Spread</span><span class="big-num">${r?fmt(r.spread,d):'—'}</span><span class="mini">${r?((r.spread/r.buy)*100).toFixed(2)+'% of mid':'no quote'}</span></div>
-      <div><span class="s-label">Updated</span><span class="big-num" style="font-size:17px;padding-top:8px">${fmtDay(sourceUpdated(b.c))}</span><span class="mini">${isStale(b.c)?'<span class="pill stale">stale — verify with bank</span>':'<span class="pill cur">current</span>'}</span></div>
+      <div><span class="s-label">Updated</span><span class="big-num" style="font-size:17px;padding-top:8px">${r?dateFor(b.c,cur):'—'}</span><span class="mini">${r?pillFor(b.c,cur):''}</span></div>
     </div>
     <div class="panel">
       <div class="chart-head"><span class="kicker">${cur} mid · last 90 days</span></div>
@@ -1135,7 +1117,7 @@ function renderBankDetail(){
 }
 function renderBanks(){safe(renderBankList,'bank list');safe(renderBankDetail,'bank detail')}
 function renderMatrix(){
-    const codes=[...CURRENCIES.map(c=>c.code).filter(hasData),'ETB'];
+  const codes=[...CURRENCIES.map(c=>c.code).filter(hasData),'ETB'];
   let html='<thead><tr><th class="mx-corner">from&nbsp;/&nbsp;to</th>'+codes.map(c=>`<th class="num" data-code="${c}">${c}</th>`).join('')+'</tr></thead><tbody>';
   for(const r of codes){
     html+=`<tr data-r="${r}"><th>${r}</th>`;
@@ -1153,7 +1135,7 @@ function renderMatrix(){
 }
 function renderPairs(){
   renderMatrix();
-    $('#pairsBody').innerHTML=CURRENCIES.filter(c=>hasData(c.code)).map(c=>{
+  $('#pairsBody').innerHTML=CURRENCIES.filter(c=>hasData(c.code)).map(c=>{
     const bb=bestBuy(c.code),bs=bestSell(c.code),d30=curChg(c.code,30),d=decOf(c.code);
     return `<tr data-code="${c.code}">
       <td><span class="p-pair">${c.code} / ETB</span><i class="sub">${c.code==='USDT'?'P2P parallel market — not quoted by banks':c.name}</i></td>
@@ -1190,7 +1172,7 @@ function updateConverter(){
   $('#cvResult').textContent=amt?fmtSmart(amt*rate):'0.00';
   $('#cvFromName').textContent=nameOf(from);
   $('#cvToName').textContent=nameOf(to);
-  $('#cvRateLine').innerHTML=`<b>1 ${from} = ${fmtSmart(rate)} ${to}</b> &nbsp;·&nbsp; 1 ${to} = ${fmtSmart(1/rate)} ${from}<em>${src} · updated ${ago(DATA.genTs)}</em>`;
+  $('#cvRateLine').innerHTML=`<b>1 ${from} = ${fmtSmart(rate)} ${to}</b> &nbsp;·&nbsp; 1 ${to} = ${fmtSmart(1/rate)} ${from}<em>${src} · updated ${fmtDay(DATA.genTs)}</em>`;
   $('#quickBody').innerHTML=[1,10,100,1000,10000,100000].map(a=>
     `<tr><td class="num" style="text-align:left">${fmt(a,0)} ${from}</td><td class="num">${fmtSmart(a*rate)} ${to}</td></tr>`).join('');
 }
@@ -1218,9 +1200,8 @@ function renderBureaus(){
   rows.sort((a,b)=>cmp(val[key](a),val[key](b),dir));
   $('#bureauBody').innerHTML=rows.map(u=>{
     const r=bureauRates(u,cur),vs=r&&bbb!=null?r.buy-bbb:null;
-    const st=isStale(u.id)?'<span class="pill stale">stale</span>':'<span class="pill cur">current</span>';
     return `<tr class="b-row" data-n="${u.name}">
-      <td><span class="b-txt"><b>${u.name}</b><i>licensed FX bureau</i></span></td>
+      <td><span class="b-txt"><b>${u.name}${r?' '+pillFor(u.id,cur):''}</b><u class="b-date">${r?dateFor(u.id,cur):'never collected'}</u></span></td>
       <td class="num">${r?fmt(r.buy,d):'—'}</td>
       <td class="num">${r?fmt(r.sell,d):'—'}</td>
       <td class="num">${r?fmt(r.sell-r.buy,d):'—'}</td>
@@ -1235,22 +1216,20 @@ function renderBureaus(){
   for(const u of BUREAUS){const r=bureauRates(u,cur);if(!r)continue;
     if(!bu||r.buy>bu.r.buy)bu={u,r};if(!bsell||r.sell<bsell.r.sell)bsell={u,r}}
   $('#bureauBand').innerHTML=bu?`
-   <div class="street-item"><span class="s-label">Best ${cur} cash buy — you sell</span><span class="s-bank">${bu.u.name}</span><span class="s-rate">${fmt(bu.r.buy,d)} <small>ETB</small></span></div>
-   <div class="street-item"><span class="s-label">Lowest ${cur} cash sell — you buy</span><span class="s-bank">${bsell.u.name}</span><span class="s-rate">${fmt(bsell.r.sell,d)} <small>ETB</small></span></div>
-   <div class="street-item"><span class="s-label">vs best bank</span><span class="s-bank">cash purchases</span><span class="s-rate up">${bbb!=null?'+'+fmt(bu.r.buy-bbb,2):'—'} <small>ETB / ${cur}</small></span></div>
-   <div class="s-note">${BUREAUS.length} licensed bureaus publishing online — cash rates at the counter. Tap a row for all currencies.</div>`
+   <div class="bd-figures" style="border:0;padding:8px 0 0;margin:0">
+     <div><span class="s-label">Best ${cur} cash buy — you sell</span><span class="s-bank">${bu.u.name}</span><span class="s-rate">${fmt(bu.r.buy,d)} <small>ETB</small></span></div>
+     <div><span class="s-label">Lowest ${cur} cash sell — you buy</span><span class="s-bank">${bsell.u.name}</span><span class="s-rate">${fmt(bsell.r.sell,d)} <small>ETB</small></span></div>
+     <div><span class="s-label">vs best bank</span><span class="s-bank">cash purchases</span><span class="s-rate up">${bbb!=null?'+'+fmt(bu.r.buy-bbb,2):'—'} <small>ETB / ${cur}</small></span></div>
+     <div><span class="s-label">Bureaus</span><span class="s-bank">${BUREAUS.length} licensed</span><span class="mini" style="margin-top:4px">cash at the counter</span></div>
+   </div>`
    :`<div class="s-note" style="border-left:0;padding-left:2px">Bureau quotes are not collected yet.</div>`;
 }
 function updatePrices(){
-  const a=S.price.annual;
-  $$('.price-val').forEach(el=>el.textContent=fmt(+(a?el.dataset.a:el.dataset.m),0));
-  $$('.p-usd').forEach(el=>{const p=+(a?el.dataset.a:el.dataset.m);
-    el.textContent=p?'≈ $'+fmtSmart(p/etbPerUnit('USD')):'no charge, ever'});
-  $('#billNote').textContent=a?'Billed yearly — that\'s two months free vs monthly.':'Billed monthly. Switch to annual for two months free.';
+  $('#billNote')&&0;
 }
-const VIEW={today:renderToday,trends:renderTrends,banks:renderBanks,pairs:renderPairs,converter:updateConverter,bureaus:renderBureaus,pricing:updatePrices};
 
 /* ================= router ================= */
+const VIEW={today:renderToday,trends:renderTrends,banks:renderBanks,pairs:renderPairs,converter:updateConverter,bureaus:renderBureaus,pricing:()=>{}};
 function showView(v){
   if(!VIEW[v])return;
   S.view=v;
@@ -1280,46 +1259,37 @@ function startClock(){
   $('#ethDate').innerHTML=`${eth} <span>· Ethiopian calendar</span>`;
   setInterval(()=>{
     $('#clockTime').textContent=new Date().toLocaleTimeString('en-GB',{timeZone:'Africa/Addis_Ababa',hour:'2-digit',minute:'2-digit',second:'2-digit'})+' EAT';
-    $$('.c-upd').forEach(el=>{if(el.dataset.b)el.textContent=ago(sourceUpdated(el.dataset.b))});
   },1000);
 }
-/* ================= price alerts ================= */
-function openAlertForm(code){
-  const ov=$('#overlay');
-  $('#mPlan').parentElement.style.display='none';
-  $('#mGo').style.display='none';
-  $('#mErr').hidden=true;
-  $('.modal h3').textContent='Set a price alert';
-  $('#alertFields').hidden=false;
-  $('#alCode').value=code;
-  $('#alDir').value='above';
-  $('#alTarget').value='';
-  $('#alMail').value='';
-  $('#overlay').hidden=false;
-  requestAnimationFrame(()=>ov.classList.add('in'));
-}
-function closeAlertForm(){
-  $('#alertFields').hidden=true;
-  $('#mPlan').parentElement.style.display='';
-  $('#mGo').style.display='';
-  $('.modal h3').textContent='Start watching the birr';
-  closeModal();
-}
+
 /* ================= toast & modal ================= */
 function toast(msg){
   const t=document.createElement('div');t.className='toast';t.textContent=msg;
   $('#toasts').appendChild(t);requestAnimationFrame(()=>t.classList.add('in'));
   setTimeout(()=>{t.classList.remove('in');setTimeout(()=>t.remove(),300)},2800);
 }
-function openModal(plan){
-  $('#mPlan').textContent=plan;
-  $('#mPrice').textContent=plan==='Observer'?'Free forever':
-    plan==='Professional'?(S.price.annual?'199':'249')+' ETB /mo':(S.price.annual?'1,599':'1,999')+' ETB /mo';
-  $('#mErr').hidden=true;$('#mEmail').value='';
-  $('#overlay').hidden=false;requestAnimationFrame(()=>$('#overlay').classList.add('in'));
-  setTimeout(()=>$('#mEmail').focus(),120);
-}
 function closeModal(){$('#overlay').classList.remove('in');setTimeout(()=>$('#overlay').hidden=true,220)}
+function openAlertForm(code){
+  $('#signupFields').hidden=true;
+  $('#alertFields').hidden=false;
+  $('#alCode').value=code;
+  $('#alPair').textContent=code+' / ETB';
+  const now=live.mid[code];
+  $('#alertNow').textContent=now!=null?fmt(now,decOf(code))+' ETB':'—';
+  $('#alDir').value='above';
+  $('#alTarget').value='';
+  $('#alMail').value='';
+  $('#alErr').hidden=true;
+  $$('#alertFields .seg button').forEach((b,i)=>b.classList.toggle('on',i===0));
+  const ov=$('#overlay');
+  $('#overlay').hidden=false;
+  requestAnimationFrame(()=>ov.classList.add('in'));
+}
+function closeAlertForm(){
+  $('#alertFields').hidden=true;
+  $('#signupFields').hidden=false;
+  closeModal();
+}
 
 /* ================= wiring ================= */
 function wire(){
@@ -1328,7 +1298,7 @@ function wire(){
   $('#bankSearchWrap').innerHTML=`${I.search}<input class="input" id="bankQ" placeholder="Search banks…">`;
   $('#bureauSearchWrap').innerHTML=`${I.search}<input class="input" id="bureauQ" placeholder="Search bureaus…">`;
   $('#copyRate').innerHTML=I.copy;$('#swapBtn').innerHTML=I.swap;$('#mClose').innerHTML=I.x;
-  $$('.f-chev').forEach(el=>el.innerHTML=I.chev);
+  $$('.f-chev')&&0;
   $('#curChips').addEventListener('click',e=>{const c=e.target.closest('.chip');if(!c)return;
     if(!hasData(c.dataset.cur)){toast(c.dataset.cur+' rates are not collected yet — the tab activates once data arrives.');return}
     S.today.cur=c.dataset.cur;renderChips();renderTodayTable();renderDirHint()});
@@ -1351,15 +1321,13 @@ function wire(){
   $('#bankDetail').addEventListener('click',e=>{const c=e.target.closest('.chip[data-cur]');if(!c)return;
     if(!hasData(c.dataset.cur)){toast(c.dataset.cur+' rates are not collected yet.');return}
     S.banks.cur=c.dataset.cur;renderBankDetail()});
-    $('#pairsBody').addEventListener('click',e=>{
+  $('#pairsBody').addEventListener('click',e=>{
     const bell=e.target.closest('.bell');
     if(bell){
       const code=e.target.closest('tr').dataset.code;
       openAlertForm(code);
       return;
     }
-    const tr=e.target.closest('tr[data-code]');
-    if(tr&&DATA.mode==='live'){S.trends.cur=tr.dataset.code;showView('trends')}
   });
   const mx=$('#matrix');
   const hl=(r,c)=>{$$('#matrix .rc').forEach(x=>x.classList.remove('rc'));$$('#matrix .hx').forEach(x=>x.classList.remove('hx'));
@@ -1391,16 +1359,14 @@ function wire(){
     const tr=e.target.closest('.b-row');if(!tr)return;
     const more=$(`#bureauBody .b-more[data-n="${CSS.escape(tr.dataset.n)}"]`);
     if(more){more.hidden=!more.hidden;tr.classList.toggle('open')}});
-  $('#billSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
-    S.price.annual=b.dataset.b==='a';$$('#billSeg button').forEach(x=>x.classList.toggle('on',x===b));updatePrices()});
-  $$('.btn-plan').forEach(b=>b.addEventListener('click',()=>openModal(b.dataset.plan)));
+  $$('.btn-plan').forEach(b=>b.addEventListener('click',()=>toast('Paid plans are coming soon — tap “Notify me” to be the first to know.')));
   $('#faq').addEventListener('click',e=>{const q=e.target.closest('.faq-q');if(!q)return;q.parentElement.classList.toggle('open')});
   $('#mGo').addEventListener('click',()=>{
     const v=$('#mEmail').value.trim();
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)){$('#mErr').hidden=false;return}
-    closeModal();toast(`You're in — confirmation sent to ${v}.`);
+    closeModal();toast('Thanks — we\'ll be in touch.');
   });
-    $$('#alertFields .seg button').forEach(b=>b.addEventListener('click',()=>{
+  $$('#alertFields .seg button').forEach(b=>b.addEventListener('click',()=>{
     $$('#alertFields .seg button').forEach(x=>x.classList.toggle('on',x===b));
     $('#alDir').value=b.dataset.d;
   }));
@@ -1425,10 +1391,9 @@ function wire(){
     closeAlertForm();
     toast('Your email app is opening — send the pre-filled message to confirm.');
   });
-  $('#mEmail').addEventListener('keydown',e=>{if(e.key==='Enter')$('#mGo').click()});
-  $('#mClose').addEventListener('click',closeModal);
-  $('#overlay').addEventListener('click',e=>{if(e.target.id==='overlay')closeModal()});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#overlay').hidden)closeModal()});
+  $('#mClose').addEventListener('click',closeAlertForm);
+  $('#overlay').addEventListener('click',e=>{if(e.target.id==='overlay')closeAlertForm()});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#overlay').hidden)closeAlertForm()});
   document.addEventListener('visibilitychange',()=>{
     if(!document.hidden&&DATA.mode==='live'&&Date.now()-DATA.genTs>CONFIG.POLL_MS)setTimeout(pollData,200)});
   let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{CHARTS.length=0;safe(VIEW[S.view],S.view)},180)});
@@ -1438,7 +1403,7 @@ function wire(){
 (function boot(){
   buildDemo();
   buildConverter();
-  safe(wire,'wire');
+  wire();
   ensureStatus();
   updateStatusChip();
   renderTicker();
