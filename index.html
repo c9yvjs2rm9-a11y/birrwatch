@@ -972,7 +972,7 @@ function renderP2P(){
      <div><span class="s-label">Mid</span><span class="big-num">${fmt(mid,2)}</span><span class="mini">ETB per 1 USDT</span></div>
      <div><span class="s-label">Buy / Sell</span><span class="big-num" style="font-size:19px;padding-top:6px">${fmt(q.buy,2)} / ${fmt(q.sell,2)}</span><span class="mini">public parallel-market source</span></div>
      <div><span class="s-label">vs bank USD</span><span class="big-num ${prem!=null&&prem>=0?'up':'down'}" style="font-size:19px;padding-top:6px">${prem!=null?(prem>=0?'+':'−')+Math.abs(prem*100).toFixed(1)+'%':'—'}</span><span class="mini">parallel premium</span></div>
-     <div><span class="s-label">${r?dateFor(b.c,cur):'—'}</span><span class="mini">${r?pillFor(b.c,cur):''}</span></span><span class="big-num" style="font-size:13px;padding-top:10px">${fmtDayTime(ts)}</span><span class="mini">public parallel-market sources</span></div>
+     <div><span class="s-label">Updated</span><span class="big-num" style="font-size:13px;padding-top:10px">${fmtDayTime(ts)}</span><span class="mini">public parallel-market sources</span></div>
    </div>
    <p class="mini" style="margin-top:10px">Aggregated from public parallel-market sources and shown for reference only — not a bank or NBE rate, not an offer to trade, and no guarantee any counterparty is available at this price.</p>`;
 }
