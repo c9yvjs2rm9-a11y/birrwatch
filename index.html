@@ -339,7 +339,14 @@ footer{background:var(--ink);color:var(--paper);padding:64px 0 36px;margin-top:2
         <button class="icon-btn" id="copyRate" title="Copy rate"></button>
       </div>
       <div class="hero-deltas" id="heroDeltas"></div>
-            <p class="hero-sub">NBE official <b id="nbeRate">—</b> &nbsp;·&nbsp; Customs (ERCA) <b id="customsRate">—</b> &nbsp;·&nbsp; Bank average <b id="avgRate">—</b> &nbsp;·&nbsp; <span id="heroUpdated">updated just now</span></p>
+            <div class="panel" style="margin-top:4px">
+              <div class="bd-figures" style="border:0;padding:10px 0 0;margin:0">
+                <div><span class="s-label">NBE official</span><span class="big-num" style="font-size:20px" id="nbeRate">—</span><span class="mini">ETB · indicative</span></div>
+                <div><span class="s-label">Customs (ERCA)</span><span class="big-num" style="font-size:20px" id="customsRate">—</span><span class="mini">ETB · valuation</span></div>
+                <div><span class="s-label">Bank average</span><span class="big-num" style="font-size:20px" id="avgRate">—</span><span class="mini">ETB · mid of banks</span></div>
+                <div><span class="s-label">Data as of</span><span class="big-num" style="font-size:20px" id="dataDate">—</span><span class="mini" id="sourcesLine">—</span></div>
+              </div>
+            </div>
       <div class="eth-date" id="ethDate"></div>
     </div>
     <div class="panel">
