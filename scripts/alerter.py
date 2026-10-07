@@ -29,6 +29,8 @@ def mids(doc):
             mid = (float(r["buy"]) + float(r["sell"])) / 2
         except (KeyError, TypeError, ValueError):
             continue
+        if r.get("flag") == "stale":
+            continue
         if cur == "USDT":
             if stype == "market":
                 sums.setdefault(cur, []).append(mid)
