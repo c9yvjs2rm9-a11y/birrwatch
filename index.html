@@ -75,8 +75,13 @@ h2{font-size:27px;margin-top:7px}
 .pill{display:inline-block;font:700 8.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:2px 8px;vertical-align:middle;margin-left:6px}
 .pill.cur{color:var(--green);border:1px solid rgba(11,123,61,.35);background:rgba(11,123,61,.07)}
 .pill.stale{color:var(--red);border:1px solid rgba(185,58,27,.35);background:rgba(185,58,27,.07)}
-.b-date{display:block;font:400 10px var(--mono);color:var(--muted);margin-top:1px}
+.b-date{display:block;font:400 10px var(--mono);color:var(--muted);margin-top:1px;text-decoration:none}
 .bi-txt .b-date{font-size:9px}
+.b-meta{display:flex;align-items:center;gap:8px;margin-top:2px;flex-wrap:wrap}
+.b-meta .pill{margin-left:0}
+.refgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px 18px}
+.refgrid>div{border-left:0!important;padding:0!important}
+@media(min-width:700px){.refgrid{grid-template-columns:repeat(4,1fr)}}
 .seg{display:inline-flex;border:1px solid var(--line2);border-radius:10px;background:var(--panel);padding:3px;gap:2px}
 .seg button{border:0;background:transparent;font:600 12px var(--ui);color:var(--muted);padding:8px 13px;border-radius:7px;white-space:nowrap}
 .seg button.on{background:var(--ink);color:var(--paper)}
@@ -283,9 +288,9 @@ footer{background:var(--ink);color:var(--paper);padding:64px 0 36px;margin-top:2
   #view-trends th:nth-child(5),#view-trends td:nth-child(5),
   #view-trends th:nth-child(6),#view-trends td:nth-child(6){display:none}
   #view-pairs .table-scroll table:not(.matrix){min-width:0!important}
+  #view-pairs th:nth-child(4),#view-pairs td:nth-child(4),
   #view-pairs th:nth-child(5),#view-pairs td:nth-child(5),
-  #view-pairs th:nth-child(6),#view-pairs td:nth-child(6),
-  #view-pairs th:nth-child(7),#view-pairs td:nth-child(7){display:none}
+  #view-pairs th:nth-child(6),#view-pairs td:nth-child(6){display:none}
   #view-bureaus .table-scroll table{min-width:0!important}
   #view-bureaus th:nth-child(n+4),#view-bureaus td:nth-child(n+4){display:none}
   table.sheet{min-width:0!important}
@@ -331,7 +336,7 @@ footer{background:var(--ink);color:var(--paper);padding:64px 0 36px;margin-top:2
       </div>
       <div class="hero-deltas" id="heroDeltas"></div>
       <div class="panel" style="margin-top:4px">
-        <div class="bd-figures" style="border:0;padding:10px 0 0;margin:0">
+        <div class="refgrid">
           <div><span class="s-label">NBE official</span><span class="big-num" style="font-size:20px" id="nbeRate">—</span><span class="mini">ETB · indicative</span></div>
           <div><span class="s-label">Customs (ERCA)</span><span class="big-num" style="font-size:20px" id="customsRate">—</span><span class="mini">ETB · valuation</span></div>
           <div><span class="s-label">Bank average</span><span class="big-num" style="font-size:20px" id="avgRate">—</span><span class="mini">ETB · mid of banks</span></div>
@@ -931,7 +936,7 @@ function renderBestBand(){
   const bb=bestBuy('USD'),bs=bestSell('USD'),t=tightest('USD');
   const nb=BANKS.filter(b=>{const r=bankRates(b,'USD');return r&&!(DATA.mode==='live'&&r.flag)}).length;
   $('#bestBand').innerHTML=`
-   <div class="bd-figures" style="border:0;padding:8px 0 0;margin:0">
+   <div class="refgrid">
      <div><span class="s-label">Best USD buy — you sell</span><span class="s-bank">${bb?bb.b.name:'—'}</span><span class="s-rate">${bb?fmt(bb.r.buy,2):'—'} <small>ETB</small></span></div>
      <div><span class="s-label">Lowest USD sell — you buy</span><span class="s-bank">${bs?bs.b.name:'—'}</span><span class="s-rate">${bs?fmt(bs.r.sell,2):'—'} <small>ETB</small></span></div>
      <div><span class="s-label">Tightest spread</span><span class="s-bank">${t?t.b.name:'—'}</span><span class="s-rate">${t?fmt(t.r.spread,2):'—'} <small>ETB</small></span></div>
@@ -951,7 +956,7 @@ function renderP2P(){
   const ts=DATA.mode==='live'?sourceUpdated('P2P'):Date.now();
   el.innerHTML=`
    <div class="chart-head"><span class="kicker">Parallel market reference · USDT/ETB</span><span class="range-hint">indicative — P2P market, not bank or NBE</span></div>
-   <div class="bd-figures" style="border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:10px 0 0;padding:14px 0">
+   <div class="refgrid" style="border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:14px 0;margin:10px 0 0">
      <div><span class="s-label">Mid</span><span class="big-num">${fmt(mid,2)}</span><span class="mini">ETB per 1 USDT</span></div>
      <div><span class="s-label">Buy / Sell</span><span class="big-num" style="font-size:19px;padding-top:6px">${fmt(q.buy,2)} / ${fmt(q.sell,2)}</span><span class="mini">public parallel-market source</span></div>
      <div><span class="s-label">vs bank USD</span><span class="big-num ${prem!=null&&prem>=0?'up':'down'}" style="font-size:19px;padding-top:6px">${prem!=null?(prem>=0?'+':'−')+Math.abs(prem*100).toFixed(1)+'%':'—'}</span><span class="mini">parallel premium</span></div>
@@ -1003,7 +1008,7 @@ function renderTodayTable(){
     const hlB=S.today.dir==='buy'&&r?' hl':'',hlS=S.today.dir==='sell'&&r?' hl':'';
     return `<tr data-b="${b.c}">
       <td class="c-idx">${String(i+1).padStart(2,'0')}</td>
-      <td><span class="c-bank"><span class="mono-badge">${b.c.slice(0,2)}</span><span class="b-txt"><b>${b.name}${r?' '+pillFor(b.c,cur):''}</b><u class="b-date">${r?dateFor(b.c,cur):'never collected'}</u></span></span></td>
+      <td><span class="c-bank"><span class="mono-badge">${b.c.slice(0,2)}</span><span class="b-txt"><b>${b.name}</b><span class="b-meta">${r?pillFor(b.c,cur):''}<span class="b-date">${r?dateFor(b.c,cur):'never collected'}</span></span></td>
       <td class="num c-buy${hlB}">${r?fmt(r.buy,d):'—'}</td>
       <td class="num c-sell${hlS}">${r?fmt(r.sell,d):'—'}</td>
       <td class="num c-spread">${r?fmt(r.spread,d):'—'}</td>
@@ -1075,7 +1080,7 @@ function renderBankList(){
     const r=bankRates(b,'USD');
     return `<button class="bank-item ${b.c===S.banks.sel?'on':''}" data-c="${b.c}">
       <span class="mono-badge">${b.c.slice(0,2)}</span>
-      <span class="bi-txt"><b>${b.name}${r?' '+pillFor(b.c,'USD'):''}</b><i>${b.type}</i><u class="b-date">${r?dateFor(b.c,'USD'):'never collected'}</u></span>
+      <span class="bi-txt"><b>${b.name}</b><i>${b.type}</i><span class="b-meta">${r?pillFor(b.c,'USD'):''}<span class="b-date">${r?dateFor(b.c,'USD'):'never collected'}</span></span></span>
       <span class="bi-rate">${r?fmt(r.buy,2):'—'}<em>USD buy</em></span>
     </button>`}).join('')||'<div style="padding:16px;font-size:13px;color:var(--muted)">No banks match.</div>';
 }
@@ -1202,7 +1207,7 @@ function renderBureaus(){
   $('#bureauBody').innerHTML=rows.map(u=>{
     const r=bureauRates(u,cur),vs=r&&bbb!=null?r.buy-bbb:null;
     return `<tr class="b-row" data-n="${u.name}">
-      <td><span class="b-txt"><b>${u.name}${r?' '+pillFor(u.id,cur):''}</b><u class="b-date">${r?dateFor(u.id,cur):'never collected'}</u></span></td>
+      <td><span class="b-txt"><b>${u.name}</b><span class="b-meta">${r?pillFor(u.id,cur):''}<span class="b-date">${r?dateFor(u.id,cur):'never collected'}</span></span></span></td>
       <td class="num">${r?fmt(r.buy,d):'—'}</td>
       <td class="num">${r?fmt(r.sell,d):'—'}</td>
       <td class="num">${r?fmt(r.sell-r.buy,d):'—'}</td>
