@@ -12,7 +12,7 @@ import re
 import sys
 import threading
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import requests
@@ -1263,8 +1263,9 @@ def main():
             print(f"[collect] {sid} ⚠", flush=True)
         time.sleep(2)
 
+    stale_since = doc.setdefault("stale_since", {})
     by_cur = {}
-    for r in list(rates):
+    for r in rates:
         s = sources.get(r.get("source"), {})
         if s.get("type") != "bank":
             continue
@@ -1272,22 +1273,31 @@ def main():
             buy = float(r["buy"])
         except (TypeError, ValueError):
             continue
-        by_cur.setdefault(r.get("currency"), []).append((r["source"], buy, r))
+        by_cur.setdefault(r.get("currency"), []).append((r.get("source"), buy, r))
     rejected = []
     for cur, entries in by_cur.items():
-        if not cur or len(entries) < MIN_FLEET:
+        if not cur:
             continue
-        vals = sorted(b for _, b, _ in entries)
-        n = len(vals)
-        med = vals[n // 2] if n % 2 else (vals[n // 2 - 1] + vals[n // 2]) / 2
+        fresh = sorted(b for _, b, r in entries if not r.get("flag"))
+        if len(fresh) < MIN_FLEET:
+            continue
+        n = len(fresh)
+        med = fresh[n // 2] if n % 2 else (fresh[n // 2 - 1] + fresh[n // 2]) / 2
         if not med:
             continue
         tol = FLEET_TOL if cur == "USD" else 0.04
         for src, buy, row in entries:
             if abs(buy / med - 1) > tol:
-                if row in rates:
-                    rates.remove(row)
-                rejected.append(f"{src} {cur} {buy:.2f} vs {med:.2f}")
+                if not row.get("flag"):
+                    row["flag"] = "stale"
+                    stale_since.setdefault(f"{src}|{cur}", date.today().isoformat())
+                    rejected.append(f"{src} {cur} {buy:.2f} vs {med:.2f}")
+            elif row.pop("flag", None):
+                stale_since.pop(f"{src}|{cur}", None)
+    if rejected:
+        summary.append("| ⚠ fleet check | newly flagged stale quote(s): "
+                       + ", ".join(rejected[:8]) + " |")
+        print(f"[fleet] newly flagged: {rejected}", flush=True)
     if rejected:
         summary.append("| ⚠ fleet check | rejected outlier quote(s): "
                        + ", ".join(rejected[:8]) + " |")
