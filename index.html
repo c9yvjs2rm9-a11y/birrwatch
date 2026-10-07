@@ -621,6 +621,20 @@ function ago(ts){if(!ts)return'—';const s=Math.max(0,(Date.now()-ts)/1e3);if(s
 function dlabel(d,full){return full?d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}):d.getDate()+' '+d.toLocaleString('en',{month:'short'})}
 function fmtDay(ts){if(!ts)return'—';return new Date(ts).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}
 function fmtDayTime(ts){if(!ts)return'—';const d=new Date(ts);return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+' at '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}
+function pillFor(id,code){
+  if(DATA.mode!=='live')return'<span class="pill cur">current</span>';
+  const q=DATA.quotes[srcKey(id,code)];
+  if((q&&q.flag==='stale')||isStale(id))return'<span class="pill stale">stale</span>';
+  return'<span class="pill cur">current</span>';
+}
+function dateFor(id,code){
+  const q=DATA.quotes[srcKey(id,code)];
+  if(DATA.mode==='live'&&q&&q.flag==='stale'){
+    const d=DATA.staleSince[id+'|'+code];
+    return d?'stale since '+fmtDay(Date.parse(d)):'stale sheet';
+  }
+  return fmtDay(sourceUpdated(id));
+}
 function copyText(t){try{navigator.clipboard.writeText(t)}catch(e){const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove()}}
 const cmp=(a,b,dir)=>{if(a==null&&b==null)return 0;if(a==null)return 1;if(b==null)return -1;return(a<b?-1:a>b?1:0)*dir};
 
@@ -730,9 +744,9 @@ function demoQuote(id,code){
 function bankRates(b,code){return DATA.mode==='live'?storeQuote(b.c,code):demoQuote(b.c,code)}
 function bureauRates(u,code='USD'){return DATA.mode==='live'?storeQuote(u.id,code):demoQuote(u.id,code)}
 
-function bestBuy(code){let o=null;for(const b of BANKS){const r=bankRates(b,code);if(r&&(!o||r.buy>o.r.buy))o={b,r}}return o}
-function bestSell(code){let o=null;for(const b of BANKS){const r=bankRates(b,code);if(r&&(!o||r.sell<o.r.sell))o={b,r}}return o}
-function tightest(code){let o=null;for(const b of BANKS){const r=bankRates(b,code);if(r&&r.spread!=null&&(!o||r.spread<o.r.spread))o={b,r}}return o}
+function bestBuy(code){let o=null;for(const b of BANKS){const r=bankRates(b,code);if(r&&!r.flag&&(!o||r.buy>o.r.buy))o={b,r}}return o}
+function bestSell(code){let o=null;for(const b of BANKS){const r=bankRates(b,code);if(r&&!r.flag&&(!o||r.sell<o.r.sell))o={b,r}}return o}
+function tightest(code){let o=null;for(const b of BANKS){const r=bankRates(b,code);if(r&&!r.flag&&r.spread!=null&&(!o||r.spread<o.r.spread))o={b,r}}return o}
 
 function curChg(code,back){const s=H[code];if(!s||s.length<2)return 0;const L=s.length,p=s[Math.max(0,L-1-back)],m=live.mid[code]||s[L-1];return p?(m-p)/p:0}
 function bankChg(b,code){return curChg(code,1)}
@@ -740,7 +754,7 @@ function bankSeries(b,code,n){const s=H[code];if(!s||!live.mid[code])return[];co
 function sourceUpdated(id){if(DATA.mode==='live'){const t=DATA.srcTs[id];return t||DATA.genTs}const b=BANK[id];return Date.now()-((Math.abs(id.charCodeAt(0))*13)%150)*6e4}
 function isStale(id){if(DATA.mode!=='live')return false;const ts=DATA.srcTs[id];return!!ts&&Date.now()-ts>CONFIG.STALE_MS}
 function okCount(){const ids=Object.keys(DATA.sources);return ids.filter(id=>!isStale(id)).length}
-function avgMid(code){let n=0,t=0;for(const b of BANKS){const r=bankRates(b,code);if(r){n++;t+=(r.buy+r.sell)/2}}return n?t/n:live.mid[code]}
+function avgMid(code){let n=0,t=0;for(const b of BANKS){const r=bankRates(b,code);if(r&&!(DATA.mode==='live'&&r.flag)){n++;t+=(r.buy+r.sell)/2}}return n?t/n:live.mid[code]}
 
 function recomputeMids(){
   const sums={},official={},market={},customs={};
@@ -750,7 +764,7 @@ function recomputeMids(){
     if(s.type==='official')official[r.currency]=mid;
     else if(s.type==='market')market[r.currency]=mid;
     else if(s.type==='customs')customs[r.currency]=mid;
-    else if(s.type==='bank'){(sums[r.currency]??={n:0,t:0});sums[r.currency].n++;sums[r.currency].t+=mid}
+    else if(s.type==='bank'){if(!r.flag){(sums[r.currency]??={n:0,t:0});sums[r.currency].n++;sums[r.currency].t+=mid}}
   }
   live.customs=customs;
   for(const c of CURRENCIES){
@@ -760,9 +774,9 @@ function recomputeMids(){
   }
 }
 function applyRates(doc){
-  DATA.rates=doc.rates||[];DATA.sources=doc.sources||{};DATA.quotes={};DATA.srcTs={};
+  DATA.staleSince=doc.stale_since||{};
   for(const id in DATA.sources)DATA.srcTs[id]=Date.parse(DATA.sources[id].fetched_at)||DATA.genTs;
-  for(const r of DATA.rates)DATA.quotes[srcKey(r.source,r.currency)]={buy:+r.buy,sell:+r.sell,spread:+r.sell-+r.buy};
+  for(const r of DATA.rates)DATA.quotes[srcKey(r.source,r.currency)]={buy:+r.buy,sell:+r.sell,spread:+r.sell-+r.buy,flag:r.flag||null};
   recomputeMids();
 }
 function applyTrends(t){
@@ -926,11 +940,11 @@ function renderHero(){
   $('#heroDeltas').innerHTML=histReal()
     ?deltaHtml(curChg('USD',1),'today')+deltaHtml(curChg('USD',30),'30d')
     :'<span class="delta" style="color:var(--muted);border-color:var(--line2);background:var(--paper2)">history building — daily change appears soon</span>';
-  $('#nbeRate').textContent=fmt(live.off.USD,2)+' ETB';
-  $('#avgRate').textContent=fmt(avgMid('USD'),2)+' ETB';
-  $('#customsRate').textContent=(live.customs&&live.customs.USD!=null)?fmt(live.customs.USD,2)+' ETB':'—';
-  $('#heroUpdated').textContent='updated '+ago(DATA.genTs)+
-    (DATA.mode==='live'?` · ${okCount()}/${Object.keys(DATA.sources).length} sources ok`:'');
+  $('#nbeRate').textContent=fmt(live.off.USD,2);
+  $('#customsRate').textContent=(live.customs&&live.customs.USD!=null)?fmt(live.customs.USD,2):'—';
+  $('#avgRate').textContent=fmt(avgMid('USD'),2);
+  $('#dataDate').textContent=fmtDay(DATA.genTs);
+  $('#sourcesLine').textContent=DATA.mode==='live'?`${okCount()}/${Object.keys(DATA.sources).length} sources ok`:'sample data';
 }
 function renderBestBand(){
   const bb=bestBuy('USD'),bs=bestSell('USD'),t=tightest('USD');
@@ -958,7 +972,7 @@ function renderP2P(){
      <div><span class="s-label">Mid</span><span class="big-num">${fmt(mid,2)}</span><span class="mini">ETB per 1 USDT</span></div>
      <div><span class="s-label">Buy / Sell</span><span class="big-num" style="font-size:19px;padding-top:6px">${fmt(q.buy,2)} / ${fmt(q.sell,2)}</span><span class="mini">public parallel-market source</span></div>
      <div><span class="s-label">vs bank USD</span><span class="big-num ${prem!=null&&prem>=0?'up':'down'}" style="font-size:19px;padding-top:6px">${prem!=null?(prem>=0?'+':'−')+Math.abs(prem*100).toFixed(1)+'%':'—'}</span><span class="mini">parallel premium</span></div>
-     <div><span class="s-label">Updated</span><span class="big-num" style="font-size:13px;padding-top:10px">${fmtDayTime(ts)}</span><span class="mini">public parallel-market sources</span></div>
+     <div><span class="s-label">${r?dateFor(b.c,cur):'—'}</span><span class="mini">${r?pillFor(b.c,cur):''}</span></span><span class="big-num" style="font-size:13px;padding-top:10px">${fmtDayTime(ts)}</span><span class="mini">public parallel-market sources</span></div>
    </div>
    <p class="mini" style="margin-top:10px">Aggregated from public parallel-market sources and shown for reference only — not a bank or NBE rate, not an offer to trade, and no guarantee any counterparty is available at this price.</p>`;
 }
@@ -1004,16 +1018,15 @@ function renderTodayTable(){
   $('#rateBody').innerHTML=rows.map((b,i)=>{
     const r=bankRates(b,cur),ch=bankChg(b,cur);
     const hlB=S.today.dir==='buy'&&r?' hl':'',hlS=S.today.dir==='sell'&&r?' hl':'';
-    const st=isStale(b.c)?'<span class="pill stale">stale</span>':'<span class="pill cur">current</span>';
     return `<tr data-b="${b.c}">
       <td class="c-idx">${String(i+1).padStart(2,'0')}</td>
-      <td><span class="c-bank"><span class="mono-badge">${b.c.slice(0,2)}</span><span class="b-txt"><b>${b.name}</b><i>${b.type}${b.est?' · est. '+b.est:''}</i></span></span></td>
+      <td><span class="c-bank"><span class="mono-badge">${b.c.slice(0,2)}</span><span class="b-txt"><b>${b.name}${r?' '+pillFor(b.c,cur):''}</b><u class="b-date">${r?dateFor(b.c,cur):'never collected'}</u>
       <td class="num c-buy${hlB}">${r?fmt(r.buy,d):'—'}</td>
       <td class="num c-sell${hlS}">${r?fmt(r.sell,d):'—'}</td>
       <td class="num c-spread">${r?fmt(r.spread,d):'—'}</td>
       <td class="num c-chg${histReal()?' '+cls(ch):''}">${histReal()?fmtPct(ch):'—'}</td>
       <td class="c-spark"><canvas class="sparkcv" data-b="${b.c}"></canvas></td>
-      <td class="c-upd" data-b="${b.c}">${fmtDay(sourceUpdated(b.c))}${st}</td></tr>`}).join('');
+      <td class="c-upd" data-b="${b.c}">${r?dateFor(b.c,cur):'—'}</td>
   $$('#rateBody .sparkcv').forEach(cv=>{
     const id=cv.dataset.b;
     drawSpark(cv,id==='__P2P__'?(H.USDT||[]).slice(-60):bankSeries(BANK[id],cur,60));
@@ -1076,8 +1089,8 @@ function renderBankList(){
   const q=S.banks.q.trim().toLowerCase();
   const list=BANKS.filter(b=>!q||b.name.toLowerCase().includes(q)||b.c.toLowerCase().includes(q));
   $('#bankList').innerHTML=list.map(b=>{
-    const r=bankRates(b,'USD'),st=isStale(b.c)?' ·stale':'';
-    return `<button class="bank-item ${b.c===S.banks.sel?'on':''}" data-c="${b.c}">
+    const r=bankRates(b,'USD');
+    return `<button class="bank-item ${<b>${b.name}${r?' '+pillFor(b.c,'USD'):''}</b><i>${b.type}</i><u class="b-date">${r?dateFor(b.c,'USD'):'never collected'}</u>
       <span class="mono-badge">${b.c.slice(0,2)}</span>
       <span class="bi-txt"><b>${b.name}</b><i>${b.type}</i></span>
       <span class="bi-rate">${r?fmt(r.buy,2):'—'}<em>USD buy${st}</em></span>
@@ -1095,7 +1108,7 @@ function renderBankDetail(){
   $('#bankDetail').innerHTML=`
     <div class="bd-head">
       <span class="mono-badge lg">${b.c.slice(0,2)}</span>
-      <div><h2 style="margin:0">${b.name}</h2><p class="meta">${b.type}${b.est?' · Est. '+b.est:''} · HQ Addis Ababa</p></div>
+      <div><h2 style="margin:0">${b.name}${r?' '+pillFor(b.c,cur):''}</h2><p class="meta">${b.type}${b.est?' · Est. '+b.est:''} · HQ Addis Ababa</p></div>
       ${tags.length?`<span class="bd-tag">${tags[0]}</span>`:''}
     </div>
     <div class="chip-row" style="margin-top:18px">${CURRENCIES.map(c=>`<button class="chip ${c.code===cur?'on':''}" data-cur="${c.code}"${hasData(c.code)?'':' style="opacity:.35"'}>${c.code}</button>`).join('')}</div>
@@ -1267,7 +1280,6 @@ function startClock(){
   $('#ethDate').innerHTML=`${eth} <span>· Ethiopian calendar</span>`;
   setInterval(()=>{
     $('#clockTime').textContent=new Date().toLocaleTimeString('en-GB',{timeZone:'Africa/Addis_Ababa',hour:'2-digit',minute:'2-digit',second:'2-digit'})+' EAT';
-    $('#heroUpdated').textContent='updated '+ago(DATA.genTs)+(DATA.mode==='live'?` · ${okCount()}/${Object.keys(DATA.sources).length} sources ok`:'');
     $$('.c-upd').forEach(el=>{if(el.dataset.b)el.textContent=ago(sourceUpdated(el.dataset.b))});
   },1000);
 }
