@@ -185,10 +185,10 @@
    "type": "bureau",
    "fetched_at": "2026-10-08T11:36:49+00:00"
   },
-  "BRH": {
-   "name": "Berhan Bank",
-   "type": "bank",
-   "fetched_at": "2026-10-05T17:09:30+00:00"
+  "BRH": { 
+   "name": "Berhan Bank", 
+   "type": "bank", 
+   "fetched_at": "2026-10-08T16:25:00+00:00"
   },
   "GOH": {
    "name": "Goh Betoch Bank",
@@ -1318,7 +1318,12 @@
    "buy": 42.0602,
    "sell": 42.9014,
    "flag": "stale"
-  }
+  },
+  { "source": "BRH", "currency": "USD", "buy": 161.7225, "sell": 164.9570 },
+  { "source": "BRH", "currency": "EUR", "buy": 188.5348, "sell": 192.3055 },
+  { "source": "BRH", "currency": "GBP", "buy": 215.6381, "sell": 219.9509 },
+  { "source": "BRH", "currency": "AED", "buy": 44.0325, "sell": 44.9131 },
+  { "source": "BRH", "currency": "CNY", "buy": 24.1211, "sell": 24.6035 }
  ],
  "stale_since": {
   "ORB|USD": "2026-10-08",
