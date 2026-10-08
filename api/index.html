@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Birrwatch API — free Ethiopian exchange rate data</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23D9A62E'/%3E%3Ctext x='32' y='43' font-size='28' text-anchor='middle' fill='%23191713' font-family='serif'%3E%E1%89%A5%E1%88%AD%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Archivo:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F6F4EE; --panel:#FBFAF6; --ink:#191713; --ink2:#3F3B2F; --muted:#75705F;
+  --line:#E4DFCF; --line2:#D6D0BC; --green:#0B7B3D; --red:#B93A1B; --gold:#D9A62E;
+  --mono:"Spline Sans Mono",ui-monospace,monospace; --ui:"Archivo",sans-serif; --disp:"Fraunces",serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:400 14.5px/1.6 var(--ui)}
+.wrap{max-width:900px;margin:0 auto;padding:0 20px}
+.hdr{border-bottom:1px solid var(--line);background:var(--panel);position:sticky;top:0;z-index:5}
+.hdr-in{max-width:900px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink)}
+.brand-mark{width:30px;height:30px;border-radius:8px;background:var(--gold);display:grid;place-items:center;font:600 12px "Noto Sans Ethiopic",serif}
+.brand-name{font:600 17px var(--disp)}
+.hdr a.link{font:600 12px var(--mono);color:var(--muted);text-decoration:none;border:1px solid var(--line2);border-radius:999px;padding:5px 12px}
+.hdr a.link:hover{color:var(--ink);border-color:var(--ink)}
+h1{font:600 clamp(28px,5vw,40px)/1.15 var(--disp);letter-spacing:-.01em;margin:34px 0 10px}
+.sub{color:var(--muted);font-size:14.5px;max-width:640px;margin-bottom:24px}
+.sub b{color:var(--ink2)}
+h2{font:600 22px var(--disp);margin:44px 0 8px;letter-spacing:-.01em}
+h3{font:600 15px var(--ui);margin:22px 0 8px}
+p{margin:8px 0}
+.panel{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:18px 20px;margin:16px 0}
+.kicker{font:500 10.5px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+code,.mono{font:500 12.5px var(--mono);background:#EFECE1;border-radius:6px;padding:2px 7px;word-break:break-all}
+th{font:500 10.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line2)}
+td{padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:top}
+table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.tblwrap{border-radius:12px;overflow-x:auto;margin:12px 0 8px}
+td .mono{font-size:11.5px}
+.mut{color:var(--muted)}
+.urlchip{display:inline-block;font:600 13px var(--mono);background:var(--ink);color:#F6F4EE;border-radius:8px;padding:8px 14px;margin:6px 0}
+.tag{display:inline-block;font:700 9px var(--mono);letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:2px 9px;margin-left:6px;vertical-align:middle}
+.tag.g{color:var(--green);border:1px solid rgba(11,123,61,.35);background:rgba(11,123,61,.07)}
+.tag.r{color:var(--red);border:1px solid rgba(185,58,27,.35);background:rgba(185,58,27,.07)}
+.tag.y{color:#8a6d00;border:1px solid rgba(217,166,46,.5);background:rgba(217,166,46,.12)}
+.pre{position:relative;background:#1E1B14;color:#EDEAE0;border-radius:12px;padding:16px 16px;margin:10px 0;overflow-x:auto}
+.pre code{background:none;color:#EDEAE0;font:400 12.5px/1.65 var(--mono);white-space:pre;display:block;padding:0}
+.copy{position:absolute;top:10px;right:10px;background:rgba(246,244,238,.12);color:#EDEAE0;border:1px solid rgba(246,244,238,.25);border-radius:7px;font:600 11px var(--mono);padding:5px 10px;cursor:pointer}
+.copy:hover{background:rgba(246,244,238,.22)}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;margin-right:8px}
+.statgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px 18px}
+@media(min-width:640px){.statgrid{grid-template-columns:repeat(4,1fr)}}
+.statgrid>div{border-left:2px solid var(--line2);padding-left:12px}
+.statgrid b{display:block;font:600 20px var(--mono);letter-spacing:-.02em;margin:2px 0}
+.statgrid span{display:block;font:400 10px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+footer{border-top:1px solid var(--line);margin-top:56px;padding:26px 0 40px;color:var(--muted);font-size:12.5px}
+footer a{color:var(--ink2)}
+</style>
+</head>
+<body>
+
+<div class="hdr"><div class="hdr-in">
+  <a class="brand" href="/"><span class="brand-mark">ብር</span><span class="brand-name">Birrwatch</span></a>
+  <span class="kicker" style="margin-left:6px">API documentation · v1</span>
+  <a class="link" href="/" style="margin-left:auto">← Birrwatch.et</a>
+  <a class="link" href="/api/rates">/api/rates</a>
+  <a class="link" href="/api/trends">/api/trends</a>
+</div></div>
+
+<div class="wrap">
+
+<h1>Free Ethiopian exchange-rate data</h1>
+<p class="sub">Two public JSON endpoints give you every rate Birrwatch collects — <b>27+ commercial banks, 5 licensed FX bureaus, NBE's official reference, the customs valuation rate and a parallel-market (USDT/ETB) indicator</b> — updated automatically three times a day, plus daily history. No key, no signup. Free with attribution.</p>
+
+<div class="panel">
+  <div class="kicker" style="margin-bottom:10px"><span class="live-dot" id="liveDot" style="background:#B93A1B"></span>Live — from the current dataset</div>
+  <div class="statgrid">
+    <div><span>Sources</span><b id="stSources">…</b></div>
+    <div><span>Quotes</span><b id="stQuotes">…</b></div>
+    <div><span>Updated</span><b id="stUpdated" style="font-size:14px">…</b></div>
+    <div><span>USD bank avg</span><b id="stUsd">…</b></div>
+  </div>
+  <p class="mut" style="font-size:11.5px;margin-top:12px" id="liveNote">Loading live values…</p>
+</div>
+
+<h2>Endpoints</h2>
+
+<h3><span class="urlchip">GET /api/rates</span> <span class="tag g">static json</span></h3>
+<p>The full current dataset: every collected source and currency, plus per-source freshness. Updates 3×/day (≈ 08:23, 11:23, 14:23 Addis time).</p>
+<div class="tblwrap"><table>
+  <thead><tr><th>Field</th><th>Type</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><code>meta.generated_at</code></td><td class="mono">string</td><td>Dataset build time (ISO-8601, UTC). Compare before re-processing — if unchanged, skip.</td></tr>
+    <tr><td><code>meta.version</code></td><td class="mono">number</td><td>Contract version — currently <b>1</b>. Fields are only ever added, never renamed.</td></tr>
+    <tr><td><code>meta.disclaimer</code></td><td class="mono">string</td><td>Data provenance &amp; no-warranty text.</td></tr>
+    <tr><td><code>sources.&lt;ID&gt;.name</code></td><td class="mono">string</td><td>Display name, e.g. <code>"Commercial Bank of Ethiopia"</code>.</td></tr>
+    <tr><td><code>sources.&lt;ID&gt;.type</code></td><td class="mono">string</td><td><code>bank</code> · <code>bureau</code> · <code>official</code> (NBE) · <code>customs</code> (ERCA) · <code>market</code> (parallel USDT).</td></tr>
+    <tr><td><code>sources.&lt;ID&gt;.fetched_at</code></td><td class="mono">string</td><td>When that source was last read. Failed sources keep their previous stamp.</td></tr>
+    <tr><td><code>rates[].source</code></td><td class="mono">string</td><td>Source ID — joins with <code>sources</code>.</td></tr>
+    <tr><td><code>rates[].currency</code></td><td class="mono">string</td><td>ISO code. USD, EUR, AED, SAR, GBP, CNY across banks; USDT for the parallel reference.</td></tr>
+    <tr><td><code>rates[].buy</code></td><td class="mono">number</td><td>Rate at which the source <b>buys FX from you</b> (you receive ETB). Higher is better when selling.</td></tr>
+    <tr><td><code>rates[].sell</code></td><td class="mono">number</td><td>Rate at which the source <b>sells FX to you</b> (you pay ETB). Lower is better when buying.</td></tr>
+    <tr><td><code>rates[].flag</code></td><td class="mono">string?</td><td><code>"stale"</code> when the sheet failed our fleet cross-check (see Semantics). Optional field.</td></tr>
+    <tr><td><code>stale_since.&lt;src|ccy&gt;</code></td><td class="mono">string?</td><td>Date the sheet was first flagged stale. Optional.</td></tr>
+  </tbody>
+</table></div>
+
+<h3><span class="urlchip">GET /api/trends</span> <span class="tag g">static json</span></h3>
+<p>Daily history, one value per calendar day, arrays aligned to <code>dates</code>. Grows daily — collecting since September 2026.</p>
+<div class="tblwrap"><table>
+  <thead><tr><th>Field</th><th>Type</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><code>dates[]</code></td><td class="mono">string[]</td><td>ISO dates, ascending. Last element = latest collected day.</td></tr>
+    <tr><td><code>series.&lt;CCY&gt;.mid[]</code></td><td class="mono">number[]</td><td>Daily bank-average mid for that currency. Gaps forward-filled from the previous day.</td></tr>
+    <tr><td><code>series.&lt;CCY&gt;.official[]</code></td><td class="mono">number[]?</td><td>Daily NBE official weighted average (published for USD, EUR, AED, SAR, GBP, CNY on weekdays).</td></tr>
+  </tbody>
+</table></div>
+
+<h2>Semantics you should know</h2>
+<div class="tblwrap"><table>
+  <tbody>
+    <tr><td><b>buy vs sell</b></td><td>Always from the <i>customer's</i> perspective at that counter. A bank "buys" your dollars; it "sells" dollars to you. Official and customs sources publish one reference number — we store it as buy&nbsp;=&nbsp;sell.</td></tr>
+    <tr><td><b>stale flag</b></td><td>When one bank's sheet fails our cross-check against the median of ~25 banks (&gt;2.5% off for USD, &gt;4% for others), we flag it <code>"stale"</code> and keep serving it — but the Birrwatch site excludes it from averages, "best rate" ranking and alerts. You should probably do the same; the flag exists so <i>you</i> can decide.</td></tr>
+    <tr><td><b>USDT / ETB</b></td><td>An <b>indicative parallel-market reference</b> from public sources — not a bank or NBE rate, not an offer to trade.</td></tr>
+    <tr><td><b>NBE official</b></td><td>The published "Indicative Daily Exchange Rate" (weighted average of the previous day's bank transactions). Published weekdays only; buy = sell.</td></tr>
+    <tr><td><b>Missing rows</b></td><td>If a bank didn't publish a currency today, the row is absent — never zero, never invented.</td></tr>
+  </tbody>
+</table></div>
+
+<h2>Usage rules</h2>
+<div class="panel">
+  <p><b>1.</b> Cache for at least <b>15 minutes</b> — the dataset updates 3×/day; polling faster gains nothing.</p>
+  <p><b>2.</b> Attribute <b>"Rates via Birrwatch"</b> with a link to <a href="https://birrwatch.et">birrwatch.et</a>.</p>
+  <p><b>3.</b> Never present the data as NBE-official. Rates are indicative aggregates of published sheets, provided as-is with no warranty of accuracy or availability.</p>
+</div>
+
+<h2>Examples — with live values</h2>
+<p class="mut" style="font-size:12.5px">The values inside these examples were fetched from the live API when you loaded this page.</p>
+
+<h3>curl</h3>
+<div class="pre"><button class="copy">copy</button><code>curl https://birrwatch.et/api/rates</code></div>
+
+<h3>Python — bank-average USD/ETB right now</h3>
+<div class="pre"><button class="copy">copy</button><code>import requests
+
+d = requests.get("https://birrwatch.et/api/rates").json()
+
+banks = [r for r in d["rates"]
+         if r["currency"] == "USD"
+         and d["sources"][r["source"]]["type"] == "bank"
+         and not r.get("flag")]
+
+avg = sum((float(r["buy"]) + float(r["sell"])) / 2 for r in banks) / len(banks)
+print(f"USD/ETB bank average: {avg:.2f}")</code></div>
+
+<div class="panel">
+  <div class="kicker" style="margin-bottom:8px">This code just printed</div>
+  <b style="font:600 22px var(--mono)" id="pyOut">…</b>
+</div>
+
+<h3>JavaScript — best USD buy across banks</h3>
+<div class="pre"><button class="copy">copy</button><code>const d = await fetch("https://birrwatch.et/api/rates").then(r =&gt; r.json());
+
+const best = d.rates
+  .filter(r =&gt; r.currency === "USD"
+        &amp;&amp; d.sources[r.source]?.type === "bank"
+        &amp;&amp; !r.flag)
+  .sort((a, b) =&gt; b.buy - a.buy)[0];
+
+console.log(best.source, "buys USD at", best.buy);</code></div>
+
+<div class="panel">
+  <div class="kicker" style="margin-bottom:8px">This code just printed</div>
+  <b style="font:600 15px var(--mono)" id="jsOut">…</b>
+</div>
+
+<h3>Live sample — USD quotes as served right now</h3>
+<div class="tblwrap"><table id="sampleTable">
+  <thead><tr><th>source</th><th>type</th><th class="mono">buy</th><th class="mono">sell</th><th>flag</th></tr></thead>
+  <tbody><tr><td colspan="5" class="mut">loading…</td></tr></tbody>
+</table></div>
+<p class="mut" style="font-size:11.5px">First bank rows of the current dataset. Fetch <a href="/api/rates"><span class="mono">/api/rates</span></a> for all of it.</p>
+
+</div>
+
+<footer><div class="wrap">
+  <p><b>Birrwatch API v1</b> — free with attribution. Fields are only ever added, never renamed; changes are announced on this page. Questions: <a href="mailto:hello@birrwatch.et">hello@birrwatch.et</a>.</p>
+  <p><a href="/">← Back to Birrwatch.et</a></p>
+</div></footer>
+
+<script>
+(async function(){
+  const $=s=>document.querySelector(s);
+  try{
+    const d=await fetch("/data/rates.json").then(r=>r.json());
+    const banks=d.rates.filter(r=>r.currency==="USD"&&d.sources[r.source]&&d.sources[r.source].type==="bank"&&!r.flag);
+    const avg=banks.length?banks.reduce((s,r)=>s+(+r.buy+ +r.sell)/2,0)/banks.length:null;
+    $("#stSources").textContent=Object.keys(d.sources||{}).length;
+    $("#stQuotes").textContent=(d.rates||[]).length;
+    $("#stUpdated").textContent=d.meta&&d.meta.generated_at?new Date(d.meta.generated_at).toLocaleDateString("en-GB",{day:"numeric",month:"short"}):"—";
+    $("#stUsd").textContent=avg?avg.toFixed(2):"—";
+    $("#pyOut").textContent=avg?("USD/ETB bank average: "+avg.toFixed(2)):"—";
+    const best=banks.slice().sort((a,b)=>b.buy-a.buy)[0];
+    $("#jsOut").textContent=best?(best.source+" buys USD at "+best.buy):"—";
+    $("#liveDot").style.background="#0B7B3D";
+    $("#liveNote").textContent="Fetched live from /api/rates at "+new Date().toLocaleTimeString()+".";
+    const rows=(banks.slice(0,6));
+    document.querySelector("#sampleTable tbody").innerHTML=rows.map(r=>
+      `<tr><td class="mono">${r.source}</td><td>${(d.sources[r.source]||{}).name||""}</td><td class="mono">${(+r.buy).toFixed(2)}</td><td class="mono">${(+r.sell).toFixed(2)}</td><td>${r.flag?'<span class="tag r">'+r.flag+"</span>":'<span class="tag g">ok</span>'}</td></tr>`).join("");
+  }catch(e){
+    $("#liveNote").textContent="Live preview unavailable right now — the endpoints themselves are unaffected. Try /api/rates directly.";
+  }
+  document.querySelectorAll(".copy").forEach(b=>b.addEventListener("click",()=>{
+    const code=b.parentElement.querySelector("code").innerText;
+    (navigator.clipboard?navigator.clipboard.writeText(code):Promise.reject()).then(
+      ()=>{b.textContent="copied";setTimeout(()=>b.textContent="copy",1500)},
+      ()=>{});
+  }));
+})();
+</script>
+</body>
+</html>
