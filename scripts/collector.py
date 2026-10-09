@@ -91,7 +91,7 @@ SOURCES = {
         "https://zemenbank.com/exchange-rate/",
         "https://zemenbank.com/",
     ]},
-    "HIB": {"name": "Hibret Bank", "type": "bank", "urls": [
+    "HIB": {"name": "Hibret Bank", "type": "bank", "debug": True, "urls": [
         "https://www.hibretbank.com.et/about/exchange-rate/",
         "https://www.hibretbank.com.et/",
     ]},
@@ -106,7 +106,7 @@ SOURCES = {
     "ENB": {"name": "Enat Bank", "type": "bank", "urls": [
         "https://www.enatbanksc.com/",
     ]},
-    "ZZB": {"name": "ZamZam Bank", "type": "bank", "urls": [
+    "ZZB": {"name": "ZamZam Bank", "type": "bank", "debug": True, "urls": [
         "https://zamzambank.com/exchange-rates/",
         "https://zamzambank.com/",
     ]},
@@ -128,7 +128,7 @@ SOURCES = {
         "https://dbe.com.et/exchange-rate/",
         "https://dbe.com.et/",
     ]},
-    "GDB": {"name": "Gadaa Bank", "type": "bank", "urls": [
+    "GDB": {"name": "Gadaa Bank", "type": "bank", "debug": True, "urls": [
         "https://gadaabank.com.et/",
     ]},
     "GLB": {"name": "Global Bank Ethiopia", "type": "bank", "urls": [
@@ -1225,6 +1225,8 @@ def main():
                 print(f"[collect] {sid} error", flush=True)
             continue
         got, via, notes = result
+        if cfg.get("debug") and notes:
+            summary.append(f"| {sid} | 🔍 {'; '.join(notes[:6])} |")
         if not got:
             detail = "; ".join(notes[:14]) if notes else "unknown"
             summary.append(f"| {sid} | ✗ {detail} — kept previous values |")
