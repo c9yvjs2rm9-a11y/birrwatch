@@ -390,6 +390,7 @@ def _qual(w):
 
 
 def detect_header(rows):
+    """Pick a MATCHED (buy, sell) pair — same rate type, transaction first."""
     for i, row in enumerate(rows):
         nxt = rows[i + 1] if i + 1 < len(rows) else []
         width = max(len(row), len(nxt))
@@ -402,22 +403,21 @@ def detect_header(rows):
             elif r == "sell":
                 sells.append((j, _qual(combo)))
         if buys and sells:
-            def pick(lst):
-                for want in ("txn", None, "cash"):
-                    for j, q in lst:
-                        if q == want:
-                            return j
-                return lst[0][0]
-            b = pick(buys)
-            s = pick(sells)
+            for want in ("txn", None, "cash"):
+                b = next((j for j, q in buys if q == want), None)
+                s = next((j for j, q in sells if q == want), None)
+                if b is not None and s is not None and b != s:
+                    return i, b, s
+            b, s = buys[0][0], sells[0][0]
             if b != s:
                 return i, b, s
     return None
 
 
 def parse_page(html):
+    """Merge all tables; transaction values win where a bank publishes both."""
     soup = BeautifulSoup(html, "html.parser")
-    best = {}
+    best_any, best_txn = {}, {}
     for table in soup.find_all("table"):
         rows = table_rows(table)
         head = detect_header(rows)
@@ -429,6 +429,7 @@ def parse_page(html):
         bu_, su_ = norm(bt), norm(st)
         if ("WEIGHTED" in bu_ or "AVERAGE" in bu_) and ("WEIGHTED" in su_ or "AVERAGE" in su_):
             continue
+        is_txn = "TRANSACTION" in bu_ or "TRANSACTION" in su_
         out = {}
         for r in rows[hi + 1:]:
             if len(r) <= max(bcol, scol):
@@ -441,9 +442,13 @@ def parse_page(html):
                 buy, sell = sell, buy
             if plausible(buy, sell):
                 out[cur] = (buy, sell)
-        if len(out) > len(best):
-            best = out
-    return best
+        if is_txn:
+            best_txn.update(out)
+        if len(out) > len(best_any):
+            best_any = out
+    merged = dict(best_any)
+    merged.update(best_txn)
+    return merged
 
 
 def parse_nbe_headline(html):
