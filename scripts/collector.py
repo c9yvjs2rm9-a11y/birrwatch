@@ -142,7 +142,8 @@ SOURCES = {
     "HJB": {"name": "Hijra Bank", "type": "bank", "urls": [
         "https://hijra-bank.com/",
     ]},
-    "OMO": {"name": "Omo Bank", "type": "bank", "urls": [
+    "OMO": {"name": "Omo Bank", "type": "bank", "browser_first": True,
+            "click": ["TRANSACTION BUYING/SELLING"], "urls": [
         "https://omobanksc.com/",
     ]},
     "RMB": {"name": "Rammis Bank", "type": "bank", "urls": [
@@ -302,62 +303,27 @@ def parse_json_rates(node, out=None, depth=0):
                             cur = m
                             break
                 if cur and cur not in out:
-                    b = s = None
+                    exact_b = exact_s = tx_b = tx_s = None
                     for k, v in item.items():
                         kl = str(k).lower()
                         f = _num_ok(v)
                         if f is None:
                             continue
-                        if any(w in kl for w in ("buy", "bid", "purchas")):
-                            b = f
-                        elif any(w in kl for w in ("sell", "ask", "offer")):
-                            s = f
+                        if kl in ("buying", "buy", "bid"):
+                            exact_b = f
+                        elif kl in ("selling", "sell", "ask", "offer"):
+                            exact_s = f
+                        elif "transaction" in kl and "buy" in kl:
+                            tx_b = f
+                        elif "transaction" in kl and "sell" in kl:
+                            tx_s = f
+                    b = exact_b if exact_b is not None else tx_b
+                    s = exact_s if exact_s is not None else tx_s
                     if b and s and plausible(min(b, s), max(b, s)):
                         out[cur] = (min(b, s), max(b, s))
     elif isinstance(node, dict):
         for v in node.values():
             parse_json_rates(v, out, depth + 1)
-    return out
-
-
-def parse_json_official(node, out=None, depth=0):
-    """Official/customs APIs: a currency token plus either explicit buy/sell
-    or a single rate-like number anywhere in the JSON tree."""
-    if out is None:
-        out = {}
-    if depth > 8 or len(out) > 60:
-        return out
-    if isinstance(node, list):
-        for item in node:
-            parse_json_official(item, out, depth + 1)
-    elif isinstance(node, dict):
-        cur = None
-        for v in node.values():
-            if isinstance(v, str):
-                m = match_currency(v)
-                if m:
-                    cur = m
-                    break
-        if cur and cur not in out:
-            b = s = single = None
-            for k, v in node.items():
-                kl = str(k).lower()
-                f = _num_ok(v)
-                if f is None:
-                    continue
-                if any(w in kl for w in ("buy", "bid", "purchas")):
-                    b = f
-                elif any(w in kl for w in ("sell", "ask", "offer")):
-                    s = f
-                elif any(w in kl for w in ("rate", "mid", "value", "indicative", "price")):
-                    single = f
-            if b and s:
-                out[cur] = (min(b, s), max(b, s))
-            elif single:
-                out[cur] = (single, single)
-        for v in node.values():
-            if isinstance(v, (dict, list)):
-                parse_json_official(v, out, depth + 1)
     return out
 
 
@@ -743,7 +709,7 @@ def attempt_static(url):
     return None, last
 
 
-def attempt_dynamic(url, capture=False):
+def attempt_dynamic(url, capture=False, click_texts=None):
     info = []
     caps = []
     pw = None
@@ -805,6 +771,16 @@ def attempt_dynamic(url, capture=False):
                     info.append("clicked View")
             except Exception:
                 pass
+            for ctext in (click_texts or []):
+                try:
+                    el = page.get_by_text(ctext, exact=False).first
+                    if el.count() > 0:
+                        el.click(timeout=3000)
+                        page.wait_for_timeout(3000)
+                        info.append("clicked:" + ctext[:18])
+                        break
+                except Exception:
+                    pass
             html = page.content() or ""
             try:
                 ntab = len(BeautifulSoup(html, "html.parser").find_all("table"))
@@ -1112,7 +1088,7 @@ def collect_source(cfg):
         notes.append("nbe api failed — trying pages")
     if cfg.get("browser_first"):
         for url in cfg["urls"]:
-            dhtml, derr, dinfo, _caps = attempt_dynamic(url)
+            dhtml, derr, dinfo, _caps = attempt_dynamic(url, click_texts=cfg.get("click"))
             if dhtml:
                 if cfg.get("headline"):
                     h = parse_nbe_headline(dhtml)
@@ -1158,7 +1134,7 @@ def collect_source(cfg):
             notes.append(f"{short(url)}: {err}")
         if not browser_worth_it(err):
             continue
-        dhtml, derr, dinfo, _caps = attempt_dynamic(url)
+        dhtml, derr, dinfo, _caps = attempt_dynamic(url, click_texts=cfg.get("click"))
         if dhtml:
             if cfg.get("headline"):
                 h = parse_nbe_headline(dhtml)
