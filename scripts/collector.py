@@ -84,7 +84,7 @@ SOURCES = {
         "https://www.nibbanksc.com/exchange-rate/",
         "https://www.nibbanksc.com/",
     ]},
-    "WGB": {"name": "Wegagen Bank", "type": "bank", "urls": [
+    "WGB": {"name": "Wegagen Bank", "type": "bank", "debug": True, "urls": [
         "https://www.wegagen.com/",
     ]},
     "ZEM": {"name": "Zemen Bank", "type": "bank", "urls": [
@@ -1101,6 +1101,8 @@ def collect_source(cfg):
                         return h, "headline", notes
                 got = parse_any(dhtml)
                 if got:
+                    if cfg.get("debug"):
+                        notes.extend(table_preview(dhtml))
                     return got, "browser", notes
                 notes.append(f"browser-first {short(url)}: parsed 0 (" + "; ".join(dinfo) + ")")
             else:
@@ -1130,6 +1132,8 @@ def collect_source(cfg):
                 continue
             got = parse_any(html)
             if got:
+                if cfg.get("debug"):
+                    notes.extend(table_preview(html))
                 return got, "static", notes
             n, kw = diagnose(html)
             notes.append(f"{short(url)}: HTTP 200 · {n} tables · {'rate words found' if kw else 'no rate words'}")
@@ -1230,7 +1234,7 @@ def main():
                 print(f"[collect] {sid} error", flush=True)
             continue
         got, via, notes = result
-        if cfg.get("debug") and notes:
+        if cfg.get("debug"):
             summary.append(f"| {sid} | 🔍 {'; '.join(notes[:6])} |")
         if not got:
             detail = "; ".join(notes[:14]) if notes else "unknown"
