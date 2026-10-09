@@ -414,6 +414,8 @@ def table_rows(table):
 
 def _qual(w):
     lw = w.lower()
+    if any(k in lw for k in ("transaction", "txn", "electronic", "transfer")):
+        return "txn"
     if "cash" in lw or "note" in lw:
         return "cash"
     if "weighted" in lw or "average" in lw:
@@ -435,7 +437,7 @@ def detect_header(rows):
                 sells.append((j, _qual(combo)))
         if buys and sells:
             def pick(lst):
-                for want in ("cash", None):
+                for want in ("txn", None, "cash"):
                     for j, q in lst:
                         if q == want:
                             return j
@@ -544,14 +546,26 @@ def parse_cards(html):
         cur = match_currency(u)
         if not cur:
             continue
+        low = t.lower()
+        k = low.find("transaction")
+        seg = t[k:] if k >= 0 else t
         nums = []
-        for m in NUM.findall(t):
+        for m in NUM.findall(seg):
             try:
                 v = float(m.replace(",", ""))
             except ValueError:
                 continue
-            if 0.5 < v < 5000:
+            if 5 < v < 5000:
                 nums.append(v)
+        if len(nums) < 2:
+            nums = []
+            for m in NUM.findall(t):
+                try:
+                    v = float(m.replace(",", ""))
+                except ValueError:
+                    continue
+                if 5 < v < 5000:
+                    nums.append(v)
         if len(nums) < 2:
             continue
         has_bs = any(w in u for w in BUY_W) and any(w in u for w in SELL_W)
