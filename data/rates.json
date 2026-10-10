@@ -1,6 +1,6 @@
 {
  "meta": {
-  "generated_at": "2026-10-10T08:35:27+00:00",
+  "generated_at": "2026-10-10T11:33:38+00:00",
   "version": 1,
   "disclaimer": "Indicative rates collected from published bank rate sheets. Confirm with the bank before transacting."
  },
@@ -8,7 +8,7 @@
   "NBE": {
    "name": "National Bank of Ethiopia",
    "type": "official",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "ERCA": {
    "name": "Customs valuation rate \u2014 ERCA",
@@ -18,17 +18,17 @@
   "CBE": {
    "name": "Commercial Bank of Ethiopia",
    "type": "bank",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "AWB": {
    "name": "Awash Bank",
    "type": "bank",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "DBL": {
    "name": "Dashen Bank",
    "type": "bank",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "BOA": {
    "name": "Bank of Abyssinia",
@@ -38,112 +38,112 @@
   "CBO": {
    "name": "Cooperative Bank of Oromia",
    "type": "bank",
-   "fetched_at": "2026-10-10T05:34:53+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "P2P": {
    "name": "USDT/ETB \u2014 parallel market (ebr.exchange (indicative spread); indicative)",
    "type": "market",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "ORB": {
    "name": "Oromia Bank",
    "type": "bank",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "ABY": {
    "name": "Abay Bank",
    "type": "bank",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "ZEM": {
    "name": "Zemen Bank",
    "type": "bank",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "AHB": {
    "name": "Ahadu Bank",
    "type": "bank",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "DBE": {
    "name": "Development Bank of Ethiopia",
    "type": "bank",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "GLB": {
    "name": "Global Bank Ethiopia",
    "type": "bank",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "SQB": {
    "name": "Siinqee Bank",
    "type": "bank",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "AMM": {
    "name": "Ammann Forex Bureau",
    "type": "bureau",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "AYO": {
    "name": "AYOTAN Forex Bureau",
    "type": "bureau",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "HAR": {
    "name": "Haron Forex Bureau",
    "type": "bureau",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "TAY": {
    "name": "Taypay Forex Bureau",
    "type": "bureau",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "NIB": {
    "name": "Nib International Bank",
    "type": "bank",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "WGB": {
    "name": "Wegagen Bank",
    "type": "bank",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "HIB": {
    "name": "Hibret Bank",
    "type": "bank",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "BUN": {
    "name": "Bunna Bank",
    "type": "bank",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "ENB": {
    "name": "Enat Bank",
    "type": "bank",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "ZZB": {
    "name": "ZamZam Bank",
    "type": "bank",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "AIB": {
    "name": "Addis International Bank",
    "type": "bank",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "AMB": {
    "name": "Amhara Bank",
    "type": "bank",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "ANB": {
    "name": "Anbesa International Bank",
    "type": "bank",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "GDB": {
    "name": "Gadaa Bank",
@@ -153,22 +153,22 @@
   "HJB": {
    "name": "Hijra Bank",
    "type": "bank",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "OMO": {
    "name": "Omo Bank",
    "type": "bank",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "RMB": {
    "name": "Rammis Bank",
    "type": "bank",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "SHB": {
    "name": "Shabelle Bank",
    "type": "bank",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "TSB": {
    "name": "Tsedey Bank",
@@ -178,32 +178,32 @@
   "THB": {
    "name": "Tsehay Bank",
    "type": "bank",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "ROO": {
    "name": "Rooha Forex Bureau",
    "type": "bureau",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "BRH": {
    "name": "Berhan Bank",
    "type": "bank",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "GOH": {
    "name": "Goh Betoch Bank",
    "type": "bank",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "SKB": {
    "name": "Siket Bank",
    "type": "bank",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   },
   "SDB": {
    "name": "Sidama Bank",
    "type": "bank",
-   "fetched_at": "2026-10-10T08:35:27+00:00"
+   "fetched_at": "2026-10-10T11:33:38+00:00"
   }
  },
  "rates": [
@@ -246,8 +246,8 @@
   {
    "source": "CBO",
    "currency": "USD",
-   "buy": 160.8803,
-   "sell": 164.0979
+   "buy": 160.8853,
+   "sell": 164.103
   },
   {
    "source": "DBL",
@@ -312,14 +312,14 @@
   {
    "source": "CBE",
    "currency": "GBP",
-   "buy": 214.5575,
-   "sell": 218.8487
+   "buy": 218.6364,
+   "sell": 223.0092
   },
   {
    "source": "P2P",
    "currency": "USDT",
-   "buy": 191.89,
-   "sell": 193.05
+   "buy": 191.85,
+   "sell": 193.01
   },
   {
    "source": "AWB",
@@ -384,8 +384,8 @@
   {
    "source": "ZEM",
    "currency": "USD",
-   "buy": 161.0,
-   "sell": 164.22
+   "buy": 161.005,
+   "sell": 164.2251
   },
   {
    "source": "ZEM",
@@ -396,8 +396,8 @@
   {
    "source": "ZEM",
    "currency": "AED",
-   "buy": 43.8358,
-   "sell": 44.7125
+   "buy": 43.8371,
+   "sell": 44.7138
   },
   {
    "source": "ZEM",
@@ -811,26 +811,27 @@
   {
    "source": "ANB",
    "currency": "USD",
-   "buy": 163.5586,
-   "sell": 166.8298
+   "buy": 161.7221,
+   "sell": 164.9565
   },
   {
    "source": "ANB",
    "currency": "EUR",
-   "buy": 190.5763,
-   "sell": 194.3878
+   "buy": 190.3263,
+   "sell": 194.1328
   },
   {
    "source": "ANB",
    "currency": "AED",
-   "buy": 44.8434,
-   "sell": 45.7403
+   "buy": 45.7934,
+   "sell": 46.7093,
+   "flag": "stale"
   },
   {
    "source": "ANB",
    "currency": "GBP",
-   "buy": 214.6963,
-   "sell": 218.9902
+   "buy": 218.9902,
+   "sell": 223.37
   },
   {
    "source": "GDB",
@@ -901,8 +902,8 @@
   {
    "source": "RMB",
    "currency": "USD",
-   "buy": 161.3401,
-   "sell": 164.5669
+   "buy": 161.3563,
+   "sell": 164.5834
   },
   {
    "source": "RMB",
@@ -1420,6 +1421,7 @@
   "SKB|CNY": "2026-10-08",
   "ZZB|SAR": "2026-10-08",
   "TSB|AED": "2026-10-08",
-  "BUN|AED": "2026-10-10"
+  "BUN|AED": "2026-10-10",
+  "ANB|AED": "2026-10-10"
  }
 }
