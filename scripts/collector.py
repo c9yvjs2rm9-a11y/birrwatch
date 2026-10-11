@@ -390,13 +390,23 @@ def _qual(w):
 
 
 def detect_header(rows):
-    """Pick a MATCHED (buy, sell) pair — same rate type, transaction first."""
+    """Pick a MATCHED (buy, sell) pair — same rate type, transaction first.
+    Handles spanning group headers (CASH ... TRANSACTION ...) by propagating
+    the group label across empty cells in the group row."""
     for i, row in enumerate(rows):
         nxt = rows[i + 1] if i + 1 < len(rows) else []
         width = max(len(row), len(nxt))
+        grow = list(row)
+        last = ""
+        for j in range(len(grow)):
+            cell = grow[j].strip()
+            if cell:
+                last = cell
+            elif last and any(k in last.lower() for k in ("cash", "transaction", "txn")):
+                grow[j] = last
         buys, sells = [], []
         for j in range(width):
-            combo = (row[j] if j < len(row) else "") + " " + (nxt[j] if j < len(nxt) else "")
+            combo = (grow[j] if j < len(grow) else "") + " " + (nxt[j] if j < len(nxt) else "")
             r = role(combo)
             if r == "buy":
                 buys.append((j, _qual(combo)))
