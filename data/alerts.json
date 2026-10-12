@@ -1,1 +1,18 @@
-{ "id": "usd165", "pair": "USD", "dir": "above", "target": 165, "email": "c9yvjs2rm9@privaterelay.appleid.com", "status": "armed" }
+[
+  {
+    "id": "al-001",
+    "pair": "USD",
+    "dir": "above",
+    "target": 165,
+    "email": "c9yvjs2rm9@privaterelay.appleid.com",
+    "status": "armed"
+  },
+  {
+    "id": "al-002",
+    "pair": "USDT",
+    "dir": "below",
+    "target": 180,
+    "email": "c9yvjs2rm9@privaterelay.appleid.com",
+    "status": "armed"
+  }
+]
