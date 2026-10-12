@@ -24,6 +24,11 @@ jobs:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           ALERT_FROM: ${{ secrets.ALERT_FROM }}
         run: python3 scripts/alerter.py
+      - name: Post daily summary to Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python3 scripts/telegram.py
       - name: Commit alert state
         run: |
           git config user.name "birrwatch-bot"
