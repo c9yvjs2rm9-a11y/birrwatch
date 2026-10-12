@@ -65,8 +65,8 @@ def main():
     if usd:
         lines.append(f"💵 USD/ETB  {usd:.2f} (bank avg)")
         bb, bs = best(doc, "USD", "buy"), best(doc, "USD", "sell")
-        if bb: lines.append(f"  Best buy: {bb[0]} — {bb[1]:.2f}")
-        if bs: lines.append(f"  Best sell: {bs[0]} — {bs[1]:.2f}")
+        if bb: lines.append(f"  Best buy: {SHORT.get(bb[0], bb[0])} — {bb[1]:.2f}")
+        if bs: lines.append(f"  Best sell: {SHORT.get(bs[0], bs[0])} — {bs[1]:.2f}")
     for cur, flag in (("EUR", "🇪🇺"), ("AED", "🇦🇪"), ("SAR", "🇸🇦"), ("GBP", "🇬🇧")):
         if cur in bank:
             lines.append(f"{flag} {cur}/ETB  {bank[cur]:.2f}")
