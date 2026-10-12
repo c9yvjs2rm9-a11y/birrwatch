@@ -66,6 +66,9 @@ def main():
     changed = False
 
     for a in alerts:
+        if not isinstance(a, dict):
+            print(f"[eval] skipped non-object entry: {str(a)[:60]!r}", flush=True)
+            continue
         aid = a.get("id", "?")
         if a.get("status") != "armed":
             continue
