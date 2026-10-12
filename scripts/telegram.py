@@ -10,6 +10,15 @@ TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 CHAT = os.environ.get("TELEGRAM_CHAT_ID", "")
 
 
+SHORT = {
+ "CBE": "CBE", "DBE": "DBE", "AWB": "Awash", "DBL": "Dashen", "BOA": "Bank of Abyssinia",
+ "CBO": "Coop Bank Oromia", "ORB": "Oromia", "ABY": "Abay", "NIB": "Nib Int'l",
+ "WGB": "Wegagen", "ZEM": "Zemen", "HIB": "Hibret", "BRH": "Berhan", "BUN": "Bunna",
+ "ENB": "Enat", "TSB": "Tsedey", "THB": "Tsehay", "SDB": "Sidama", "AMB": "Amhara",
+ "GDB": "Gadaa", "GLB": "Global", "OMO": "Omo", "AIB": "Addis Int'l", "GOH": "Goh Betoch",
+ "ANB": "Anbesa", "ZZB": "ZamZam", "AHB": "Ahadu", "HJB": "Hijra", "RMB": "Rammis",
+ "SHB": "Shabelle", "SQB": "Siinqee", "SKB": "Siket",
+}
 def bank_mids(doc):
     bank = {}
     for r in doc.get("rates", []):
