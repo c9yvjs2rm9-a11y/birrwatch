@@ -1,6 +1,6 @@
 {
  "meta": {
-  "generated_at": "2026-10-14T11:52:50+00:00",
+  "generated_at": "2026-10-15T05:51:05+00:00",
   "version": 1,
   "disclaimer": "Indicative rates collected from published bank rate sheets. Confirm with the bank before transacting."
  },
@@ -8,7 +8,7 @@
   "NBE": {
    "name": "National Bank of Ethiopia",
    "type": "official",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "ERCA": {
    "name": "Customs valuation rate \u2014 ERCA",
@@ -18,22 +18,22 @@
   "CBE": {
    "name": "Commercial Bank of Ethiopia",
    "type": "bank",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "AWB": {
    "name": "Awash Bank",
    "type": "bank",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "DBL": {
    "name": "Dashen Bank",
    "type": "bank",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "BOA": {
    "name": "Bank of Abyssinia",
    "type": "bank",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "CBO": {
    "name": "Cooperative Bank of Oromia",
@@ -43,107 +43,107 @@
   "P2P": {
    "name": "USDT/ETB \u2014 parallel market (ebr.exchange (indicative spread); indicative)",
    "type": "market",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "ORB": {
    "name": "Oromia Bank",
    "type": "bank",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "ABY": {
    "name": "Abay Bank",
    "type": "bank",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "ZEM": {
    "name": "Zemen Bank",
    "type": "bank",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "AHB": {
    "name": "Ahadu Bank",
    "type": "bank",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "DBE": {
    "name": "Development Bank of Ethiopia",
    "type": "bank",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "GLB": {
    "name": "Global Bank Ethiopia",
    "type": "bank",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "SQB": {
    "name": "Siinqee Bank",
    "type": "bank",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "AMM": {
    "name": "Ammann Forex Bureau",
    "type": "bureau",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "AYO": {
    "name": "AYOTAN Forex Bureau",
    "type": "bureau",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "HAR": {
    "name": "Haron Forex Bureau",
    "type": "bureau",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "TAY": {
    "name": "Taypay Forex Bureau",
    "type": "bureau",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "NIB": {
    "name": "Nib International Bank",
    "type": "bank",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "WGB": {
    "name": "Wegagen Bank",
    "type": "bank",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "HIB": {
    "name": "Hibret Bank",
    "type": "bank",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "BUN": {
    "name": "Bunna Bank",
    "type": "bank",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "ENB": {
    "name": "Enat Bank",
    "type": "bank",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "ZZB": {
    "name": "ZamZam Bank",
    "type": "bank",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "AIB": {
    "name": "Addis International Bank",
    "type": "bank",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "AMB": {
    "name": "Amhara Bank",
    "type": "bank",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "ANB": {
    "name": "Anbesa International Bank",
    "type": "bank",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "GDB": {
    "name": "Gadaa Bank",
@@ -153,22 +153,22 @@
   "HJB": {
    "name": "Hijra Bank",
    "type": "bank",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "OMO": {
    "name": "Omo Bank",
    "type": "bank",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "RMB": {
    "name": "Rammis Bank",
    "type": "bank",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "SHB": {
    "name": "Shabelle Bank",
    "type": "bank",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "TSB": {
    "name": "Tsedey Bank",
@@ -178,40 +178,40 @@
   "THB": {
    "name": "Tsehay Bank",
    "type": "bank",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "ROO": {
    "name": "Rooha Forex Bureau",
    "type": "bureau",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "BRH": {
    "name": "Berhan Bank",
    "type": "bank",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "GOH": {
    "name": "Goh Betoch Bank",
    "type": "bank",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "SKB": {
    "name": "Siket Bank",
    "type": "bank",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   },
   "SDB": {
    "name": "Sidama Bank",
    "type": "bank",
-   "fetched_at": "2026-10-14T11:52:50+00:00"
+   "fetched_at": "2026-10-15T05:51:05+00:00"
   }
  },
  "rates": [
   {
    "source": "NBE",
    "currency": "USD",
-   "buy": 160.8578,
-   "sell": 160.8578
+   "buy": 160.6923,
+   "sell": 160.6923
   },
   {
    "source": "ERCA",
@@ -222,8 +222,8 @@
   {
    "source": "CBE",
    "currency": "USD",
-   "buy": 160.2319,
-   "sell": 163.4365
+   "buy": 160.4319,
+   "sell": 163.6405
   },
   {
    "source": "AWB",
@@ -264,8 +264,8 @@
   {
    "source": "CBE",
    "currency": "EUR",
-   "buy": 186.9906,
-   "sell": 190.7304
+   "buy": 186.101,
+   "sell": 189.823
   },
   {
    "source": "BOA",
@@ -312,14 +312,14 @@
   {
    "source": "CBE",
    "currency": "GBP",
-   "buy": 214.5575,
-   "sell": 218.8487
+   "buy": 215.7729,
+   "sell": 220.0883
   },
   {
    "source": "P2P",
    "currency": "USDT",
-   "buy": 193.31,
-   "sell": 194.47
+   "buy": 192.86,
+   "sell": 194.02
   },
   {
    "source": "AWB",
@@ -444,26 +444,26 @@
   {
    "source": "DBE",
    "currency": "AED",
-   "buy": 44.0067,
-   "sell": 44.8868
+   "buy": 44.0019,
+   "sell": 44.8819
   },
   {
    "source": "DBE",
    "currency": "SAR",
-   "buy": 43.0182,
-   "sell": 43.8785
+   "buy": 43.033,
+   "sell": 43.8937
   },
   {
    "source": "DBE",
    "currency": "GBP",
-   "buy": 213.4133,
-   "sell": 217.6816
+   "buy": 214.0275,
+   "sell": 218.3081
   },
   {
    "source": "DBE",
    "currency": "CNY",
-   "buy": 24.1484,
-   "sell": 24.6314
+   "buy": 24.1455,
+   "sell": 24.6284
   },
   {
    "source": "GLB",
@@ -486,8 +486,8 @@
   {
    "source": "SQB",
    "currency": "USD",
-   "buy": 160.9008,
-   "sell": 164.1188
+   "buy": 160.902,
+   "sell": 164.12
   },
   {
    "source": "SQB",
@@ -702,8 +702,8 @@
   {
    "source": "BUN",
    "currency": "USD",
-   "buy": 161.6965,
-   "sell": 164.9304
+   "buy": 161.7015,
+   "sell": 164.9355
   },
   {
    "source": "BUN",
@@ -902,14 +902,14 @@
   {
    "source": "RMB",
    "currency": "USD",
-   "buy": 161.5903,
-   "sell": 164.8221
+   "buy": 161.6469,
+   "sell": 164.8798
   },
   {
    "source": "RMB",
    "currency": "EUR",
-   "buy": 186.2931,
-   "sell": 190.019
+   "buy": 186.4794,
+   "sell": 190.209
   },
   {
    "source": "RMB",
@@ -926,8 +926,8 @@
   {
    "source": "RMB",
    "currency": "GBP",
-   "buy": 211.5263,
-   "sell": 215.7568
+   "buy": 211.7378,
+   "sell": 215.9726
   },
   {
    "source": "SHB",
@@ -986,14 +986,14 @@
   {
    "source": "ROO",
    "currency": "USD",
-   "buy": 184.02,
-   "sell": 187.7004
+   "buy": 183.55,
+   "sell": 187.221
   },
   {
    "source": "ROO",
    "currency": "EUR",
-   "buy": 205.07,
-   "sell": 209.1714
+   "buy": 204.7,
+   "sell": 208.794
   },
   {
    "source": "ROO",
@@ -1010,8 +1010,8 @@
   {
    "source": "ROO",
    "currency": "GBP",
-   "buy": 239.1,
-   "sell": 243.882
+   "buy": 239.11,
+   "sell": 243.8922
   },
   {
    "source": "ROO",
@@ -1034,8 +1034,8 @@
   {
    "source": "DBE",
    "currency": "EUR",
-   "buy": 180.3443,
-   "sell": 183.9512
+   "buy": 180.8777,
+   "sell": 184.4952
   },
   {
    "source": "GDB",
@@ -1089,20 +1089,20 @@
   {
    "source": "SKB",
    "currency": "USD",
-   "buy": 161.595,
-   "sell": 164.8269
+   "buy": 161.6,
+   "sell": 164.832
   },
   {
    "source": "SKB",
    "currency": "EUR",
-   "buy": 188.0328,
-   "sell": 191.7935
+   "buy": 188.0378,
+   "sell": 191.7986
   },
   {
    "source": "SKB",
    "currency": "GBP",
-   "buy": 213.8986,
-   "sell": 218.1766
+   "buy": 213.9036,
+   "sell": 218.1817
   },
   {
    "source": "SDB",
@@ -1137,50 +1137,50 @@
   {
    "source": "CBE",
    "currency": "AED",
-   "buy": 43.6278,
-   "sell": 44.5004
+   "buy": 43.6823,
+   "sell": 44.5559
   },
   {
    "source": "CBE",
    "currency": "SAR",
-   "buy": 42.6762,
-   "sell": 43.5297
+   "buy": 42.7294,
+   "sell": 43.584
   },
   {
    "source": "CBE",
    "currency": "CNY",
-   "buy": 23.8373,
-   "sell": 24.314
+   "buy": 23.867,
+   "sell": 24.3444
   },
   {
    "source": "NBE",
    "currency": "EUR",
-   "buy": 180.9161,
-   "sell": 180.9161
+   "buy": 179.9063,
+   "sell": 179.9063
   },
   {
    "source": "NBE",
    "currency": "AED",
-   "buy": 44.0113,
-   "sell": 44.0113
+   "buy": 43.9624,
+   "sell": 43.9624
   },
   {
    "source": "NBE",
    "currency": "SAR",
-   "buy": 43.0422,
-   "sell": 43.0422
+   "buy": 43.0128,
+   "sell": 43.0128
   },
   {
    "source": "NBE",
    "currency": "GBP",
-   "buy": 214.073,
-   "sell": 214.073
+   "buy": 212.69,
+   "sell": 212.69
   },
   {
    "source": "NBE",
    "currency": "CNY",
-   "buy": 24.1507,
-   "sell": 24.1507
+   "buy": 24.1295,
+   "sell": 24.1295
   },
   {
    "source": "SHB",
@@ -1275,29 +1275,29 @@
   {
    "source": "RMB",
    "currency": "CNY",
-   "buy": 20.347,
-   "sell": 20.754,
+   "buy": 20.3674,
+   "sell": 20.7747,
    "flag": "stale"
   },
   {
    "source": "SKB",
    "currency": "AED",
-   "buy": 46.2183,
-   "sell": 47.1427,
+   "buy": 46.2233,
+   "sell": 47.1478,
    "flag": "stale"
   },
   {
    "source": "SKB",
    "currency": "SAR",
-   "buy": 45.3855,
-   "sell": 46.2932,
+   "buy": 45.3905,
+   "sell": 46.2983,
    "flag": "stale"
   },
   {
    "source": "SKB",
    "currency": "CNY",
-   "buy": 26.774,
-   "sell": 27.3095,
+   "buy": 26.779,
+   "sell": 27.3146,
    "flag": "stale"
   },
   {
