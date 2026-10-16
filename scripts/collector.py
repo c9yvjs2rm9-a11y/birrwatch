@@ -40,6 +40,7 @@ UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML,
 HEADERS = {"User-Agent": UA}
 
 EBR_URL = "https://ebr.exchange/"
+LAST_CASH = {}
 EBR_API = "https://api.ebr.exchange/api/dashboard/market-stats"
 
 SOURCES = {
@@ -389,10 +390,9 @@ def _qual(w):
     return None
 
 
-def detect_header(rows):
-    """Pick a MATCHED (buy, sell) pair — same rate type, transaction first.
-    Handles spanning group headers (CASH ... TRANSACTION ...) by propagating
-    the group label across empty cells in the group row."""
+def detect_header_pairs(rows):
+    """All matched (basis, buy_col, sell_col) triples in the first usable header.
+    Spanning group labels (CASH ... TRANSACTION ...) propagate across empty cells."""
     for i, row in enumerate(rows):
         nxt = rows[i + 1] if i + 1 < len(rows) else []
         width = max(len(row), len(nxt))
@@ -412,53 +412,59 @@ def detect_header(rows):
                 buys.append((j, _qual(combo)))
             elif r == "sell":
                 sells.append((j, _qual(combo)))
-        if buys and sells:
-            for want in ("txn", None, "cash"):
-                b = next((j for j, q in buys if q == want), None)
-                s = next((j for j, q in sells if q == want), None)
-                if b is not None and s is not None and b != s:
-                    return i, b, s
-            b, s = buys[0][0], sells[0][0]
-            if b != s:
-                return i, b, s
-    return None
+        if not buys or not sells:
+            continue
+        pairs = []
+        for bj, bq in buys:
+            sj = next((j for j, q in sells if q == bq and j > bj), None)
+            if sj is None:
+                sj = next((j for j, q in sells if q is None and bq is None and j > bj), None)
+            if sj is not None:
+                pairs.append((bq, i, bj, sj))
+        if pairs:
+            return pairs
+    return []
 
 
 def parse_page(html):
-    """Merge all tables; transaction values win where a bank publishes both."""
+    """Returns (primary, cash). primary = txn-preferred quotes (as today);
+    cash = cash-basis quotes where the bank publishes them separately."""
     soup = BeautifulSoup(html, "html.parser")
-    best_any, best_txn = {}, {}
+    txn, cash, unspec = {}, {}, {}
     for table in soup.find_all("table"):
         rows = table_rows(table)
-        head = detect_header(rows)
-        if not head:
-            continue
-        hi, bcol, scol = head
-        bt = rows[hi][bcol] if bcol < len(rows[hi]) else ""
-        st = rows[hi + 1][scol] if hi + 1 < len(rows) and scol < len(rows[hi + 1]) else ""
-        bu_, su_ = norm(bt), norm(st)
-        if ("WEIGHTED" in bu_ or "AVERAGE" in bu_) and ("WEIGHTED" in su_ or "AVERAGE" in su_):
-            continue
-        is_txn = "TRANSACTION" in bu_ or "TRANSACTION" in su_
-        out = {}
-        for r in rows[hi + 1:]:
-            if len(r) <= max(bcol, scol):
+        for (basis, hi, bcol, scol) in detect_header_pairs(rows):
+            bt = rows[hi][bcol] if bcol < len(rows[hi]) else ""
+            st = rows[hi][scol] if scol < len(rows[hi]) else ""
+            bu_, su_ = norm(bt), norm(st)
+            if "WEIGHTED" in bu_ or "AVERAGE" in bu_ or "WEIGHTED" in su_ or "AVERAGE" in su_:
                 continue
-            cur = match_currency(r[0]) or match_currency(" ".join(r[:2]))
-            if not cur or cur in out:
-                continue
-            buy, sell = number(r[bcol]), number(r[scol])
-            if buy and sell and buy > sell:
-                buy, sell = sell, buy
-            if plausible(buy, sell):
-                out[cur] = (buy, sell)
-        if is_txn:
-            best_txn.update(out)
-        if len(out) > len(best_any):
-            best_any = out
-    merged = dict(best_any)
-    merged.update(best_txn)
-    return merged
+            out = {}
+            for r in rows[hi + 1:]:
+                if len(r) <= max(bcol, scol):
+                    continue
+                cur = match_currency(r[0]) or match_currency(" ".join(r[:2]))
+                if not cur or cur in out:
+                    continue
+                buy, sell = number(r[bcol]), number(r[scol])
+                if buy and sell and buy > sell:
+                    buy, sell = sell, buy
+                if plausible(buy, sell):
+                    out[cur] = (buy, sell)
+            if basis == "txn":
+                txn.update(out)
+            elif basis == "cash":
+                cash.update(out)
+            else:
+                for cur, v in out.items():
+                    unspec.setdefault(cur, v)
+    allc = set(txn) | set(unspec) | set(cash)
+    primary = {}
+    for cur in allc:
+        v = txn.get(cur) or unspec.get(cur) or cash.get(cur)
+        if v:
+            primary[cur] = v
+    return primary, cash
 
 
 def parse_nbe_headline(html):
@@ -566,21 +572,22 @@ def parse_cards(html):
 
 
 def parse_any(html):
+    """Returns (primary, cash_quotes)."""
     try:
-        got = parse_page(html)
+        primary, cash = parse_page(html)
     except Exception:
-        got = {}
-    if not got:
+        primary, cash = {}, {}
+    if not primary:
         try:
-            got = parse_cards(html)
+            primary = parse_cards(html) or {}
         except Exception:
-            got = {}
-    if not got:
+            primary = {}
+    if not primary:
         try:
-            got = parse_rate_tables(html)
+            primary = parse_rate_tables(html) or {}
         except Exception:
-            got = {}
-    return got
+            primary = {}
+    return primary, (cash or {})
 
 
 def diagnose(html):
@@ -1079,7 +1086,8 @@ def fetch_nbe_api(notes):
     return None
 
 
-def collect_source(cfg):
+def collect_source(cfg, sid=""):
+    global LAST_CASH
     if cfg.get("method") == "csv":
         notes = []
         for url in cfg["urls"]:
@@ -1109,7 +1117,7 @@ def collect_source(cfg):
                     h = parse_nbe_headline(dhtml)
                     if h:
                         return h, "headline", notes
-                got = parse_any(dhtml)
+                got, cash_got = parse_any(dhtml)
                 if got:
                     if cfg.get("debug"):
                         notes.extend(table_preview(dhtml))
@@ -1140,8 +1148,10 @@ def collect_source(cfg):
                     return jgot, "api", notes
                 notes.append(f"{short(url)}: json body: {html[:200]}")
                 continue
-            got = parse_any(html)
+            got, cash_got = parse_any(html)
             if got:
+                if cash_got and sid:
+                    LAST_CASH[sid] = cash_got
                 if cfg.get("debug"):
                     notes.extend(table_preview(html))
                 return got, "static", notes
@@ -1173,6 +1183,8 @@ def collect_source(cfg):
                     return jgot, "api", notes
             got = parse_any(dhtml)
             if got:
+                if cash_got and sid:
+                    LAST_CASH[sid] = cash_got
                 return got, "browser", notes
             notes.append("browser: parsed 0 (" + "; ".join(dinfo) + ")")
             n, _kw = diagnose(dhtml)
@@ -1234,7 +1246,7 @@ def main():
             skipped.append(sid)
             continue
         print(f"[collect] {sid} …", flush=True)
-        result, err = run_with_timeout(collect_source, (cfg,), timeout=cfg.get("cap") or PER_SOURCE, label=sid)
+        result, err = run_with_timeout(collect_source, (cfg, sid), timeout=cfg.get("cap") or PER_SOURCE, label=sid)
         if result is None:
             if err and err.startswith("⏳"):
                 summary.append(f"| {sid} | ⏳ {err} — kept previous values |")
@@ -1348,6 +1360,19 @@ def main():
         write_summary(text)
         os._exit(1)
 
+    cash_path = ROOT / "data" / "cash_rates.json"
+    cash_doc = {}
+    if cash_path.exists():
+        try:
+            cash_doc = json.loads(cash_path.read_text(encoding="utf-8"))
+        except Exception:
+            cash_doc = {}
+    for sid_c, quotes_c in LAST_CASH.items():
+        if quotes_c and sid_c in sources:
+            cash_doc[sid_c] = {cur: {"buy": b, "sell": s} for cur, (b, s) in quotes_c.items()}
+    if cash_doc:
+        cash_path.write_text(json.dumps(cash_doc, indent=1) + "\n", encoding="utf-8")
+        print(f"[cash] {sum(len(v) for v in cash_doc.values())} cash quotes written", flush=True)
     doc.setdefault("meta", {})["generated_at"] = now
     RATES.write_text(json.dumps(doc, indent=1) + "\n", encoding="utf-8")
 
