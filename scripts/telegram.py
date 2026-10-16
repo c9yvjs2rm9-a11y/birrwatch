@@ -23,7 +23,7 @@ def bank_mids(doc):
     bank = {}
     for r in doc.get("rates", []):
         src = doc.get("sources", {}).get(r.get("source"), {})
-        if src.get("type") != "bank" or r.get("flag") == "stale":
+        if src.get("type") != "bank" or r.get("flag") == "stale" or r.get("basis") == "cash":
             continue
         try:
             bank.setdefault(r["currency"], []).append((float(r["buy"]) + float(r["sell"])) / 2)
