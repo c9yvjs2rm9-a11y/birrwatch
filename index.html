@@ -793,6 +793,8 @@ async function pollData(){
     const doc=await r.json();
     let tr=null;
     try{const rt=await fetch(CONFIG.TRENDS_URL+'?t='+Date.now(),{cache:'no-store'});if(rt.ok)tr=await rt.json()}catch(e){}
+    let cs=null;
+    try{const rc=await fetch('data/cash_rates.json?t='+Date.now(),{cache:'no-store'});if(rc.ok)cs=await rc.json()}catch(e){}
     const gen=doc.meta&&doc.meta.generated_at;
     if(gen&&gen===DATA.genAt)return;
     DATA.genAt=gen||'';
