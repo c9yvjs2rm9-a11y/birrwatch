@@ -360,6 +360,10 @@ footer{background:var(--ink);color:var(--paper);padding:64px 0 36px;margin-top:2
     <div><span class="kicker">01 — All banks</span><h2>Bank comparison</h2></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
       <div class="seg" id="dirSeg">
+      <div class="seg" id="basisSeg">
+        <button data-basis="txn" class="on">Transaction</button>
+        <button data-basis="cash">Cash</button>
+      </div>
         <button data-dir="buy" class="on">I'm selling FX</button>
         <button data-dir="sell">I'm buying FX</button>
       </div>
@@ -382,7 +386,7 @@ footer{background:var(--ink);color:var(--paper);padding:64px 0 36px;margin-top:2
       <tbody id="rateBody"></tbody>
     </table>
   </div>
-  <p class="f-note">Each bank's transaction (electronic) rate where published; bureaus quote cash at the counter. Collected automatically — indicative only, confirm before transacting.</p>
+  <p class="f-note">Toggle between transaction (electronic) and cash rates where banks publish both; bureaus quote cash at the counter.; bureaus quote cash at the counter. Collected automatically — indicative only, confirm before transacting.</p>
 </section>
 
 <section class="view" id="view-trends">
@@ -691,7 +695,7 @@ const CONFIG={
   TRENDS_URL:QS.get('trends')||'data/trends.json',
   POLL_MS:60000, STALE_MS:26*3600e3,
 };
-const DATA={mode:'demo',rates:[],sources:{},quotes:{},srcTs:{},genTs:Date.now(),genAt:'',histReal:false,staleSince:{},fails:0,chipEl:null};
+const DATA={mode:'demo',rates:[],sources:{},quotes:{},srcTs:{},genTs:Date.now(),genAt:'',histReal:false,staleSince:{},cash:{},fails:0,chipEl:null};
 let H={}, DATES=[];
 const live={mid:{},off:{},customs:{}};
 
@@ -714,12 +718,16 @@ function demoQuote(id,code){
     if(sell-buy<half*.8)sell=buy+half*.8;return{buy,sell,spread:sell-buy}}
   return null;
 }
-function bankRates(b,code){return DATA.mode==='live'?storeQuote(b.c,code):demoQuote(b.c,code)}
+function bankRates(b,code,basis){
+  if(DATA.mode!=='live')return demoQuote(b.c,code);
+  if(basis==='cash'){const c=(DATA.cash||{})[b.c];return (c&&c[code])||null}
+  return storeQuote(b.c,code);
+}
 function bureauRates(u,code='USD'){return DATA.mode==='live'?storeQuote(u.id,code):demoQuote(u.id,code)}
 
-function bestBuy(code){let o=null;for(const b of BANKS){const r=bankRates(b,code);if(r&&!(DATA.mode==='live'&&r.flag)&&(!o||r.buy>o.r.buy))o={b,r}}return o}
-function bestSell(code){let o=null;for(const b of BANKS){const r=bankRates(b,code);if(r&&!(DATA.mode==='live'&&r.flag)&&(!o||r.sell<o.r.sell))o={b,r}}return o}
-function tightest(code){let o=null;for(const b of BANKS){const r=bankRates(b,code);if(r&&!(DATA.mode==='live'&&r.flag)&&r.spread!=null&&(!o||r.spread<o.r.spread))o={b,r}}return o}
+function bestBuy(code,basis){let o=null;for(const b of BANKS){const r=bankRates(b,code,basis);if(r&&!(DATA.mode==='live'&&r.flag)&&(!o||r.buy>o.r.buy))o={b,r}}return o}
+function bestBuy(code,basis){let o=null;for(const b of BANKS){const r=bankRates(b,code,basis);if(r&&!(DATA.mode==='live'&&r.flag)&&(!o||r.sell<o.r.sell))o={b,r}}return o}
+function bestBuy(code,basis){let o=null;for(const b of BANKS){const r=bankRates(b,code,basis);if(r&&!(DATA.mode==='live'&&r.flag)&&r.spread!=null&&(!o||r.spread<o.r.spread))o={b,r}}return o}
 
 function curChg(code,back){const s=H[code];if(!s||s.length<2)return 0;const L=s.length,p=s[Math.max(0,L-1-back)],m=live.mid[code]||s[L-1];return p?(m-p)/p:0}
 function bankChg(b,code){return curChg(code,1)}
@@ -799,6 +807,7 @@ async function pollData(){
     if(gen&&gen===DATA.genAt)return;
     DATA.genAt=gen||'';
     DATA.genTs=Date.parse(gen)||Date.now();
+    if(cs)DATA.cash=cs;
     applyRates(doc);
     if(tr)applyTrends(tr);
     DATA.mode='live';DATA.fails=0;
@@ -891,7 +900,7 @@ function drawSpark(cv,vals){
 /* ================= state ================= */
 const S={
   view:'today',
-  today:{cur:'USD',sort:{key:'buy',dir:-1},dir:'buy',q:''},
+  today:{cur:'USD',sort:{key:'buy',dir:-1},dir:'buy',basis:'txn',q:''},
   trends:{cur:'USD',range:90,sort:'d30'},
   banks:{sel:'CBE',cur:'USD',q:''},
   pairs:{},
@@ -936,14 +945,17 @@ function renderHero(){
   $('#sourcesLine').textContent=DATA.mode==='live'?`${okCount()}/${Object.keys(DATA.sources).length} sources ok`:'sample data';
 }
 function renderBestBand(){
-  const bb=bestBuy('USD'),bs=bestSell('USD'),t=tightest('USD');
-  const nb=BANKS.filter(b=>{const r=bankRates(b,'USD');return r&&!(DATA.mode==='live'&&r.flag)}).length;
+  const basis=S.today.basis||'txn';
+  const bb=bestBuy('USD',basis),bs=bestSell('USD',basis),tt=tightest('USD',basis);
+  const nb=BANKS.filter(b=>{const r=bankRates(b,'USD',basis);return r&&!(DATA.mode==='live'&&r.flag)}).length;
+  const lbBuy=basis==='cash'?'Best USD cash buy — you sell':t('b_buy');
+  const lbSell=basis==='cash'?'Lowest USD cash sell — you buy':t('b_sell');
   $('#bestBand').innerHTML=`
    <div class="refgrid">
-     <div><span class="s-label">Best USD buy — you sell</span><span class="s-bank">${bb?bb.b.name:'—'}</span><span class="s-rate">${bb?fmt(bb.r.buy,2):'—'} <small>ETB</small></span></div>
-     <div><span class="s-label">Lowest USD sell — you buy</span><span class="s-bank">${bs?bs.b.name:'—'}</span><span class="s-rate">${bs?fmt(bs.r.sell,2):'—'} <small>ETB</small></span></div>
-     <div><span class="s-label">Tightest spread</span><span class="s-bank">${t?t.b.name:'—'}</span><span class="s-rate">${t?fmt(t.r.spread,2):'—'} <small>ETB</small></span></div>
-     <div><span class="s-label">Coverage</span><span class="s-bank">${nb} of ${BANKS.length} banks</span><span class="s-rate" style="font-size:18px;padding-top:4px">${DATA.mode==='live'?fmt(live.mid.USD,2):'—'} <small>mid</small></span></div>
+     <div><span class="s-label">${lbBuy}</span><span class="s-bank">${bb?bb.b.name:'—'}</span><span class="s-rate">${bb?fmt(bb.r.buy,2):'—'} <small>ETB</small></span></div>
+     <div><span class="s-label">${lbSell}</span><span class="s-bank">${bs?bs.b.name:'—'}</span><span class="s-rate">${bs?fmt(bs.r.sell,2):'—'} <small>ETB</small></span></div>
+     <div><span class="s-label">${t('b_spread')}</span><span class="s-bank">${tt?tt.b.name:'—'}</span><span class="s-rate">${tt?fmt(tt.r.spread,2):'—'} <small>ETB</small></span></div>
+     <div><span class="s-label">${t('b_cov')}</span><span class="s-bank">${nb} ${t('b_of')} ${BANKS.length} banks</span><span class="s-rate" style="font-size:18px;padding-top:4px">${DATA.mode==='live'?fmt(live.mid.USD,2):'—'} <small>mid</small></span></div>
    </div>`;
 }
 function renderP2P(){
@@ -1004,14 +1016,14 @@ function renderTodayTable(){
   }
   let rows=BANKS.filter(b=>!q||b.name.toLowerCase().includes(q)||b.c.toLowerCase().includes(q));
   const {key,dir}=S.today.sort;
-  const val={bank:b=>b.name,buy:b=>{const r=bankRates(b,cur);return r?r.buy:null},sell:b=>{const r=bankRates(b,cur);return r?r.sell:null},spread:b=>{const r=bankRates(b,cur);return r?r.spread:null},chg:b=>bankChg(b,cur),upd:b=>sourceUpdated(b.c)};
+  const val={bank:b=>b.name,buy:b=>{const r=bankRates(b,cur,S.today.basis);return r?r.buy:null},sell:b=>{const r=bankRates(b,cur,S.today.basis);return r?r.sell:null},spread:b=>{const r=bankRates(b,cur,S.today.basis);return r?r.spread:null},chg:b=>bankChg(b,cur),upd:b=>sourceUpdated(b.c)};
   rows.sort((a,b)=>cmp(val[key](a),val[key](b),dir));
   $('#rateBody').innerHTML=rows.map((b,i)=>{
-    const r=bankRates(b,cur),ch=bankChg(b,cur);
+    const r=bankRates(b,cur,S.today.basis),ch=bankChg(b,cur);
     const hlB=S.today.dir==='buy'&&r?' hl':'',hlS=S.today.dir==='sell'&&r?' hl':'';
     return `<tr data-b="${b.c}">
       <td class="c-idx">${String(i+1).padStart(2,'0')}</td>
-      <td><span class="c-bank"><span class="mono-badge">${b.c.slice(0,2)}</span><span class="b-txt"><b>${b.name}</b><span class="b-meta">${r?pillFor(b.c,cur):''}<span class="b-date">${r?dateFor(b.c,cur):'never collected'}</span></span></td>
+      <td><span class="c-bank"><span class="mono-badge">${b.c.slice(0,2)}</span><span class="b-txt"><b>${b.name}</b><span class="b-meta">${r?pillFor(b.c,cur):''}<span class="b-date">${r?dateFor(b.c,cur):(S.today.basis==='cash'?'cash not published':'never collected')}</span></span></td>
       <td class="num c-buy${hlB}">${r?fmt(r.buy,d):'—'}</td>
       <td class="num c-sell${hlS}">${r?fmt(r.sell,d):'—'}</td>
       <td class="num c-spread">${r?fmt(r.spread,d):'—'}</td>
@@ -1314,6 +1326,9 @@ function wire(){
   $('#dirSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
     S.today.dir=b.dataset.dir;$$('#dirSeg button').forEach(x=>x.classList.toggle('on',x===b));
     S.today.sort={key:S.today.dir,dir:S.today.dir==='buy'?-1:1};renderTodayTable();renderDirHint()});
+  $('#basisSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+    S.today.basis=b.dataset.basis;$$('#basisSeg button').forEach(x=>x.classList.toggle('on',x===b));
+    renderBestBand();renderTodayTable()});
   $('#rateTable').addEventListener('click',e=>{const th=e.target.closest('th[data-key]');if(!th)return;const k=th.dataset.key;
     if(S.today.sort.key===k)S.today.sort.dir*=-1;else S.today.sort={key:k,dir:k==='bank'?1:-1};renderTodayTable()});
   $('#searchWrap').addEventListener('input',e=>{if(e.target.id==='bankSearchQ'){S.today.q=e.target.value;renderTodayTable()}});
