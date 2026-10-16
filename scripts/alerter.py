@@ -30,6 +30,7 @@ def mids(doc):
         except (KeyError, TypeError, ValueError):
             continue
         if r.get("flag") == "stale":
+        if r.get("basis") == "cash":
             continue
         if cur == "USDT":
             if stype == "market":
