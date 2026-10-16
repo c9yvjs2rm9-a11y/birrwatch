@@ -22,6 +22,8 @@ for r in doc.get("rates") or []:
     mid = (buy + sell) / 2
     cur = str(r.get("currency", "")).upper()
     stype = (doc.get("sources") or {}).get(r.get("source"), {}).get("type", "bank")
+    if r.get("basis") == "cash":
+        continue
     if stype == "official":
         offs[cur] = mid
     else:
