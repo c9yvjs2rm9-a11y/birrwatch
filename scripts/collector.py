@@ -1049,11 +1049,13 @@ def fetch_parallel(budget):
         return buy, sell, src, notes
     return None, None, None, notes
 
+
 def write_summary(text):
     p = os.environ.get("GITHUB_STEP_SUMMARY")
     if p:
         with open(p, "a", encoding="utf-8") as f:
             f.write(text + "\n")
+
 
 def fetch_nbe_api(notes):
     """NBE official API: walk back up to 7 days for the most recent published
@@ -1081,6 +1083,8 @@ def fetch_nbe_api(notes):
             except Exception:
                 continue
         if "USD" in out:
+            notes.append(f"nbe api: {ds} · {len(out)} currencies")
+            return out
         notes.append(f"nbe api {ds}: no USD in {len(data)} rows")
     return None
 
