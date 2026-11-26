@@ -54,11 +54,11 @@ SOURCES = {
         "https://customs.erca.gov.et/trade/?lang=en",
         "https://customs.erca.gov.et/",
     ]},
-    "CBE": {"name": "Commercial Bank of Ethiopia", "type": "bank", "urls": [
+    "CBE": {"name": "Commercial Bank of Ethiopia", "type": "bank", "debug": True, "urls": [
         "https://combanketh.et/exchange-rates?srcPage=home",
         "https://combanketh.et/",
     ]},
-    "AWB": {"name": "Awash Bank", "type": "bank", "urls": [
+    "AWB": {"name": "Awash Bank", "type": "bank", "debug": True, "urls": [
         "https://awashbank.com/exchange-historical/",
         "https://www.awashbank.com/",
     ]},
@@ -183,7 +183,7 @@ SOURCES = {
     "TAY": {"name": "Taypay Forex Bureau", "type": "bureau", "method": "csv", "urls": [
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7rZVlNT4C3L7Big_5ZfnQOCB7dAmuY388AG0YJCDc3HB-xoVX8PtCbPJZngJHYbNeEFLSCMHGOvLN/pub?gid=0&single=true&output=csv",
     ]},
-    "ROO": {"name": "Rooha Forex Bureau", "type": "bureau", "urls": [
+    "ROO": {"name": "Rooha Forex Bureau", "type": "bureau", "debug": True, "urls": [
         "https://www.roohaforex.net/",
     ]},
 }
@@ -881,7 +881,8 @@ def fetch_ebr(notes, budget):
             except Exception:
                 pass
         all_prices.extend(text_candidates(html))
-        for cur, (b, s) in (parse_any(html) or {}).items():
+        pgot, _pcash = parse_any(html)
+        for cur, (b, s) in (pgot or {}).items():
             if cur in ("USD", "USDT"):
                 buys.append(b)
                 sells.append(s)
@@ -896,7 +897,8 @@ def fetch_ebr(notes, budget):
                 except Exception:
                     continue
             all_prices.extend(text_candidates(bhtml))
-            for cur, (b, s) in (parse_any(bhtml) or {}).items():
+            bgot, _bcash = parse_any(bhtml)
+            for cur, (b, s) in (bgot or {}).items():
                 if cur in ("USD", "USDT"):
                     buys.append(b)
                     sells.append(s)
@@ -1047,7 +1049,6 @@ def fetch_parallel(budget):
         return buy, sell, src, notes
     return None, None, None, notes
 
-
 def write_summary(text):
     p = os.environ.get("GITHUB_STEP_SUMMARY")
     if p:
@@ -1080,8 +1081,6 @@ def fetch_nbe_api(notes):
             except Exception:
                 continue
         if "USD" in out:
-            notes.append(f"nbe api: {ds} · {len(out)} currencies")
-            return out
         notes.append(f"nbe api {ds}: no USD in {len(data)} rows")
     return None
 
@@ -1181,10 +1180,12 @@ def collect_source(cfg, sid=""):
                         jgot = {}
                 if jgot:
                     return jgot, "api", notes
-            got = parse_any(dhtml)
+            got, cash_got = parse_any(dhtml)
             if got:
                 if cash_got and sid:
                     LAST_CASH[sid] = cash_got
+                if cfg.get("debug"):
+                    notes.extend(table_preview(dhtml))
                 return got, "browser", notes
             notes.append("browser: parsed 0 (" + "; ".join(dinfo) + ")")
             n, _kw = diagnose(dhtml)
