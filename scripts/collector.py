@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-# Birrwatch robot collector v14 — banks + NBE + ERCA customs + bureaus + parallel USDT/ETB.
+# Birrwatch robot collector v14.1 — banks + NBE + ERCA customs + bureaus + parallel USDT/ETB.
+# v14.1: challenge-aware static retries + interstitial waits (LiteSpeed-style "One moment, please..." pages).
 # v14: NBE via official API (api.nbe.gov.et), EBR via market-stats API,
 # table-content previews in failure notes (to crack BRH/GOH/SDB/SKB),
 # per-currency fleet tolerance (USD strict 2.5%, others 4%).
@@ -38,6 +39,20 @@ MIN_FLEET = 8
 
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 HEADERS = {"User-Agent": UA}
+
+# --- v14.1 patch: anti-bot challenge handling -------------------------------
+# Several Ethiopian bank sites (LiteSpeed/QUIC.cloud-style hosting) serve a JS
+# browser-verification interstitial ("One moment, please... / request is being
+# verified") to non-interactive clients. Static retries occasionally catch a
+# window where the real page is served; a browser may also pass it.
+CHALLENGE_MARKS = ("one moment, please", "request is being verified")
+
+
+def is_challenge(html):
+    if not html:
+        return False
+    low = html[:4000].lower()
+    return any(m in low for m in CHALLENGE_MARKS)
 
 EBR_URL = "https://ebr.exchange/"
 LAST_CASH = {}
@@ -623,6 +638,8 @@ def browser_worth_it(err):
         return False
     if "timeout" in e or "connection" in e or "nameresolution" in e or "connect" in e:
         return False
+    if "challenge" in e:
+        return True
     if "http 403" in e or "ssl" in e or "http 200" in e:
         return True
     return False
@@ -706,12 +723,21 @@ def decide_from_candidates(buys, sells, prices, label):
 
 def attempt_static(url):
     last = "failed"
-    for attempt in range(2):
+    for attempt in range(4):
         try:
-            r = requests.get(url, headers=HEADERS, timeout=15)
+            u = url
+            if attempt:  # cache-bust so a challenge window is not re-served
+                u = url + ("&" if "?" in url else "?") + "_cb=" + str(int(time.time() * 1000))
+            r = requests.get(u, headers=HEADERS, timeout=15)
             if r.status_code == 200 and len(r.text) > 20:
-                return r.text, None
-            last = f"HTTP {r.status_code}"
+                if is_challenge(r.text):
+                    last = "anti-bot challenge page"
+                else:
+                    return r.text, None
+            elif r.status_code == 200:
+                last = "empty body"
+            else:
+                last = f"HTTP {r.status_code}"
             if r.status_code in (404, 410):
                 return None, last
         except requests.exceptions.SSLError:
@@ -726,8 +752,8 @@ def attempt_static(url):
             return None, "timeout"
         except Exception as e:
             return None, type(e).__name__
-        if attempt < 1:
-            time.sleep(2)
+        if attempt < 3:
+            time.sleep(5)
     return None, last
 
 
@@ -764,6 +790,18 @@ def attempt_dynamic(url, capture=False, click_texts=None):
                 pass
         try:
             page.goto(url, wait_until="domcontentloaded", timeout=25000)
+            # wait out JS verification interstitials ("One moment, please...")
+            for _ in range(5):
+                try:
+                    if not is_challenge(page.content() or ""):
+                        break
+                except Exception:
+                    break
+                page.wait_for_timeout(4000)
+                try:
+                    page.reload(wait_until="domcontentloaded", timeout=15000)
+                except Exception:
+                    pass
             page.wait_for_timeout(4000)
             try:
                 page.mouse.wheel(0, 1200)
@@ -1055,7 +1093,6 @@ def write_summary(text):
     if p:
         with open(p, "a", encoding="utf-8") as f:
             f.write(text + "\n")
-
 
 def fetch_nbe_api(notes):
     """NBE official API: walk back up to 7 days for the most recent published
