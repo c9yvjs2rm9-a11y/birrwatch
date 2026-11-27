@@ -726,8 +726,8 @@ function bankRates(b,code,basis){
 function bureauRates(u,code='USD'){return DATA.mode==='live'?storeQuote(u.id,code):demoQuote(u.id,code)}
 
 function bestBuy(code,basis){let o=null;for(const b of BANKS){const r=bankRates(b,code,basis);if(r&&!(DATA.mode==='live'&&r.flag)&&(!o||r.buy>o.r.buy))o={b,r}}return o}
-function bestBuy(code,basis){let o=null;for(const b of BANKS){const r=bankRates(b,code,basis);if(r&&!(DATA.mode==='live'&&r.flag)&&(!o||r.sell<o.r.sell))o={b,r}}return o}
-function bestBuy(code,basis){let o=null;for(const b of BANKS){const r=bankRates(b,code,basis);if(r&&!(DATA.mode==='live'&&r.flag)&&r.spread!=null&&(!o||r.spread<o.r.spread))o={b,r}}return o}
+function bestSell(code,basis){let o=null;for(const b of BANKS){const r=bankRates(b,code,basis);if(r&&!(DATA.mode==='live'&&r.flag)&&(!o||r.sell<o.r.sell))o={b,r}}return o}
+function tightest(code,basis){let o=null;for(const b of BANKS){const r=bankRates(b,code,basis);if(r&&!(DATA.mode==='live'&&r.flag)&&r.spread!=null&&(!o||r.spread<o.r.spread))o={b,r}}return o}
 
 function curChg(code,back){const s=H[code];if(!s||s.length<2)return 0;const L=s.length,p=s[Math.max(0,L-1-back)],m=live.mid[code]||s[L-1];return p?(m-p)/p:0}
 function bankChg(b,code){return curChg(code,1)}
