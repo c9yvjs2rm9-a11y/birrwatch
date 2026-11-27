@@ -359,11 +359,11 @@ footer{background:var(--ink);color:var(--paper);padding:64px 0 36px;margin-top:2
   <div class="block-head">
     <div><span class="kicker">01 — All banks</span><h2>Bank comparison</h2></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-      <div class="seg" id="dirSeg">
       <div class="seg" id="basisSeg">
         <button data-basis="txn" class="on">Transaction</button>
         <button data-basis="cash">Cash</button>
       </div>
+      <div class="seg" id="dirSeg">
         <button data-dir="buy" class="on">I'm selling FX</button>
         <button data-dir="sell">I'm buying FX</button>
       </div>
@@ -386,7 +386,7 @@ footer{background:var(--ink);color:var(--paper);padding:64px 0 36px;margin-top:2
       <tbody id="rateBody"></tbody>
     </table>
   </div>
-  <p class="f-note">Toggle between transaction (electronic) and cash rates where banks publish both; bureaus quote cash at the counter.; bureaus quote cash at the counter. Collected automatically — indicative only, confirm before transacting.</p>
+  <p class="f-note">Toggle between transaction (electronic) and cash rates where banks publish both; bureaus quote cash at the counter. Collected automatically — indicative only, confirm before transacting.</p>
 </section>
 
 <section class="view" id="view-trends">
@@ -942,20 +942,37 @@ function renderHero(){
   $('#customsRate').textContent=(live.customs&&live.customs.USD!=null)?fmt(live.customs.USD,2):'—';
   $('#avgRate').textContent=fmt(avgMid('USD'),2);
   $('#dataDate').textContent=fmtDay(DATA.genTs);
-  $('#sourcesLine').textContent=DATA.mode==='live'?`${okCount()}/${Object.keys(DATA.sources).length} sources ok`:'sample data';
+  $('#sourcesLine').textContent=DATA.mode==='live'?`${okCount()}/${Object.keys(DATA.sources).length} ${t('sources_ok')}`:t('sample_data');
 }
+/* ---- i18n (EN / አማርኛ) ---- */
+const STR={
+  b_buy:{en:'Best bank buy — you sell',am:'ምርጥ የባንክ ግዥ — እርስዎ የሚሸጡት'},
+  b_sell:{en:'Lowest bank sell — you buy',am:'ትንሹ የባንክ ሽያጭ — እርስዎ የሚገዙት'},
+  b_spread:{en:'Tightest spread',am:'ትንሹ የዋጋ ልዩነት'},
+  b_cov:{en:'Coverage',am:'ሽፋን'},
+  b_of:{en:'of',am:'ከ'},
+  banks_word:{en:'banks',am:'ባንኮች'},
+  cash_buy:{en:'Best USD cash buy — you sell',am:'ምርጥ የጥሬ ገንዘብ ግዥ — እርስዎ የሚሸጡት'},
+  cash_sell:{en:'Lowest USD cash sell — you buy',am:'ትንሹ የጥሬ ገንዘብ ሽያጭ — እርስዎ የሚገዙት'},
+  cash_none:{en:'cash not published',am:'የጥሬ ገንዘብ ክፍያ አልተሰጠም'},
+  never:{en:'never collected',am:'ገና አልተሰበሰበም'},
+  sources_ok:{en:'sources ok',am:'ምንጮች ንቁ'},
+  sample_data:{en:'sample data',am:'ናሙና መረጃ'}
+};
+function t(key){const s=STR[key];if(!s)return key;try{return (S&&S.lang==='am')?s.am:s.en}catch(e){return s.en}}
+
 function renderBestBand(){
   const basis=S.today.basis||'txn';
   const bb=bestBuy('USD',basis),bs=bestSell('USD',basis),tt=tightest('USD',basis);
   const nb=BANKS.filter(b=>{const r=bankRates(b,'USD',basis);return r&&!(DATA.mode==='live'&&r.flag)}).length;
-  const lbBuy=basis==='cash'?'Best USD cash buy — you sell':t('b_buy');
-  const lbSell=basis==='cash'?'Lowest USD cash sell — you buy':t('b_sell');
+  const lbBuy=basis==='cash'?t('cash_buy'):t('b_buy');
+  const lbSell=basis==='cash'?t('cash_sell'):t('b_sell');
   $('#bestBand').innerHTML=`
    <div class="refgrid">
      <div><span class="s-label">${lbBuy}</span><span class="s-bank">${bb?bb.b.name:'—'}</span><span class="s-rate">${bb?fmt(bb.r.buy,2):'—'} <small>ETB</small></span></div>
      <div><span class="s-label">${lbSell}</span><span class="s-bank">${bs?bs.b.name:'—'}</span><span class="s-rate">${bs?fmt(bs.r.sell,2):'—'} <small>ETB</small></span></div>
      <div><span class="s-label">${t('b_spread')}</span><span class="s-bank">${tt?tt.b.name:'—'}</span><span class="s-rate">${tt?fmt(tt.r.spread,2):'—'} <small>ETB</small></span></div>
-     <div><span class="s-label">${t('b_cov')}</span><span class="s-bank">${nb} ${t('b_of')} ${BANKS.length} banks</span><span class="s-rate" style="font-size:18px;padding-top:4px">${DATA.mode==='live'?fmt(live.mid.USD,2):'—'} <small>mid</small></span></div>
+     <div><span class="s-label">${t('b_cov')}</span><span class="s-bank">${nb} ${t('b_of')} ${BANKS.length} ${t('banks_word')}</span><span class="s-rate" style="font-size:18px;padding-top:4px">${DATA.mode==='live'?fmt(live.mid.USD,2):'—'} <small>mid</small></span></div>
    </div>`;
 }
 function renderP2P(){
@@ -1023,7 +1040,7 @@ function renderTodayTable(){
     const hlB=S.today.dir==='buy'&&r?' hl':'',hlS=S.today.dir==='sell'&&r?' hl':'';
     return `<tr data-b="${b.c}">
       <td class="c-idx">${String(i+1).padStart(2,'0')}</td>
-      <td><span class="c-bank"><span class="mono-badge">${b.c.slice(0,2)}</span><span class="b-txt"><b>${b.name}</b><span class="b-meta">${r?pillFor(b.c,cur):''}<span class="b-date">${r?dateFor(b.c,cur):(S.today.basis==='cash'?'cash not published':'never collected')}</span></span></td>
+      <td><span class="c-bank"><span class="mono-badge">${b.c.slice(0,2)}</span><span class="b-txt"><b>${b.name}</b><span class="b-meta">${r?pillFor(b.c,cur):''}<span class="b-date">${r?dateFor(b.c,cur):(S.today.basis==='cash'?t('cash_none'):t('never'))}</span></span></td>
       <td class="num c-buy${hlB}">${r?fmt(r.buy,d):'—'}</td>
       <td class="num c-sell${hlS}">${r?fmt(r.sell,d):'—'}</td>
       <td class="num c-spread">${r?fmt(r.spread,d):'—'}</td>
@@ -1276,7 +1293,7 @@ function ethiopicDate(dt){
 function startClock(){
   const e=ethiopicDate(new Date());
   const eth=`${ETH_MONTHS[e.m]} ${e.d}, ${e.y}`;
-  $('#clockDate').textContent='Addis Ababa · '+eth;
+  $('#clockDate').textContent=((S&&S.lang==='am')?'አዲስ አበባ':'Addis Ababa')+' · '+eth;
   $('#ethDate').innerHTML=`${eth} <span>· Ethiopian calendar</span>`;
   setInterval(()=>{
     $('#clockTime').textContent=new Date().toLocaleTimeString('en-GB',{timeZone:'Africa/Addis_Ababa',hour:'2-digit',minute:'2-digit',second:'2-digit'})+' EAT';
@@ -1328,7 +1345,7 @@ function wire(){
     S.today.sort={key:S.today.dir,dir:S.today.dir==='buy'?-1:1};renderTodayTable();renderDirHint()});
   $('#basisSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
     S.today.basis=b.dataset.basis;$$('#basisSeg button').forEach(x=>x.classList.toggle('on',x===b));
-    renderBestBand();renderTodayTable()});
+    safe(renderBestBand,'band');renderTodayTable()});
   $('#rateTable').addEventListener('click',e=>{const th=e.target.closest('th[data-key]');if(!th)return;const k=th.dataset.key;
     if(S.today.sort.key===k)S.today.sort.dir*=-1;else S.today.sort={key:k,dir:k==='bank'?1:-1};renderTodayTable()});
   $('#searchWrap').addEventListener('input',e=>{if(e.target.id==='bankSearchQ'){S.today.q=e.target.value;renderTodayTable()}});
@@ -1455,6 +1472,136 @@ function wire(){
     const v=(typeof VIEW!=='undefined'&&VIEW[h])?h:'today';
     if(typeof showView==='function'&&S.view!==v)showView(v);
   });
+})();
+</script>
+<script>
+/* ================= language switch: EN / አማርኛ ================= */
+(function(){
+  try{S.lang=localStorage.getItem('bw_lang')||'en'}catch(e){S.lang='en'}
+  /* [selector, english, amharic] — only applies when the element's current text matches the English original */
+  const T=[
+    ['#nav button[data-view="today"]','Today','ዛሬ'],
+    ['#nav button[data-view="trends"]','Trends','አዝማሚያዎች'],
+    ['#nav button[data-view="banks"]','Banks','ባንኮች'],
+    ['#nav button[data-view="pairs"]','Pairs','ጥንዶች'],
+    ['#nav button[data-view="converter"]','Converter','መቀየሪያ'],
+    ['#nav button[data-view="bureaus"]','FX Bureaus','የውጭ ምንዛሬ ቢሮዎች'],
+    ['#nav button[data-view="pricing"]','Pricing','ዋጋ'],
+    ['#view-today .kicker-row .kicker','USD / ETB — market mid','USD / ETB — የገበያ መካከለኛ ክፍያ'],
+    ['#view-today .refgrid div:nth-child(1) .s-label','NBE official','የNBE ኦፊሴላዊ'],
+    ['#view-today .refgrid div:nth-child(2) .s-label','Customs (ERCA)','ጉምሩክ (ERCA)'],
+    ['#view-today .refgrid div:nth-child(3) .s-label','Bank average','የባንኮች አማካይ'],
+    ['#view-today .refgrid div:nth-child(4) .s-label','Data as of','የመረጃ ቀን'],
+    ['#view-today .block-head .kicker','01 — All banks','01 — ሁሉም ባንኮች'],
+    ['#view-today .block-head h2','Bank comparison','የባንኮች ማነጻጸሪያ'],
+    ['#basisSeg button[data-basis="txn"]','Transaction','ግብይት'],
+    ['#basisSeg button[data-basis="cash"]','Cash','ጥሬ ገንዘብ'],
+    ['#dirSeg button[data-dir="buy"]',"I'm selling FX",'ውጭ ምንዛሬ እሸጣለሁ'],
+    ['#dirSeg button[data-dir="sell"]',"I'm buying FX",'ውጭ ምንዛሬ እገዛለሁ'],
+    ['#rateTable thead th[data-key="bank"]','Bank','ባንክ'],
+    ['#rateTable thead th[data-key="buy"]','Bank buys','ባንክ የሚገዛው'],
+    ['#rateTable thead th[data-key="sell"]','Bank sells','ባንክ የሚሸጠው'],
+    ['#rateTable thead th[data-key="spread"]','Spread','ልዩነት'],
+    ['#rateTable thead th[data-key="upd"]','Updated','የተዘመነው'],
+    ['#rateTable thead tr th:nth-child(7)','60-day','60 ቀናት'],
+    ['#view-today p.f-note','Toggle between transaction (electronic) and cash rates where banks publish both; bureaus quote cash at the counter. Collected automatically — indicative only, confirm before transacting.','ባንኮች ሁለቱንም የሚፈጽሙበት ቦታ በግብይት (ኤሌክትሮኒክ) እና በጥሬ ገንዘብ ክፍያዎች መካከል ይቀየሩ። በራስ-ሰር የተሰበሰበ — አሳዢ ብቻ ነው፤ ከመገበያየትዎ በፊት ከባንኩ ያረጋግጡ።'],
+    ['#view-trends .block-head .kicker','02 — Trends','02 — አዝማሚያዎች'],
+    ['#view-trends .block-head h2','Every pair, at a glance','ሁሉም ጥንዶች በአንድ እይታ'],
+    ['#view-trends .hint','Tap any row to load it into the chart above.','በላዩ ላይ ባለው ግራፍ ውስጥ ለመጫን ማንኛውንም ረድፍ ይንኩ።'],
+    ['#view-trends thead th','Pair','ጥንድ'],
+    ['#view-trends thead th','Rate','ክፍያ'],
+    ['#view-trends thead th','60-day trend','የ60 ቀን አዝማሚያ'],
+    ['#view-banks .block-head .kicker','03 — Banks','03 — ባንኮች'],
+    ['#view-banks .block-head h2','Bank explorer','የባንክ መረጃ'],
+    ['#view-pairs .block-head .kicker','04 — Pairs','04 — ጥንዶች'],
+    ['#view-pairs .block-head h2','Cross-rate matrix','የመሻገሪያ ክፍያ ሰሌዳ'],
+    ['#view-pairs .hint','Derived from live ETB market mids. Tap any cell to copy the conversion.','ከቀጥታ የETB የገበያ መካከለኛ ክፍያዎች የተዘጋጀ። ልወጣውን ለመቅዳት ማንኛውንም ሴል ይንኩ።'],
+    ['#view-pairs .block-head h2','Popular ETB pairs','ታዋቂ የETB ጥንዶች'],
+    ['#view-pairs .hint','Best buy and sell across all banks, right now.','አሁን በሁሉም ባንኮች መካከል ምርጥ የግዥ እና የሽያጭ ክፍያ።'],
+    ['#view-pairs table:not(.matrix) thead th','Pair','ጥንድ'],
+    ['#view-pairs table:not(.matrix) thead th','Mid','መካከለኛ'],
+    ['#view-pairs table:not(.matrix) thead th','Best buy','ምርጥ ግዥ'],
+    ['#view-pairs table:not(.matrix) thead th','Best sell','ምርጥ ሽያጭ'],
+    ['#view-pairs table:not(.matrix) thead th','Market spread','የገበያ ልዩነት'],
+    ['#view-pairs table:not(.matrix) thead th','Alert','ማንቂያ'],
+    ['#view-converter .block-head .kicker','05 — Converter','05 — መቀየሪያ'],
+    ['#view-converter .block-head h2','Currency converter','የምንዛሬ መቀየሪያ'],
+    ['#view-converter .cp-head .kicker','From','ከ'],
+    ['#view-converter .cp-head .kicker','To','ወደ'],
+    ['#cvMode button[data-m="best"]','Best bank rate','ምርጥ የባንክ ክፍያ'],
+    ['#cvMode button[data-m="avg"]','Market average','የገበያ አማካይ'],
+    ['#cvMode button[data-m="official"]','NBE official','የNBE ኦፊሴላዊ'],
+    ['#view-converter .quick h3','Quick reference','ፈጣን ማጣቀሻ'],
+    ['#view-converter .quick thead th','Amount','መጠን'],
+    ['#view-converter .quick thead th','Converts to','የሚቀየርበት'],
+    ['#view-converter .f-note','Quoted rates exclude bank commissions and cash-handling fees — confirm the final figure with your branch or the bureau counter.','የተጠቀሱ ክፍያዎች የባንክ ኮሚሽንና የጥሬ ገንዘብ አገልግሎት ክፍያ አያካትቱም — የመጨረሻውን ቁጥር ከቅርንጫፍዎ ወይም ከቢሮው ያረጋግጡ።'],
+    ['#view-bureaus .block-head .kicker','06 — Licensed FX bureaus','06 — የተፈቀዱ የውጭ ምንዛሬ ቢሮዎች'],
+    ['#view-bureaus .block-head h2','Licensed FX bureaus','የተፈቀዱ የውጭ ምንዛሬ ቢሮዎች'],
+    ['#view-bureaus thead th','Bureau','ቢሮ'],
+    ['#view-bureaus thead th','USD buy','USD ግዥ'],
+    ['#view-bureaus thead th','USD sell','USD ሽያጭ'],
+    ['#view-bureaus thead th','Spread','ልዩነት'],
+    ['#view-bureaus thead th','vs best bank','ከምርጥ ባንክ ጋር'],
+    ['#view-bureaus .f-note','Cash rates collected automatically from bureau websites — indicative only. Tap a row for the full board.','የጥሬ ገንዘብ ክፍያዎች ከቢሮዎቹ ድረ-ገጾች በራስ-ሰር የተሰበሰቡ — አሳዢ ብቻ። ሙሉ ሰሌዳውን ለማየት ረድፍ ይንኩ።'],
+    ['#view-pricing .block-head .kicker','07 — Pricing','07 — ዋጋ'],
+    ['#view-pricing .block-head h2','Free today. Priced in the open, soon.','ዛሬ ነፃ። በቅርቡ በግልጽ የሚቀመጥ ዋጋ።'],
+    ['#view-pricing h2','Questions, answered','ጥያቄዎችና መልሶች'],
+    ['#alertFields .kicker','Price alert','የዋጋ ማንቂያ'],
+    ['#alertFields h3','Set a price alert','የዋጋ ማንቂያ ያዘጋጡ'],
+    ['#alertFields label:not([for])','Alert me when the rate goes','ክፍያው ሲደርስ አሳውቀኝ'],
+    ['#alertFields [data-d="above"]','Above','ከላይ'],
+    ['#alertFields [data-d="below"]','Below','ከታች'],
+    ['#alertFields label[for="alTarget"]','Target rate (ETB)','ዒላማ ክፍያ (ETB)'],
+    ['#alertFields label[for="alMail"]','Your email','የእርስዎ ኢሜይል'],
+    ['#alGo','Create alert','ማንቂያ ፍጠር'],
+    ['#alertFields .f-note-c','One confirmation email, then only when your alert triggers. No marketing, ever.','አንድ የማረጋገጫ ኢሜይል ብቻ፤ ከዚያ ማንቂያዎ ሲነሳ እንረዳዎታለን። የገበያ መልእክት ፈጽሞ የለም።'],
+    ['.f-state','Know what your birr is worth — before you trade it.','ብርዎ ምን እንደሚዋጋ ከመገበያየትዎ በፊት ያውቁ።'],
+    ['footer .f-col span','Data','መረጃ'],
+    ['footer .f-col span','Tools','መሣሪያዎች'],
+    ['footer .f-col span','Contact','አግኙን'],
+    ['footer a[data-view="today'],"Today's rates",'የዛሬ ክፍያዎች'],
+    ['footer a[data-view="trends"]','Trends','አዝማሚያዎች'],
+    ['footer a[data-view="banks"]','Banks','ባንኮች'],
+    ['footer a[data-view="bureaus"]','FX Bureaus','የውጭ ምንዛሬ ቢሮዎች'],
+    ['footer a[data-view="converter"]','Converter','መቀየሪያ'],
+    ['footer a[data-view="pairs"]','Cross rates','የመሻገሪያ ክፍያዎች'],
+    ['footer a[data-view="pricing"]','Pricing','ዋጋ'],
+    ['footer a[href="/api"]','API access','API መዳረሻ']
+  ];
+  function applyLang(lang){
+    try{document.documentElement.lang=(lang==='am')?'am':'en'}catch(e){}
+    T.forEach(function(row){
+      var sel=row[0],en=row[1],am=row[2];
+      try{$$(sel).forEach(function(el){
+        if(el.dataset.enT===undefined)el.dataset.enT=el.textContent;
+        var target=(lang==='am')?am:(el.dataset.enT||en);
+        if(el.textContent!==target)el.textContent=target;
+      })}catch(e){}
+    });
+    var b=document.getElementById('langBtn');
+    if(b){b.textContent=(lang==='am')?'EN':'አማርኛ';b.title=(lang==='am')?'Switch to English':'ወደ አማርኛ ቀይር'}
+  }
+  function rerender(){
+    safe(function(){VIEW[S.view]&&VIEW[S.view]()},'lang-view');
+    safe(renderTicker,'lang-ticker');safe(updateStatusChip,'lang-chip');
+    try{var e2=ethiopicDate(new Date());var eth2=ETH_MONTHS[e2.m]+' '+e2.d+', '+e2.y;
+      var cd=document.getElementById('clockDate');
+      if(cd)cd.textContent=((S&&S.lang==='am')?'አዲስ አበባ':'Addis Ababa')+' · '+eth2}catch(e){}
+  }
+  var nav=document.getElementById('nav');
+  if(nav){
+    var b=document.createElement('button');
+    b.id='langBtn';b.className='nav-link';b.style.fontWeight='700';
+    nav.appendChild(b);
+    b.addEventListener('click',function(){
+      var next=(S.lang==='am')?'en':'am';
+      S.lang=next;
+      try{localStorage.setItem('bw_lang',next)}catch(e){}
+      applyLang(next);rerender();
+    });
+  }
+  applyLang(S.lang);
+  if(S.lang==='am')rerender();
 })();
 </script>
 </body>
